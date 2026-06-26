@@ -20,7 +20,7 @@ Never skip this step. This document IS the project memory.
 **Type:** Premium running and streetwear e-commerce brand
 **Market:** Algerian runners and fitness community
 **Domain target:** run213.dz (or run213.com)
-**Stack:** Next.js 14 (App Router) + TypeScript + Tailwind CSS + Firebase + Framer Motion
+**Stack:** Next.js 16.2.9 (App Router) + TypeScript + Tailwind CSS + Firebase + Framer Motion
 **Repo:** GitHub (main branch = production via Vercel auto-deploy)
 **Related project:** Fish Your Style (separate project — source of backend logic only, never copy UI)
 
