@@ -1112,3 +1112,57 @@ Do not ask AI to do more than one sprint at once.
 ---
 
 End of 213 RUN Agent Constitution.
+
+
+
+
+## Latest Product + UI Decisions
+
+213 RUN is a running lifestyle / active streetwear brand, not a technical race-performance brand.
+
+Product positioning:
+- Use “running lifestyle”
+- Use “everyday movement”
+- Use “active streetwear”
+- Use “after-run comfort”
+- Use “made on demand” when relevant
+- Do not claim technical race performance or marathon performance gear.
+
+Drop_001 — Summer Build:
+- Oversized Tee
+- Regular Tee
+- Wide Short Oversized
+- Open Leg Pant
+- Baggy Jogger Oversized
+
+Winter Warmup:
+- Oversized Hoodie
+- Neck Warmer
+- Run Hat
+- These can be available as made-on-demand / promo / winter capsule.
+
+Shop The Look:
+- Do not navigate to another page when clicking a look.
+- Future behavior should be a quick-view drawer / slide-over drawer.
+- Look cards should show a lifestyle outfit image on top and product items below.
+- Looks:
+  1. Summer Road — Oversized Tee + Wide Short
+  2. City Everyday — Regular Tee + Open Leg Pant
+  3. Evening Layer — Oversized Tee + Baggy Jogger
+  4. Winter Warmup — Oversized Hoodie + Neck Warmer + Hat
+
+Product images:
+- Product cards should use clean product PNG/studio images.
+- Shop The Look should use lifestyle images: nature, city, winter.
+- Do not leave blank image cards in the UI.
+- If real product images are not available, use local placeholder images with correct aspect ratio.
+
+Navigation:
+- Do not add Journal in V1.
+- Use: Shop, Drop_001, Run Club, About.
+
+Brand Philosophy:
+Keep it short:
+“You don’t find yourself.
+You build yourself.
+BUILT. NOT FOUND.”
