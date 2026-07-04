@@ -5,10 +5,13 @@ import { footerColumns } from "@/constants/home";
 export function Footer() {
   return (
     <footer className="site-footer">
-      <BrandPhilosophy />
-      <div className="site-footer__brand">
-        <Image src="/brand/logo-213-run-dark.png" alt="213 RUN" width={132} height={48} />
-        <p>© 2026 213 RUN. All rights reserved.</p>
+      <div className="site-footer__identity">
+        <BrandPhilosophy />
+        <div className="site-footer__brand-lockup">
+          <Image src="/brand/logo-213-light.png" alt="213 RUN" width={104} height={52} />
+          <p>BUILT.<br />NOT FOUND.</p>
+        </div>
+        <small>© 2026 213 RUN. All rights reserved.</small>
       </div>
       <div className="site-footer__columns">
         {footerColumns.map((column) => (

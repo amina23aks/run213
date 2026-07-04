@@ -46,7 +46,7 @@ export function Header() {
   return (
     <header className="site-header">
       <a className="site-header__logo" href="#home" aria-label="213 RUN home">
-        <Image src="/brand/logo-213-run-dark.png" alt="213 RUN" width={132} height={48} priority />
+        <Image src="/brand/logo-213-light.png" alt="213 RUN" width={96} height={48} priority />
       </a>
       <nav className="site-header__nav" aria-label="Primary navigation">
         {navItems.map((item) => (

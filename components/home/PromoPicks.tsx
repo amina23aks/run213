@@ -5,7 +5,7 @@ export function PromoPicks() {
   return (
     <section className="home-section product-strip" id="promo-picks" aria-labelledby="promo-title">
       <aside className="section-intro">
-        <h2 id="promo-title">PROMO PICKS</h2>
+        <h2 id="promo-title">FEATURED DROP</h2>
         <p>Selected pieces.<br />Limited time promo.</p>
         <a href="#promo-picks">VIEW ALL <span>→</span></a>
       </aside>
