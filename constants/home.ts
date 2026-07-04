@@ -32,10 +32,10 @@ export const promoProducts = [
 ];
 
 export const runClubCards = [
-  "Runner from back",
-  "Phone route screenshot",
-  "Group community photo",
-  "Mountain road photo",
+  { label: "Runner from back", image: "/model.png" },
+  { label: "Phone route screenshot", image: "/tshirt.png" },
+  { label: "Group community photo", image: "/top.png" },
+  { label: "Mountain road photo", image: "/bottompart.png" },
 ];
 
 export const footerColumns = [

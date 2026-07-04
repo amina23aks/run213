@@ -5,7 +5,6 @@ import { footerColumns } from "@/constants/home";
 export function Footer() {
   return (
     <footer className="site-footer">
-      {/* TODO: Replace gradient with a local mountain/road footer background when an approved asset exists. */}
       <BrandPhilosophy />
       <div className="site-footer__brand">
         <Image src="/brand/logo-213-run-dark.png" alt="213 RUN" width={132} height={48} />

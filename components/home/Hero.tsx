@@ -22,7 +22,6 @@ export function Hero() {
           <a className="button button--lime" href="#drop-001">SHOP DROP_001 <span>→</span></a>
           <a className="button button--ghost" href="#shop-the-look">EXPLORE LOOKS <span>→</span></a>
         </div>
-        <div className="hero__pager" aria-label="Hero slide indicator"><span>01</span><b /><i /><span>03</span></div>
       </div>
     </section>
   );
