@@ -1,16 +1,25 @@
-import { brandName, slogan } from "@/constants/brand";
+import { CategoryGrid } from "@/components/home/CategoryGrid";
+import { DropPreview } from "@/components/home/DropPreview";
+import { Hero } from "@/components/home/Hero";
+import { PromoPicks } from "@/components/home/PromoPicks";
+import { RunClub } from "@/components/home/RunClub";
+import { ShopTheLook } from "@/components/home/ShopTheLook";
+import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
 
 export default function Home() {
   return (
-    <main className="foundation-page" aria-labelledby="home-title">
-      <section className="foundation-hero">
-        <p className="foundation-kicker">{brandName}</p>
-        <h1 id="home-title">{slogan}</h1>
-        <p className="foundation-copy">Sprint 0 foundation ready.</p>
-        <span className="foundation-button" aria-label="Shop Drop 01">
-          Shop Drop 01
-        </span>
-      </section>
-    </main>
+    <>
+      <Header />
+      <main>
+        <Hero />
+        <DropPreview />
+        <CategoryGrid />
+        <ShopTheLook />
+        <PromoPicks />
+        <RunClub />
+      </main>
+      <Footer />
+    </>
   );
 }
