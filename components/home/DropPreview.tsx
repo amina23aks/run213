@@ -1,28 +1,23 @@
 import Image from "next/image";
-
-const products = [
-  "Built. Not Found. Tee",
-  "Run Your Pace Tee",
-  "Discipline Hoodie",
-  "Baggy Open Leg",
-];
+import { dropProducts } from "@/constants/home";
 
 export function DropPreview() {
   return (
-    <section className="section drop" id="drop-001" aria-labelledby="drop-title">
-      <div className="section__heading">
-        <p className="eyebrow">DROP_001</p>
-        <h2 id="drop-title">BUILT. NOT FOUND.</h2>
-        <p>First pieces for the runners who show up.</p>
-      </div>
-      <div className="product-grid">
-        {products.map((product) => (
-          <article className="product-card" key={product}>
-            <Image src="/media/placeholders/product-placeholder.webp" alt={`${product} placeholder`} width={640} height={800} />
-            <div>
-              <p>{product}</p>
-              <span>DROP_001</span>
-            </div>
+    <section className="home-section product-strip" id="drop-001" aria-labelledby="drop-title">
+      <aside className="section-intro">
+        <span>01</span>
+        <h2 id="drop-title">DROP_001</h2>
+        <p>First drop ever.<br />Built for every run.<br />Made to move with you.</p>
+        <a href="#drop-001">VIEW ALL PRODUCTS <span>→</span></a>
+      </aside>
+      <div className="product-row" aria-label="DROP_001 products">
+        {dropProducts.map((product) => (
+          <article className="product-card" key={product.name}>
+            <span className="heart" aria-hidden="true">♡</span>
+            <Image src="/media/placeholders/product-placeholder.webp" alt={`${product.name} placeholder`} width={420} height={520} />
+            <h3>{product.name}</h3>
+            <p>{product.price}</p>
+            <a href="#drop-001" aria-label={`View ${product.name}`}>→</a>
           </article>
         ))}
       </div>

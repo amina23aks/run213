@@ -1,7 +1,7 @@
-import { BrandPhilosophy } from "@/components/home/BrandPhilosophy";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { DropPreview } from "@/components/home/DropPreview";
 import { Hero } from "@/components/home/Hero";
+import { PromoPicks } from "@/components/home/PromoPicks";
 import { RunClub } from "@/components/home/RunClub";
 import { ShopTheLook } from "@/components/home/ShopTheLook";
 import { Footer } from "@/components/layout/Footer";
@@ -16,8 +16,8 @@ export default function Home() {
         <DropPreview />
         <CategoryGrid />
         <ShopTheLook />
+        <PromoPicks />
         <RunClub />
-        <BrandPhilosophy />
       </main>
       <Footer />
     </>

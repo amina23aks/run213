@@ -1,29 +1,20 @@
 import Image from "next/image";
-
-const categories = [
-  "Regular Tee",
-  "Oversized Tee",
-  "Regular Hoodie",
-  "Oversized Hoodie",
-  "Baggy Open Leg",
-  "Baggy Oversized Jogging",
-];
+import { categoryCards } from "@/constants/home";
 
 export function CategoryGrid() {
   return (
-    <section className="section" id="shop" aria-labelledby="category-title">
-      <div className="section__heading section__heading--row">
-        <div>
-          <p className="eyebrow">Shop By Category</p>
-          <h2 id="category-title">Built for the daily run.</h2>
-        </div>
-        <p>Clean staples. Active streetwear. No shortcuts.</p>
-      </div>
-      <div className="category-grid">
-        {categories.map((category) => (
+    <section className="home-section category-section" id="shop" aria-labelledby="category-title">
+      <aside className="section-intro">
+        <span>02</span>
+        <h2 id="category-title">SHOP BY CATEGORY</h2>
+        <p>Shop the essentials.<br />Built for your run.</p>
+      </aside>
+      <div className="category-row">
+        {categoryCards.map((category) => (
           <a className="category-card" href="#shop" key={category}>
-            <Image src="/media/placeholders/product-placeholder.webp" alt={`${category} category placeholder`} width={560} height={680} />
-            <span>{category}</span>
+            <Image src="/media/placeholders/product-placeholder.webp" alt={`${category} category placeholder`} width={680} height={420} />
+            <strong>{category}</strong>
+            <span>→</span>
           </a>
         ))}
       </div>
