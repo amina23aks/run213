@@ -1,6 +1,12 @@
 import Image from "next/image";
 import { runClubCards } from "@/constants/home";
 
+const phraseIcons = [
+  { text: "NO NEED TO BE FAST.", icon: "/shoes.png", alt: "Running shoe icon" },
+  { text: "NO NEED TO RUN FAR.", icon: "/road.png", alt: "Road icon" },
+  { text: "JUST SHOW UP.", icon: "/star.png", alt: "Star icon" },
+];
+
 export function RunClub() {
   return (
     <section className="home-section run-club" id="run-club" aria-labelledby="club-title">
@@ -17,9 +23,12 @@ export function RunClub() {
           ))}
         </div>
         <div className="run-club__phrases">
-          <p><span aria-hidden="true">⌁</span><strong>NO NEED TO BE FAST.</strong></p>
-          <p><span aria-hidden="true">♡</span><strong>NO NEED TO RUN FAR.</strong></p>
-          <p><span aria-hidden="true">♙</span><strong>JUST SHOW UP.</strong></p>
+          {phraseIcons.map((phrase) => (
+            <p key={phrase.text}>
+              <Image src={phrase.icon} alt="" aria-hidden="true" width={36} height={36} />
+              <strong>{phrase.text}</strong>
+            </p>
+          ))}
         </div>
       </div>
     </section>
