@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { ProductDetails } from "@/components/product/ProductDetails";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
@@ -29,7 +28,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductGallery product={product} />
           <ProductInfo product={product} />
         </section>
-        <ProductDetails product={product} />
         <RelatedProducts />
       </main>
       <div className="club-footer-shell">

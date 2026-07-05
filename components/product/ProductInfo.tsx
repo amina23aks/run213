@@ -47,9 +47,25 @@ export function ProductInfo({ product }: ProductInfoProps) {
         </div>
       </div>
 
-      <button className="productAddButton" type="button">ADD TO CART</button>
-      <button className="productWishlistButton" type="button">♡ Add to wishlist</button>
-      <p className="productDeliveryNote">Cash on delivery. Delivery details are confirmed at checkout later.</p>
+      <div className="productActionsRow">
+        <button className="productAddButton" type="button">ADD TO CART</button>
+        <button className="productWishlistButton" type="button" aria-label="Add to wishlist">♡</button>
+      </div>
+
+      <div className="productCompactInfo" aria-label="Product details">
+        <div>
+          <span>Details</span>
+          <p>Soft everyday piece built for movement.</p>
+        </div>
+        <div id="product-fit">
+          <span>Fit</span>
+          <p>Relaxed oversized fit.</p>
+        </div>
+        <div>
+          <span>Delivery</span>
+          <p>Cash on delivery. Delivery details are confirmed at checkout later.</p>
+        </div>
+      </div>
     </aside>
   );
 }
