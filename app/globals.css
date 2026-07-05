@@ -199,3 +199,29 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .hero__video { background: url("/media/hero/hero-poster.webp") center / cover no-repeat; }
   .hero__video source { display: none; }
 }
+
+.shopPage { width: min(100%, 92rem); margin: 0 auto; padding: 6.25rem clamp(1rem, 4vw, 2.6rem) clamp(2.25rem, 5vw, 3.5rem); }
+.shopHero { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 1.25rem; background: linear-gradient(115deg, rgba(255, 250, 240, 0.96) 0%, rgba(255, 250, 240, 0.88) 48%, rgba(239, 231, 217, 0.78) 100%), url("/road.png") center right / cover no-repeat; padding: clamp(2rem, 5vw, 4rem); color: var(--foreground); }
+.shopHero__eyebrow { display: inline-flex; margin-bottom: 0.9rem; border-radius: 999px; background: var(--lime); padding: 0.36rem 0.58rem; font-size: 0.66rem; font-weight: 950; line-height: 1; text-transform: uppercase; }
+.shopHero h1 { max-width: 9ch; margin: 0; font-size: clamp(3rem, 7vw, 6.2rem); font-weight: 950; letter-spacing: -0.055em; line-height: 0.9; text-transform: uppercase; }
+.shopHero p { max-width: 24rem; margin: 0.75rem 0 0; color: rgba(7, 7, 6, 0.78); font-size: clamp(0.95rem, 1.35vw, 1.08rem); font-weight: 750; line-height: 1.35; }
+.shopHero p + p { margin-top: 0.3rem; }
+.shopFilters { display: flex; gap: 0.55rem; overflow-x: auto; margin-top: clamp(1.25rem, 3vw, 2rem); padding: 0 0 0.45rem; scrollbar-width: none; }
+.shopFilters::-webkit-scrollbar { display: none; }
+.shopFilters button { flex: 0 0 auto; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 999px; background: rgba(255, 250, 240, 0.68); color: rgba(7, 7, 6, 0.76); padding: 0.62rem 0.9rem; font-size: 0.68rem; font-weight: 950; line-height: 1; text-transform: uppercase; transition: background 160ms ease, border-color 160ms ease, transform 160ms ease; }
+.shopFilters button.is-active { border-color: var(--lime); background: var(--lime); color: var(--foreground); }
+.shopFilters button:hover { transform: translateY(-1px); }
+.shopProducts { margin-top: clamp(1.05rem, 2.4vw, 1.6rem); }
+.shopGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(10.75rem, 100%), 1fr)); gap: clamp(1rem, 2vw, 1.35rem); }
+.shopLoadMore { display: flex; justify-content: center; margin-top: clamp(1.5rem, 4vw, 2.4rem); }
+.shopLoadMore button { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.75rem; border: 1px solid var(--foreground); border-radius: 0.65rem; background: rgba(255, 250, 240, 0.82); color: var(--foreground); padding: 0.75rem 1.3rem; font-size: 0.72rem; font-weight: 950; line-height: 1; text-transform: uppercase; transition: background 160ms ease, transform 160ms ease; }
+.shopLoadMore button:hover { background: var(--lime); transform: translateY(-2px); }
+
+@media (min-width: 1120px) {
+  .shopGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+@media (max-width: 480px) {
+  .shopPage { padding-top: 5.6rem; }
+  .shopGrid { grid-template-columns: repeat(auto-fit, minmax(min(9.8rem, 100%), 1fr)); gap: 0.85rem; }
+}
