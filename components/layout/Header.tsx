@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 
 const navItems = [
   { label: "SHOP", href: "/shop" },
@@ -34,7 +38,10 @@ function IconMenu() {
 }
 
 export function Header() {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
   return (
+    <>
     <header className="site-header">
       <Link className="site-header__logo" href="/" aria-label="213 RUN home">
         <Image src="/brand/logo-213-light.png" alt="213 RUN" width={96} height={48} priority />
@@ -46,9 +53,11 @@ export function Header() {
       </nav>
       <div className="site-header__icons" aria-label="Header actions">
         <button type="button" aria-label="Favorites"><IconHeart /></button>
-        <button className="site-header__cart" type="button" aria-label="Cart placeholder"><IconCart /><span>0</span></button>
+        <button className="site-header__cart" type="button" aria-label="Open cart" onClick={() => setIsCartOpen(true)}><IconCart /><span>1</span></button>
         <button type="button" aria-label="Menu"><IconMenu /></button>
       </div>
     </header>
+    <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </>
   );
 }
