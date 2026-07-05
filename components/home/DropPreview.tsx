@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ProductCard } from "@/components/home/ProductCard";
 import { dropProducts } from "@/constants/home";
 
 export function DropPreview() {
@@ -10,15 +10,7 @@ export function DropPreview() {
         <a href="#drop-001">VIEW ALL PRODUCTS <span>→</span></a>
       </aside>
       <div className="product-row" aria-label="DROP_001 products">
-        {dropProducts.map((product) => (
-          <article className="product-card" key={product.name}>
-            <span className="heart" aria-hidden="true">♡</span>
-            <Image src="/tshirt.png" alt={`${product.name} placeholder`} width={420} height={520} />
-            <h3>{product.name}</h3>
-            <p>{product.price}</p>
-            <a href="#drop-001" aria-label={`View ${product.name}`}>→</a>
-          </article>
-        ))}
+        {dropProducts.map((product) => <ProductCard product={product} key={product.name} />)}
       </div>
     </section>
   );

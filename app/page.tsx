@@ -4,8 +4,8 @@ import { Hero } from "@/components/home/Hero";
 import { PromoPicks } from "@/components/home/PromoPicks";
 import { RunClub } from "@/components/home/RunClub";
 import { ShopTheLook } from "@/components/home/ShopTheLook";
-import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 
 export default function Home() {
   return (
@@ -17,9 +17,11 @@ export default function Home() {
         <CategoryGrid />
         <ShopTheLook />
         <PromoPicks />
-        <RunClub />
+        <div className="club-footer-shell">
+          <RunClub />
+          <Footer />
+        </div>
       </main>
-      <Footer />
     </>
   );
 }

@@ -1,9 +1,9 @@
 export const dropProducts = [
-  { name: "Oversized Tee", price: "2,900 DZD" },
-  { name: "Regular Tee", price: "2,400 DZD" },
-  { name: "Wide Short", price: "3,500 DZD" },
-  { name: "Open Leg Pant", price: "3,800 DZD" },
-  { name: "Baggy Jogger", price: "4,200 DZD" },
+  { name: "Oversized Tee", price: "2,900 DZD", image: "/tshirt.png", colors: ["#f6efe4", "#111111", "#8a8f75"], sizes: ["S", "M", "L", "XL"] },
+  { name: "Regular Tee", price: "2,400 DZD", image: "/tshirt.png", colors: ["#f6efe4", "#111111", "#c8ff00"], sizes: ["S", "M", "L", "XL"] },
+  { name: "Wide Short", price: "3,500 DZD", image: "/buttom.png", colors: ["#111111", "#6f7465", "#d8d0c4"], sizes: ["S", "M", "L", "XL"] },
+  { name: "Open Leg Pant", price: "3,800 DZD", image: "/buttom.png", colors: ["#111111", "#44443d", "#f2eadc"], sizes: ["S", "M", "L", "XL"] },
+  { name: "Baggy Jogger", price: "4,200 DZD", image: "/buttom.png", colors: ["#111111", "#3b3f37", "#b8b0a2"], sizes: ["S", "M", "L", "XL"] },
 ];
 
 export const categoryCards = ["TOPS", "BOTTOMS", "ACCESSORIES"];
@@ -23,12 +23,11 @@ export const lookCards = [
 ];
 
 export const promoProducts = [
-  { name: "Zip Hoodie", price: "5,900 DZD", oldPrice: "6,900 DZD", discount: "-15%" },
-  { name: "Sweatshirt", price: "3,600 DZD", oldPrice: "4,000 DZD", discount: "-10%" },
-  { name: "High Neck Zip Shirt", price: "4,200 DZD", oldPrice: "4,900 DZD", discount: "-10%" },
-  { name: "Hat / Neck Warmer Regular", price: "1,700 DZD", oldPrice: "2,000 DZD", discount: "-15%" },
-  { name: "Winter Hat", price: "1,500 DZD", oldPrice: "2,000 DZD", discount: "-15%" },
-  { name: "Backpack", price: "4,900 DZD", oldPrice: "6,000 DZD", discount: "-17%" },
+  { name: "Zip Hoodie", price: "5,900 DZD", oldPrice: "6,900 DZD", discount: "-15%", image: "/top.png", colors: ["#080808", "#f0e6d8"], sizes: ["S", "M", "L", "XL"] },
+  { name: "Sweatshirt", price: "3,600 DZD", oldPrice: "4,000 DZD", discount: "-10%", image: "/top.png", colors: ["#f1e6d9", "#111111", "#9c9488"], sizes: ["S", "M", "L", "XL"] },
+  { name: "High Neck Zip Shirt", price: "4,200 DZD", oldPrice: "4,900 DZD", discount: "-10%", image: "/top.png", colors: ["#111111", "#e8dfd2"], sizes: ["S", "M", "L", "XL"] },
+  { name: "Hat / Neck Warmer Regular", price: "1,700 DZD", oldPrice: "2,000 DZD", discount: "-15%", image: "/accs.png", colors: ["#111111", "#e8dfd2"] },
+  { name: "Backpack", price: "4,900 DZD", oldPrice: "6,000 DZD", discount: "-17%", image: "/accs.png", colors: ["#111111", "#3d3d38"] },
 ];
 
 export const runClubCards = [
