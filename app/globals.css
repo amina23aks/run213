@@ -200,13 +200,21 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .hero__video source { display: none; }
 }
 
-.shopPage { width: min(100%, 92rem); margin: 0 auto; padding: 6.25rem clamp(1rem, 4vw, 2.6rem) clamp(2.25rem, 5vw, 3.5rem); }
-.shopHero { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 1.25rem; background: linear-gradient(115deg, rgba(255, 250, 240, 0.96) 0%, rgba(255, 250, 240, 0.88) 48%, rgba(239, 231, 217, 0.78) 100%), url("/road.png") center right / cover no-repeat; padding: clamp(2rem, 5vw, 4rem); color: var(--foreground); }
-.shopHero__eyebrow { display: inline-flex; margin-bottom: 0.9rem; border-radius: 999px; background: var(--lime); padding: 0.36rem 0.58rem; font-size: 0.66rem; font-weight: 950; line-height: 1; text-transform: uppercase; }
-.shopHero h1 { max-width: 9ch; margin: 0; font-size: clamp(3rem, 7vw, 6.2rem); font-weight: 950; letter-spacing: -0.055em; line-height: 0.9; text-transform: uppercase; }
-.shopHero p { max-width: 24rem; margin: 0.75rem 0 0; color: rgba(7, 7, 6, 0.78); font-size: clamp(0.95rem, 1.35vw, 1.08rem); font-weight: 750; line-height: 1.35; }
-.shopHero p + p { margin-top: 0.3rem; }
-.shopFilters { display: flex; gap: 0.55rem; overflow-x: auto; margin-top: clamp(1.25rem, 3vw, 2rem); padding: 0 0 0.45rem; scrollbar-width: none; }
+.shopPage { width: min(100%, 92rem); margin: 0 auto; padding: 5.75rem clamp(1rem, 4vw, 2.6rem) clamp(2.25rem, 5vw, 3.5rem); }
+.shopHero { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: clamp(1.5rem, 3vw, 2rem); background: linear-gradient(115deg, rgba(255, 250, 240, 0.98) 0%, rgba(255, 250, 240, 0.94) 54%, rgba(239, 231, 217, 0.9) 100%), url("/road.png") center right / cover no-repeat; padding: clamp(2.35rem, 5vw, 4.5rem); color: var(--foreground); }
+.shopHero__eyebrow { display: inline-flex; margin-bottom: 0.9rem; border-radius: 999px; background: var(--lime); padding: 0.38rem 0.62rem; font-size: 0.66rem; font-weight: 950; line-height: 1; text-transform: uppercase; }
+.shopHero h1 { max-width: 10ch; margin: 0; font-size: clamp(3.5rem, 7vw, 7rem); font-weight: 950; letter-spacing: -0.06em; line-height: 0.88; text-transform: uppercase; }
+.shopHero p { max-width: 32rem; margin: 0.85rem 0 0; color: rgba(7, 7, 6, 0.78); font-size: clamp(1rem, 1.45vw, 1.125rem); font-weight: 750; line-height: 1.42; }
+
+.shopControls { display: flex; flex-direction: column; gap: 0.85rem; margin-top: clamp(1rem, 2.5vw, 1.45rem); }
+.shopSearch { width: min(100%, 32.5rem); }
+.shopSearch label { position: relative; display: block; }
+.shopSearch label span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+.shopSearch svg { position: absolute; left: 1rem; top: 50%; width: 1.05rem; height: 1.05rem; fill: none; stroke: rgba(7, 7, 6, 0.58); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; transform: translateY(-50%); }
+.shopSearch input { width: 100%; height: 3rem; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 999px; background: rgba(255, 250, 240, 0.86); color: var(--foreground); padding: 0 1rem 0 2.75rem; font-size: 0.88rem; font-weight: 700; outline: 0; }
+.shopSearch input::placeholder { color: rgba(7, 7, 6, 0.52); }
+.shopSearch input:focus { border-color: rgba(0, 0, 0, 0.28); box-shadow: 0 0 0 3px rgba(200, 255, 0, 0.24); }
+.shopFilters { display: flex; gap: 0.55rem; overflow-x: auto; padding: 0 0 0.45rem; scrollbar-width: none; }
 .shopFilters::-webkit-scrollbar { display: none; }
 .shopFilters button { flex: 0 0 auto; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 999px; background: rgba(255, 250, 240, 0.68); color: rgba(7, 7, 6, 0.76); padding: 0.62rem 0.9rem; font-size: 0.68rem; font-weight: 950; line-height: 1; text-transform: uppercase; transition: background 160ms ease, border-color 160ms ease, transform 160ms ease; }
 .shopFilters button.is-active { border-color: var(--lime); background: var(--lime); color: var(--foreground); }
@@ -222,6 +230,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 }
 
 @media (max-width: 480px) {
-  .shopPage { padding-top: 5.6rem; }
+  .shopPage { padding-top: 5.35rem; }
+  .shopHero { padding: 2rem 1.15rem; }
   .shopGrid { grid-template-columns: repeat(auto-fit, minmax(min(9.8rem, 100%), 1fr)); gap: 0.85rem; }
 }

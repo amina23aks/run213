@@ -1,6 +1,7 @@
 import { ShopFilters } from "@/components/shop/ShopFilters";
 import { ShopGrid } from "@/components/shop/ShopGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
+import { ShopSearch } from "@/components/shop/ShopSearch";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 
@@ -10,7 +11,10 @@ export default function ShopPage() {
       <Header />
       <main className="shopPage">
         <ShopHero />
-        <ShopFilters />
+        <div className="shopControls">
+          <ShopSearch />
+          <ShopFilters />
+        </div>
         <ShopGrid />
       </main>
       <div className="club-footer-shell">

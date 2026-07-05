@@ -1,20 +1,11 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const navItems = [
-  { label: "SHOP", href: "#shop" },
-  { label: "DROP_001", href: "#drop-001" },
-  { label: "RUN CLUB", href: "#run-club" },
-  { label: "ABOUT", href: "#about" },
+  { label: "SHOP", href: "/shop" },
+  { label: "DROP_001", href: "/#drop-001" },
+  { label: "RUN CLUB", href: "/#run-club" },
 ];
-
-function IconSearch() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="m16 16 4 4" />
-    </svg>
-  );
-}
 
 function IconHeart() {
   return (
@@ -45,16 +36,15 @@ function IconMenu() {
 export function Header() {
   return (
     <header className="site-header">
-      <a className="site-header__logo" href="#home" aria-label="213 RUN home">
+      <Link className="site-header__logo" href="/" aria-label="213 RUN home">
         <Image src="/brand/logo-213-light.png" alt="213 RUN" width={96} height={48} priority />
-      </a>
+      </Link>
       <nav className="site-header__nav" aria-label="Primary navigation">
         {navItems.map((item) => (
-          <a key={item.label} href={item.href}>{item.label}</a>
+          <Link key={item.label} href={item.href}>{item.label}</Link>
         ))}
       </nav>
       <div className="site-header__icons" aria-label="Header actions">
-        <button type="button" aria-label="Search"><IconSearch /></button>
         <button type="button" aria-label="Favorites"><IconHeart /></button>
         <button className="site-header__cart" type="button" aria-label="Cart placeholder"><IconCart /><span>0</span></button>
         <button type="button" aria-label="Menu"><IconMenu /></button>
