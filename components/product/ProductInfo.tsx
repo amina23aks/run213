@@ -28,7 +28,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
         <div className="productOptionGroup">
           <div className="productOptionGroup__header">
             <span>Size</span>
-            <a href="#product-fit">Size guide</a>
+            <a href="#">Size guide</a>
           </div>
           <div className="productSizeOptions" aria-label="Size options">
             {product.sizes.map((size, index) => (
@@ -52,20 +52,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
         <button className="productWishlistButton" type="button" aria-label="Add to wishlist">♡</button>
       </div>
 
-      <div className="productCompactInfo" aria-label="Product details">
-        <div>
-          <span>Details</span>
-          <p>Soft everyday piece built for movement.</p>
-        </div>
-        <div id="product-fit">
-          <span>Fit</span>
-          <p>Relaxed oversized fit.</p>
-        </div>
-        <div>
-          <span>Delivery</span>
-          <p>Cash on delivery. Delivery details are confirmed at checkout later.</p>
-        </div>
-      </div>
+      <p className="productDeliveryNote">Cash on delivery. Delivery details are confirmed at checkout later.</p>
     </aside>
   );
 }
