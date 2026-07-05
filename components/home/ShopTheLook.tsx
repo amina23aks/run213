@@ -27,13 +27,13 @@ export function ShopTheLook() {
   }, []);
 
   return (
-    <section className="home-section look-section" id="shop-the-look" aria-labelledby="look-title">
-      <aside className="section-intro look-section__intro">
+    <section className="home-section shopLookSection" id="shop-the-look" aria-labelledby="look-title">
+      <aside className="section-intro shopLookIntro">
         <span className="section-number">03</span>
         <h2 id="look-title">SHOP THE LOOK</h2>
         <p>Looks made to<br />move with you.</p>
       </aside>
-      <div className="look-area">
+      <div className="shopLookFigures">
         <div className="figure-showcase" onMouseEnter={() => { isHoveringRef.current = true; }} onMouseLeave={() => { isHoveringRef.current = false; }}>
           <button className="figure-nav figure-nav--prev" type="button" aria-label="Previous look" onClick={() => activateFigure(activeFigure - 1)}>←</button>
           <div className="figure-row" aria-label="Shop the look figures">
@@ -53,7 +53,7 @@ export function ShopTheLook() {
           <button className="figure-nav figure-nav--next" type="button" aria-label="Next look" onClick={() => activateFigure(activeFigure + 1)}>→</button>
         </div>
       </div>
-      <div className="lookCardsGrid">
+      <div className="shopLookCards">
         {lookCards.map((look) => (
           <article className="look-card" key={look.name}>
             <Image src="/bottompart.png" alt={`${look.name} look placeholder`} width={680} height={383} />

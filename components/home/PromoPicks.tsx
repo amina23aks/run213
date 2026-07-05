@@ -10,7 +10,7 @@ export function PromoPicks() {
         <a href="#promo-picks">VIEW ALL <span>→</span></a>
       </aside>
       <div className="product-row product-row--promo" aria-label="Promo picks products">
-        {promoProducts.map((product) => <ProductCard product={product} href="#promo-picks" promo key={product.name} />)}
+        {promoProducts.map((product) => <ProductCard product={product} promo key={product.name} />)}
       </div>
     </section>
   );

@@ -10,7 +10,7 @@ export function DropPreview() {
         <a href="#drop-001">VIEW ALL PRODUCTS <span>→</span></a>
       </aside>
       <div className="product-row" aria-label="DROP_001 products">
-        {dropProducts.map((product) => <ProductCard product={product} href="#drop-001" key={product.name} />)}
+        {dropProducts.map((product) => <ProductCard product={product} key={product.name} />)}
       </div>
     </section>
   );

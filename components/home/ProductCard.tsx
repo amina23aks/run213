@@ -12,44 +12,43 @@ type ProductCardItem = {
 
 type ProductCardProps = {
   product: ProductCardItem;
-  href: string;
   promo?: boolean;
 };
 
-export function ProductCard({ product, href, promo = false }: ProductCardProps) {
+export function ProductCard({ product, promo = false }: ProductCardProps) {
   return (
-    <article className="product-card">
-      <div className="product-card__image-area">
-        {promo ? <span className="product-card__promo-badge">PROMO</span> : null}
-        <span className="product-card__heart" aria-hidden="true">♡</span>
+    <article className="productCard">
+      <div className="productImageWrap">
+        {promo ? <span className="promoBadge">PROMO</span> : null}
+        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`}>♡</button>
         <Image src={product.image} alt={`${product.name} placeholder`} width={420} height={520} />
       </div>
 
-      <div className="product-card__content">
-        <h3>{product.name}</h3>
-        <p className="product-card__price">
-          <strong>{product.price}</strong>
-          {product.oldPrice ? <s>{product.oldPrice}</s> : null}
-          {product.discount ? <em>{product.discount}</em> : null}
-        </p>
+      <div className="productInfo">
+        <h3 className="productTitle">{product.name}</h3>
+        <div className="productPriceRow">
+          <span className="currentPrice">{product.price}</span>
+          {product.oldPrice ? <span className="oldPrice">{product.oldPrice}</span> : null}
+          {product.discount ? <span className="discountBadge">{product.discount}</span> : null}
+        </div>
 
-        <div className="product-card__colors" aria-label={`${product.name} colors`}>
+        <div className="swatchesRow" aria-label={`${product.name} colors`}>
           {product.colors.map((color, index) => (
             <span
-              className={index === 0 ? "is-selected" : undefined}
+              className={index === 0 ? "isSelected" : undefined}
               key={color}
               style={{ backgroundColor: color }}
             />
           ))}
         </div>
 
-        <div className="product-card__bottom-row">
+        <div className="productBottomRow">
           {product.sizes ? (
-            <div className="product-card__sizes" aria-label={`${product.name} sizes`}>
+            <div className="sizeChips" aria-label={`${product.name} sizes`}>
               {product.sizes.map((size) => <span key={size}>{size}</span>)}
             </div>
           ) : <span aria-hidden="true" />}
-          <a className="product-card__add" href={href} aria-label={`Add ${product.name}`}>+</a>
+          <button className="addButton" type="button" aria-label={`Add ${product.name}`}>+</button>
         </div>
       </div>
     </article>
