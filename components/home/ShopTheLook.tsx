@@ -10,6 +10,7 @@ const USER_PAUSE_MS = 7000;
 export function ShopTheLook() {
   const [activeFigure, setActiveFigure] = useState(0);
   const pauseUntilRef = useRef(0);
+  const isHoveringRef = useRef(false);
 
   const activateFigure = (index: number) => {
     pauseUntilRef.current = Date.now() + USER_PAUSE_MS;
@@ -18,7 +19,7 @@ export function ShopTheLook() {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      if (Date.now() < pauseUntilRef.current) return;
+      if (isHoveringRef.current || Date.now() < pauseUntilRef.current) return;
       setActiveFigure((current) => (current + 1) % lookFigures.length);
     }, AUTO_SLIDE_MS);
 
@@ -33,7 +34,7 @@ export function ShopTheLook() {
         <p>Looks made to<br />move with you.</p>
       </aside>
       <div className="look-area">
-        <div className="figure-showcase">
+        <div className="figure-showcase" onMouseEnter={() => { isHoveringRef.current = true; }} onMouseLeave={() => { isHoveringRef.current = false; }}>
           <button className="figure-nav figure-nav--prev" type="button" aria-label="Previous look" onClick={() => activateFigure(activeFigure - 1)}>←</button>
           <div className="figure-row" aria-label="Shop the look figures">
             {lookFigures.map((figure, index) => (
