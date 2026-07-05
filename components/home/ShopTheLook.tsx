@@ -53,7 +53,7 @@ export function ShopTheLook() {
           <button className="figure-nav figure-nav--next" type="button" aria-label="Next look" onClick={() => activateFigure(activeFigure + 1)}>→</button>
         </div>
       </div>
-      <div className="look-card-row">
+      <div className="lookCardsGrid">
         {lookCards.map((look) => (
           <article className="look-card" key={look.name}>
             <Image src="/bottompart.png" alt={`${look.name} look placeholder`} width={680} height={383} />

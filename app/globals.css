@@ -119,14 +119,14 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .figure-card img { width: min(8.4rem, 100%); margin: 0.55rem auto 0; aspect-ratio: 3 / 4.15; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0.95rem 1.25rem rgba(7, 7, 6, 0.12)); }
 .figure-nav { display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.78); color: var(--foreground); font-size: 1.25rem; font-weight: 950; box-shadow: 0 0.45rem 1.2rem rgba(7, 7, 6, 0.1); transition: transform 160ms ease, background 160ms ease; }
 .figure-nav:hover { background: white; transform: translateY(-1px); }
-.look-card-row { display: grid; grid-column: 1 / -1; grid-auto-columns: minmax(18rem, 1fr); grid-auto-flow: column; gap: 1.25rem; overflow-x: auto; padding: 0.35rem 0 0.2rem; scrollbar-width: thin; }
-.look-card { position: relative; min-height: clamp(10.625rem, 13vw, 13.125rem); aspect-ratio: 16 / 9; overflow: hidden; border-radius: 1rem; background: var(--charcoal); color: white; box-shadow: var(--shadow); }
+.lookCardsGrid { display: grid; grid-column: 1 / -1; grid-auto-columns: minmax(18rem, 1fr); grid-auto-flow: column; gap: 1.25rem; width: 100%; overflow-x: auto; padding: 0.35rem 0 0.2rem; scrollbar-width: thin; }
+.look-card { position: relative; min-height: 10.9375rem; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 1rem; background: var(--charcoal); color: white; box-shadow: var(--shadow); }
 .look-card::after { height: 70%; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.76)); }
-.look-card > span { position: absolute; left: 1.125rem; top: 1rem; z-index: 1; font-size: 0.66rem; font-weight: 950; }
-.look-card div { position: absolute; left: 1.125rem; right: 4.25rem; bottom: 1.125rem; z-index: 1; }
+.look-card > span { position: absolute; left: 1rem; top: 1rem; z-index: 1; font-size: 0.66rem; font-weight: 950; }
+.look-card div { position: absolute; left: 1rem; right: 3.75rem; bottom: 1rem; z-index: 1; }
 .look-card h3 { margin: 0 0 0.28rem; font-size: clamp(0.94rem, 1.25vw, 1.08rem); font-weight: 950; letter-spacing: -0.035em; line-height: 1.05; }
 .look-card p { margin: 0; font-size: 0.72rem; font-weight: 750; line-height: 1.3; }
-.look-card a { width: 2.25rem; height: 2.25rem; right: 1.125rem; bottom: 1.125rem; font-size: 1.18rem; }
+.look-card a { width: 2.125rem; height: 2.125rem; right: 1rem; bottom: 1rem; font-size: 1.1rem; }
 
 .club-footer-shell { position: relative; overflow: hidden; background-image: url("/bottompart.png"); background-size: cover; background-position: center center; background-repeat: no-repeat; }
 .club-footer-shell::before { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, rgba(247, 242, 232, 0.86) 0%, rgba(247, 242, 232, 0.58) 10%, rgba(247, 242, 232, 0.2) 23%, rgba(247, 242, 232, 0) 40%), linear-gradient(90deg, rgba(247, 242, 232, 0.94) 0%, rgba(247, 242, 232, 0.74) 16%, rgba(247, 242, 232, 0.34) 32%, rgba(247, 242, 232, 0.08) 48%, rgba(247, 242, 232, 0) 63%), linear-gradient(0deg, rgba(247, 242, 232, 0.66) 0%, rgba(247, 242, 232, 0.34) 25%, rgba(247, 242, 232, 0) 56%); content: ""; }
@@ -175,7 +175,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .product-row { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-flow: initial; grid-auto-columns: initial; overflow: visible; }
   .product-row--promo { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .category-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .look-card-row { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: initial; grid-auto-columns: initial; gap: clamp(1.125rem, 1.6vw, 1.5rem); overflow: visible; }
+  .lookCardsGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: initial; grid-auto-columns: initial; gap: 1.25rem; overflow: visible; }
   .run-club { align-items: center; }
   .run-club__cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .run-club__phrases { grid-template-columns: repeat(3, minmax(0, 1fr)); }
