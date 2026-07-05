@@ -52,19 +52,19 @@ export function ShopTheLook() {
           </div>
           <button className="figure-nav figure-nav--next" type="button" aria-label="Next look" onClick={() => activateFigure(activeFigure + 1)}>→</button>
         </div>
-      </div>
-      <div className="look-card-row">
-        {lookCards.map((look) => (
-          <article className="look-card" key={look.name}>
-            <Image src="/bottompart.png" alt={`${look.name} look placeholder`} width={640} height={360} />
-            <span>{look.number}</span>
-            <div>
-              <h3>{look.name}</h3>
-              <p>{look.description}</p>
-            </div>
-            <a href="#shop-the-look" aria-label={`Explore ${look.name}`}>→</a>
-          </article>
-        ))}
+        <div className="look-card-row">
+          {lookCards.map((look) => (
+            <article className="look-card" key={look.name}>
+              <Image src="/bottompart.png" alt={`${look.name} look placeholder`} width={640} height={360} />
+              <span>{look.number}</span>
+              <div>
+                <h3>{look.name}</h3>
+                <p>{look.description}</p>
+              </div>
+              <a href="#shop-the-look" aria-label={`Explore ${look.name}`}>→</a>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

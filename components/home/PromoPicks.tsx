@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ProductCard } from "@/components/home/ProductCard";
 import { promoProducts } from "@/constants/home";
 
 export function PromoPicks() {
@@ -10,27 +10,7 @@ export function PromoPicks() {
         <a href="#promo-picks">VIEW ALL <span>→</span></a>
       </aside>
       <div className="product-row product-row--promo" aria-label="Promo picks products">
-        {promoProducts.map((product) => (
-          <article className="product-card" key={product.name}>
-            <mark>PROMO</mark>
-            <span className="heart" aria-hidden="true">♡</span>
-            <Image src={product.image} alt={`${product.name} promo placeholder`} width={420} height={520} />
-            <h3>{product.name}</h3>
-            <p className="product-card__price product-card__price--promo">
-              <strong>{product.price}</strong>
-              <s>{product.oldPrice}</s>
-              <em>{product.discount}</em>
-            </p>
-            <div className="product-card__colors" aria-label={`${product.name} colors`}>
-              {product.colors.map((color) => <span key={color} style={{ backgroundColor: color }} />)}
-            </div>
-            {product.sizes ? (
-              <div className="product-card__sizes" aria-label={`${product.name} sizes`}>
-                {product.sizes.map((size) => <span key={size}>{size}</span>)}
-              </div>
-            ) : null}
-          </article>
-        ))}
+        {promoProducts.map((product) => <ProductCard product={product} href="#promo-picks" promo key={product.name} />)}
       </div>
     </section>
   );
