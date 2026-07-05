@@ -14,9 +14,21 @@ export function PromoPicks() {
           <article className="product-card" key={product.name}>
             <mark>PROMO</mark>
             <span className="heart" aria-hidden="true">♡</span>
-            <Image src="/tshirt.png" alt={`${product.name} promo placeholder`} width={420} height={520} />
+            <Image src={product.image} alt={`${product.name} promo placeholder`} width={420} height={520} />
             <h3>{product.name}</h3>
-            <p><strong>{product.price}</strong> <s>{product.oldPrice}</s> <em>{product.discount}</em></p>
+            <p className="product-card__price product-card__price--promo">
+              <strong>{product.price}</strong>
+              <s>{product.oldPrice}</s>
+              <em>{product.discount}</em>
+            </p>
+            <div className="product-card__colors" aria-label={`${product.name} colors`}>
+              {product.colors.map((color) => <span key={color} style={{ backgroundColor: color }} />)}
+            </div>
+            {product.sizes ? (
+              <div className="product-card__sizes" aria-label={`${product.name} sizes`}>
+                {product.sizes.map((size) => <span key={size}>{size}</span>)}
+              </div>
+            ) : null}
           </article>
         ))}
       </div>
