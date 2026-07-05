@@ -46,7 +46,7 @@ export function ProductCard({ product, href, promo = false }: ProductCardProps) 
               {product.sizes.map((size) => <span key={size}>{size}</span>)}
             </div>
           ) : <span aria-hidden="true" />}
-          <a className="product-card__arrow" href={href} aria-label={`View ${product.name}`}>→</a>
+          <a className="product-card__arrow" href={href} aria-label={`Add ${product.name}`}>+</a>
         </div>
       </div>
     </article>
