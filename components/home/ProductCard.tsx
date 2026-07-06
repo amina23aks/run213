@@ -42,13 +42,15 @@ export function ProductCard({ product, promo = false }: ProductCardProps) {
           ))}
         </div>
 
-        <div className="productBottomRow">
+        <div className="productActions">
           {product.sizes ? (
             <div className="sizeChips" aria-label={`${product.name} sizes`}>
               {product.sizes.map((size) => <span key={size}>{size}</span>)}
             </div>
-          ) : <span aria-hidden="true" />}
-          <button className="addButton" type="button" aria-label={`Add ${product.name}`}>+</button>
+          ) : null}
+          <div className="addButtonRow">
+            <button className="addButton" type="button" aria-label={`Add ${product.name}`}>+</button>
+          </div>
         </div>
       </div>
     </article>
