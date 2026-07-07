@@ -54,6 +54,12 @@ function isProductAvailable(product: Product): boolean {
   return true;
 }
 
+function hasRequiredSelections(product: Product, selectedSize: string | null, selectedColor: string | null): boolean {
+  if (product.colors.length > 0 && !selectedColor) return false;
+  if (product.sizes.length > 0 && !selectedSize) return false;
+  return true;
+}
+
 function normalizeStoredItems(value: string | null): CartItem[] {
   if (!value) return [];
 
@@ -117,7 +123,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (maxQuantity === 0) return false;
 
     const selectedSize = input.selectedSize ?? null;
-    const selectedColor = input.selectedColor ?? input.product.colors[0]?.name ?? null;
+    const selectedColor = input.selectedColor ?? null;
+    if (!hasRequiredSelections(input.product, selectedSize, selectedColor)) return false;
+
     const quantity = clampQuantity(input.quantity ?? MIN_QUANTITY, maxQuantity);
     const lineKey = getLineKey({ productId: input.product.id, selectedSize, selectedColor });
 
