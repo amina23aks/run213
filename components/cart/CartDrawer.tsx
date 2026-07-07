@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { CartItem } from "@/components/cart/CartItem";
-import { mockCartItems, mockCartSubtotal } from "@/components/cart/cartData";
+import { formatDzd } from "@/constants/products";
+import { useCart } from "@/context/cart";
 
 type CartDrawerProps = {
   isOpen: boolean;
@@ -8,6 +11,9 @@ type CartDrawerProps = {
 };
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+  const { items, isHydrated, getLineKey, removeItem, updateQuantity, subtotalDzd } = useCart();
+  const hasItems = isHydrated && items.length > 0;
+
   return (
     <div className={isOpen ? "cartDrawerShell is-open" : "cartDrawerShell"} aria-hidden={!isOpen}>
       <button className="cartDrawerOverlay" type="button" aria-label="Close cart" onClick={onClose} />
@@ -17,14 +23,17 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <button type="button" aria-label="Close cart" onClick={onClose}>×</button>
         </header>
 
-        {mockCartItems.length > 0 ? (
+        {hasItems ? (
           <>
             <div className="cartDrawer__items">
-              {mockCartItems.map((item) => <CartItem item={item} key={item.id} />)}
+              {items.map((item) => {
+                const lineKey = getLineKey(item);
+                return <CartItem item={item} lineKey={lineKey} onRemove={removeItem} onUpdateQuantity={updateQuantity} key={lineKey} />;
+              })}
             </div>
             <footer className="cartDrawer__footer">
-              <p className="cartDrawer__subtotal"><span>Subtotal</span><strong>{mockCartSubtotal}</strong></p>
-              <p className="cartDrawer__note">Delivery calculated at checkout.</p>
+              <p className="cartDrawer__subtotal"><span>Subtotal</span><strong>{formatDzd(subtotalDzd)}</strong></p>
+              <p className="cartDrawer__note">Delivery calculated at checkout. Server totals will be recomputed in Sprint D.</p>
               <Link className="cartDrawer__checkout" href="/checkout" onClick={onClose}>CHECKOUT</Link>
               <Link className="cartDrawer__secondary" href="/shop" onClick={onClose}>CONTINUE SHOPPING</Link>
             </footer>

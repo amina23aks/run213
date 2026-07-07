@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { useCart } from "@/context/cart";
 
 const navItems = [
   { label: "SHOP", href: "/shop" },
@@ -39,6 +40,7 @@ function IconMenu() {
 
 export function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { itemCount, isHydrated } = useCart();
 
   return (
     <>
@@ -53,7 +55,7 @@ export function Header() {
       </nav>
       <div className="site-header__icons" aria-label="Header actions">
         <button type="button" aria-label="Favorites"><IconHeart /></button>
-        <button className="site-header__cart" type="button" aria-label="Open cart" onClick={() => setIsCartOpen(true)}><IconCart /><span>1</span></button>
+        <button className="site-header__cart" type="button" aria-label="Open cart" onClick={() => setIsCartOpen(true)}><IconCart />{isHydrated && itemCount > 0 ? <span>{itemCount}</span> : null}</button>
         <button type="button" aria-label="Menu"><IconMenu /></button>
       </div>
     </header>
