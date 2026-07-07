@@ -1,4 +1,9 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useCart } from "@/context/cart";
+import type { Product } from "@/types/product";
 
 type ProductCardItem = {
   name: string;
@@ -13,9 +18,20 @@ type ProductCardItem = {
 type ProductCardProps = {
   product: ProductCardItem;
   promo?: boolean;
+  sourceProduct?: Product;
 };
 
-export function ProductCard({ product, promo = false }: ProductCardProps) {
+export function ProductCard({ product, promo = false, sourceProduct }: ProductCardProps) {
+  const { addItem } = useCart();
+  const hasRequiredVariants = Boolean(sourceProduct && (sourceProduct.colors.length > 0 || sourceProduct.sizes.length > 0));
+  const canDirectAdd = Boolean(sourceProduct && !hasRequiredVariants);
+  const productHref = sourceProduct ? `/product/${sourceProduct.slug}` : "/shop";
+
+  function handleDirectAdd() {
+    if (!sourceProduct || hasRequiredVariants) return;
+    addItem({ product: sourceProduct, quantity: 1 });
+  }
+
   return (
     <article className="productCard">
       <div className="productImageWrap">
@@ -49,7 +65,11 @@ export function ProductCard({ product, promo = false }: ProductCardProps) {
             </div>
           ) : null}
           <div className="addButtonRow">
-            <button className="addButton" type="button" aria-label={`Add ${product.name}`}>+</button>
+            {canDirectAdd ? (
+              <button className="addButton" type="button" aria-label={`Add ${product.name}`} onClick={handleDirectAdd}>+</button>
+            ) : (
+              <Link className="addButton" href={productHref} aria-label={`Choose options for ${product.name}`}>+</Link>
+            )}
           </div>
         </div>
       </div>
