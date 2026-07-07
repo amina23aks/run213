@@ -1,7 +1,8 @@
-import type { StaticProduct } from "@/constants/products";
+import { formatDzd } from "@/constants/products";
+import type { Product } from "@/types/product";
 
 type ProductInfoProps = {
-  product: StaticProduct;
+  product: Product;
 };
 
 export function ProductInfo({ product }: ProductInfoProps) {
@@ -9,22 +10,22 @@ export function ProductInfo({ product }: ProductInfoProps) {
     <aside className="productInfoPanel" aria-labelledby="product-title">
       <span className="productInfoPanel__label">DROP_001</span>
       <h1 id="product-title">{product.name.toUpperCase()}</h1>
-      <p className="productInfoPanel__price">{product.price}</p>
-      <p className="productInfoPanel__description">{product.description ?? "Built for daily movement. Soft, structured, and made for the runners who show up."}</p>
+      <p className="productInfoPanel__price">{formatDzd(product.priceDzd)}</p>
+      <p className="productInfoPanel__description">{product.description}</p>
 
       <div className="productOptionGroup">
         <div className="productOptionGroup__header">
           <span>Color</span>
-          <strong>{product.colorNames[0]}</strong>
+          <strong>{product.colors[0]?.name ?? "Color"}</strong>
         </div>
         <div className="productColorDots" aria-label="Color options">
           {product.colors.map((color, index) => (
-            <button className={index === 0 ? "is-active" : undefined} style={{ backgroundColor: color }} type="button" key={color} aria-label={product.colorNames[index] ?? "Color option"} />
+            <button className={index === 0 ? "is-active" : undefined} style={{ backgroundColor: color.hex }} type="button" key={color.name} aria-label={color.name} />
           ))}
         </div>
       </div>
 
-      {product.sizes ? (
+      {product.sizes.length ? (
         <div className="productOptionGroup">
           <div className="productOptionGroup__header">
             <span>Size</span>
@@ -32,7 +33,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           </div>
           <div className="productSizeOptions" aria-label="Size options">
             {product.sizes.map((size, index) => (
-              <button className={index === 1 ? "is-active" : undefined} type="button" key={size}>{size}</button>
+              <button className={index === 1 ? "is-active" : undefined} type="button" key={size.label}>{size.label}</button>
             ))}
           </div>
         </div>

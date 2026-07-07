@@ -1,14 +1,15 @@
 import Image from "next/image";
-import type { StaticProduct } from "@/constants/products";
+import type { Product } from "@/types/product";
 
 type ProductGalleryProps = {
-  product: StaticProduct;
+  product: Product;
 };
 
 const galleryImages = ["/tshirt.png", "/top.png", "/model.png"];
 
 export function ProductGallery({ product }: ProductGalleryProps) {
-  const images = [product.image, ...galleryImages.filter((image) => image !== product.image)].slice(0, 3);
+  const primaryImage = product.images[0]?.url ?? "/placeholders/product-placeholder.webp";
+  const images = [primaryImage, ...galleryImages.filter((image) => image !== primaryImage)].slice(0, 3);
 
   return (
     <section className="productGallery" aria-label={`${product.name} gallery`}>

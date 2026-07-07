@@ -1,12 +1,17 @@
 import { ProductCard } from "@/components/home/ProductCard";
-import { shopProducts } from "@/constants/products";
+import { toProductCardView } from "@/constants/products";
+import type { Product } from "@/types/product";
 
-export function ShopGrid() {
+type ShopGridProps = {
+  products: Product[];
+};
+
+export function ShopGrid({ products }: ShopGridProps) {
   return (
     <section className="shopProducts" aria-label="213 RUN products">
       <div className="shopGrid">
-        {shopProducts.map((product) => (
-          <ProductCard product={product} key={product.name} />
+        {products.map((product) => (
+          <ProductCard product={toProductCardView(product)} key={product.id} promo={product.isPromo} />
         ))}
       </div>
       <div className="shopLoadMore">

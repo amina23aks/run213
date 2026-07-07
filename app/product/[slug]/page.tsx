@@ -4,7 +4,8 @@ import { Header } from "@/components/layout/Header";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
-import { getProductBySlug, shopProducts } from "@/constants/products";
+import { shopProducts } from "@/constants/products";
+import { getProductBySlug } from "@/lib/firestore/products";
 
 export function generateStaticParams() {
   return shopProducts.map((product) => ({ slug: product.slug }));
@@ -16,7 +17,7 @@ type ProductPageProps = {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) notFound();
 

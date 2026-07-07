@@ -1,5 +1,5 @@
 import { ProductCard } from "@/components/home/ProductCard";
-import { relatedDropProducts } from "@/constants/products";
+import { relatedDropProducts, toProductCardView } from "@/constants/products";
 
 export function RelatedProducts() {
   return (
@@ -10,7 +10,7 @@ export function RelatedProducts() {
       </div>
       <div className="relatedProducts__grid">
         {relatedDropProducts.map((product) => (
-          <ProductCard product={product} key={product.slug} />
+          <ProductCard product={toProductCardView(product)} key={product.slug} promo={product.isPromo} />
         ))}
       </div>
     </section>
