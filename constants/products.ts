@@ -79,6 +79,11 @@ function createMockProduct(input: MockProductInput): Product {
     isPromo: input.isPromo ?? false,
     dropSlug: "drop-001",
     sortOrder: input.sortOrder,
+    showInDrop001: input.sortOrder <= 50,
+    showInFeaturedDrop: input.isPromo ?? false,
+    showInShopTheLook: false,
+    featuredSortOrder: input.isPromo ? input.sortOrder : null,
+    lookGroupSlug: null,
     createdAt: null,
     updatedAt: null,
   };

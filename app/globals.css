@@ -452,3 +452,55 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .checkoutSuccessState span { color: rgba(7, 7, 6, 0.58); font-size: 0.72rem; font-weight: 950; letter-spacing: 0.08em; text-transform: uppercase; }
 .checkoutSuccessState h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 950; letter-spacing: -0.045em; }
 .checkoutSuccessState p { margin: 0; color: rgba(7, 7, 6, 0.66); font-size: 0.9rem; font-weight: 750; line-height: 1.5; }
+
+.adminPage {
+  min-height: 100vh;
+  background: #070807;
+  color: #f4f4f0;
+  padding: 32px;
+}
+
+.adminPage header,
+.adminTopbar,
+.adminForm,
+.adminTable article {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #111211;
+  border-radius: 24px;
+  padding: 20px;
+}
+
+.adminPage header { margin-bottom: 20px; }
+.adminPage header p,
+.adminMessage { color: #c7f400; letter-spacing: 0.14em; text-transform: uppercase; }
+.adminPage h1,
+.adminPage h2 { font-family: var(--font-display); text-transform: uppercase; }
+.adminTopbar { align-items: center; display: flex; justify-content: space-between; margin-bottom: 20px; gap: 16px; }
+.adminForm { display: grid; gap: 14px; margin-bottom: 28px; max-width: 880px; }
+.adminForm input,
+.adminForm textarea,
+.adminForm select {
+  background: #181a18;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  color: #f4f4f0;
+  padding: 12px 14px;
+}
+.adminForm textarea { min-height: 90px; }
+.adminForm label { align-items: center; display: flex; gap: 10px; }
+.adminPage button {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #f4f4f0;
+  padding: 10px 16px;
+}
+.adminPrimary { background: #c7f400; color: #050505 !important; font-weight: 800; }
+.adminTable { display: grid; gap: 14px; }
+.adminTable article { align-items: center; display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 16px; }
+.adminTable article div { display: flex; gap: 8px; }
+
+@media (max-width: 760px) {
+  .adminPage { padding: 18px; }
+  .adminTopbar,
+  .adminTable article { align-items: stretch; grid-template-columns: 1fr; flex-direction: column; }
+}

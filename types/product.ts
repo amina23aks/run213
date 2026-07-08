@@ -38,6 +38,11 @@ export type Product = {
   isPromo: boolean;
   dropSlug: "drop-001" | null;
   sortOrder: number;
+  showInDrop001: boolean;
+  showInFeaturedDrop: boolean;
+  showInShopTheLook: boolean;
+  featuredSortOrder: number | null;
+  lookGroupSlug: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };

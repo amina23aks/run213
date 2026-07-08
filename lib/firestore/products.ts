@@ -30,6 +30,45 @@ export async function listActiveProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT)
   }
 }
 
+export async function listActiveProductsByPlacement(placement: "showInDrop001" | "showInFeaturedDrop", requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
+  const fallbackProducts = shopProducts
+    .filter((product) => product[placement])
+    .sort((a, b) => getPlacementSortOrder(a, placement) - getPlacementSortOrder(b, placement))
+    .slice(0, clampLimit(requestedLimit));
+
+  if (!isFirestoreConfigured()) {
+    return fallbackProducts;
+  }
+
+  try {
+    const { collection, getDocs, limit, orderBy, query, where } = await import("firebase/firestore");
+    const db = await getPublicFirestore();
+    const sortField = placement === "showInFeaturedDrop" ? "featuredSortOrder" : "sortOrder";
+    const productsQuery = query(
+      collection(db, PRODUCTS_COLLECTION),
+      where("status", "==", "active"),
+      where(placement, "==", true),
+      orderBy(sortField, "asc"),
+      limit(clampLimit(requestedLimit)),
+    );
+    const snapshot = await getDocs(productsQuery);
+    const products = snapshot.docs.map((doc) => parseProduct(doc.id, doc.data())).filter((product): product is Product => product !== null);
+
+    return products.length ? products : fallbackProducts;
+  } catch (error) {
+    console.warn(`Falling back to static products because Firestore ${placement} products could not be read.`, error);
+    return fallbackProducts;
+  }
+}
+
+function getPlacementSortOrder(product: Product, placement: "showInDrop001" | "showInFeaturedDrop"): number {
+  if (placement === "showInFeaturedDrop") {
+    return product.featuredSortOrder ?? product.sortOrder;
+  }
+
+  return product.sortOrder;
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   if (!isFirestoreConfigured()) {
     return getStaticProductBySlug(slug) ?? null;
@@ -100,6 +139,11 @@ function parseProduct(id: string, data: Record<string, unknown>): Product | null
     stockQty: isNumber(data.stockQty) ? data.stockQty : null,
     inStock: typeof data.inStock === "boolean" ? data.inStock : true,
     featured: typeof data.featured === "boolean" ? data.featured : false,
+    showInDrop001: typeof data.showInDrop001 === "boolean" ? data.showInDrop001 : false,
+    showInFeaturedDrop: typeof data.showInFeaturedDrop === "boolean" ? data.showInFeaturedDrop : false,
+    showInShopTheLook: typeof data.showInShopTheLook === "boolean" ? data.showInShopTheLook : false,
+    featuredSortOrder: isNumber(data.featuredSortOrder) ? data.featuredSortOrder : null,
+    lookGroupSlug: isString(data.lookGroupSlug) ? data.lookGroupSlug : null,
     isPromo: typeof data.isPromo === "boolean" ? data.isPromo : false,
     dropSlug: data.dropSlug === "drop-001" ? "drop-001" : null,
     sortOrder: isNumber(data.sortOrder) ? data.sortOrder : 999,
