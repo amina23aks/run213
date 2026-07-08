@@ -446,3 +446,9 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 
 .checkoutDeliveryType label:has(input:checked), .drawerDeliveryMode label:has(input:checked) { border-color: rgba(7, 7, 6, 0.3); background: rgba(255, 255, 255, 0.42); box-shadow: inset 0 0 0 1px rgba(7, 7, 6, 0.08); }
 .checkoutDeliveryType label:has(input:checked) span::before, .drawerDeliveryMode label:has(input:checked) span::before { border-color: rgba(7, 7, 6, 0.34); background: radial-gradient(circle at center, var(--lime) 0 42%, transparent 45%); box-shadow: none; }
+
+.checkoutFormMessage { margin: 0; border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 0.7rem; background: rgba(255, 255, 255, 0.48); color: rgba(7, 7, 6, 0.72); padding: 0.65rem 0.75rem; font-size: 0.74rem; font-weight: 850; line-height: 1.35; }
+.checkoutSuccessState { display: grid; gap: 0.45rem; max-width: 42rem; border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 1.15rem; background: rgba(255, 250, 240, 0.82); padding: clamp(1rem, 2vw, 1.35rem); }
+.checkoutSuccessState span { color: rgba(7, 7, 6, 0.58); font-size: 0.72rem; font-weight: 950; letter-spacing: 0.08em; text-transform: uppercase; }
+.checkoutSuccessState h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 950; letter-spacing: -0.045em; }
+.checkoutSuccessState p { margin: 0; color: rgba(7, 7, 6, 0.66); font-size: 0.9rem; font-weight: 750; line-height: 1.5; }

@@ -1,12 +1,59 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { useCart } from "@/context/cart";
+import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
+import type { DeliveryMode } from "@/types/order";
 
 export function CheckoutForm() {
+  const router = useRouter();
+  const { items, clearCart } = useCart();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    const formData = new FormData(event.currentTarget);
+    const values: OrderFormValues = {
+      fullName: String(formData.get("fullName") ?? ""),
+      phone: String(formData.get("phone") ?? ""),
+      wilaya: String(formData.get("wilaya") ?? ""),
+      deliveryMode: String(formData.get("deliveryType") ?? "home") as DeliveryMode,
+      address: String(formData.get("address") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+    };
+    const validationError = validateOrderFormValues(values, items);
+
+    if (validationError) {
+      setMessage(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage(null);
+
+    try {
+      const order = await submitOrderToApi(buildCreateOrderRequest(values, items));
+      clearCart();
+      router.push(`/checkout?status=success&orderNumber=${encodeURIComponent(order.orderNumber)}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not create order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
-    <form className="checkoutForm checkoutForm--compact" action="#">
+    <form className="checkoutForm checkoutForm--compact" action="#" onSubmit={handleSubmit}>
       <section className="checkoutCard checkoutCard--compact" aria-labelledby="checkout-details-title">
         <div className="checkoutCard__heading">
           <h2 id="checkout-details-title">Delivery details</h2>
-          <p>Cash on delivery. Order creation starts in Sprint D.</p>
+          <p>Cash on delivery. Final totals are confirmed by the server.</p>
         </div>
 
         <div className="checkoutFields checkoutFields--two">
@@ -56,7 +103,8 @@ export function CheckoutForm() {
           <strong>COD</strong>
         </div>
 
-        <button className="checkoutSubmit" type="button" disabled>CONFIRM ORDER — SPRINT D</button>
+        {message ? <p className="checkoutFormMessage" role="status">{message}</p> : null}
+        <button className="checkoutSubmit" type="submit" disabled={isSubmitting}>{isSubmitting ? "CREATING ORDER..." : "CONFIRM ORDER"}</button>
       </section>
     </form>
   );
