@@ -87,13 +87,15 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .discountBadge { margin-left: auto; border-radius: 0.3125rem; background: var(--lime); color: var(--foreground); padding: 0.1875rem 0.3125rem; font-size: 0.625rem; font-weight: 900; line-height: 1; white-space: nowrap; }
 .swatchesRow { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.4375rem; margin-top: 0.5rem; overflow-x: auto; scrollbar-width: none; }
 .swatchesRow::-webkit-scrollbar { display: none; }
-.swatchesRow span { width: 0.6875rem; height: 0.6875rem; flex: 0 0 auto; border: 0; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1); outline: 0; }
-.swatchesRow span.isSelected { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); transform: scale(1.05); }
+.swatchesRow span, .swatchesRow button { width: 0.6875rem; height: 0.6875rem; flex: 0 0 auto; border: 0; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1); outline: 0; padding: 0; }
+.swatchesRow span.isSelected, .swatchesRow button.isSelected { box-shadow: 0 0 0 2px var(--lime), inset 0 0 0 1px rgba(0, 0, 0, 0.18); transform: scale(1.05); }
 .productActions { display: flex; flex-direction: column; gap: 0.375rem; margin-top: 0.5rem; }
 .addButtonRow { display: flex; justify-content: flex-end; }
 .sizeChips { display: flex; min-width: 0; flex-wrap: nowrap; gap: 0.3125rem; overflow-x: auto; scrollbar-width: none; }
 .sizeChips::-webkit-scrollbar { display: none; }
-.sizeChips span { display: inline-flex; min-width: 1.5rem; height: 1.25rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid rgba(0, 0, 0, 0.14); border-radius: 0.25rem; background: rgba(255, 255, 255, 0.35); padding: 0 0.3125rem; font-size: 0.5625rem; font-weight: 700; line-height: 1; }
+.sizeChips span, .sizeChips button { display: inline-flex; min-width: 1.5rem; height: 1.25rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid rgba(0, 0, 0, 0.14); border-radius: 0.25rem; background: rgba(255, 255, 255, 0.35); padding: 0 0.3125rem; color: var(--foreground); font-size: 0.5625rem; font-weight: 700; line-height: 1; }
+.sizeChips button.isSelected { border-color: var(--lime); background: var(--lime); }
+.productCardHelper { margin: -0.125rem 0 0; color: rgba(0, 0, 0, 0.64); font-size: 0.625rem; font-weight: 800; line-height: 1.2; }
 .addButton { display: inline-flex; width: 1.625rem; height: 1.625rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: var(--lime); color: var(--foreground); font-size: 0.98rem; font-weight: 800; line-height: 1; padding: 0; transition: transform 160ms ease, background 160ms ease; }
 .addButton:hover { transform: translateX(0.1rem); background: var(--lime-strong); }
 
