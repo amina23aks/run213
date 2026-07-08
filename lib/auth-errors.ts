@@ -13,33 +13,34 @@ export function extractFirebaseAuthCode(error: unknown): string {
 }
 
 export function getAuthErrorMessage(code: string): string {
+  const prefix = code === "unknown" ? "Auth error" : code;
   switch (code) {
     case "auth/unauthorized-domain":
-      return "This domain is not authorized in Firebase Auth. Add the current Vercel preview/production domain in Firebase Console → Authentication → Settings → Authorized domains, then redeploy if env vars changed.";
+      return `${prefix}: This domain is not authorized in Firebase Auth. Add the current Vercel preview/production domain in Firebase Console → Authentication → Settings → Authorized domains, then redeploy if env vars changed.`;
     case "auth/popup-blocked":
-      return "The Google popup was blocked. Redirect sign-in will open instead.";
+      return `${prefix}: The Google popup was blocked. Redirect sign-in will open instead.`;
     case "auth/popup-closed-by-user":
-      return "Google sign in was closed before it finished.";
+      return `${prefix}: Google sign in was closed before it finished.`;
     case "auth/cancelled-popup-request":
-      return "Another Google sign-in popup is already open. Close it and try again.";
+      return `${prefix}: Another Google sign-in popup is already open. Close it and try again.`;
     case "auth/invalid-api-key":
-      return "Firebase API key is invalid or missing. Check NEXT_PUBLIC_FIREBASE_API_KEY and redeploy.";
+      return `${prefix}: Firebase API key is invalid or missing. Check NEXT_PUBLIC_FIREBASE_API_KEY and redeploy.`;
     case "auth/invalid-email":
-      return "Enter a valid email address.";
+      return `${prefix}: Enter a valid email address.`;
     case "auth/user-not-found":
     case "auth/wrong-password":
     case "auth/invalid-credential":
-      return "Email sign in failed. Check your email and password.";
+      return `${prefix}: Email sign in failed. Check your email and password.`;
     case "auth/email-already-in-use":
-      return "An account already exists for this email. Use Login instead.";
+      return `${prefix}: An account already exists for this email. Use Login instead.`;
     case "auth/weak-password":
-      return "Password must be at least 6 characters.";
+      return `${prefix}: Password must be at least 6 characters.`;
     case "auth/operation-not-allowed":
-      return "This sign-in provider is not enabled in Firebase Auth.";
+      return `${prefix}: This sign-in provider is not enabled in Firebase Auth.`;
     case "unknown":
-      return "Authentication failed. Try again or check Firebase Auth settings.";
+      return `${prefix}: Authentication failed. Try again or check Firebase Auth settings.`;
     default:
-      return `Authentication failed (${code}). Check Firebase Auth settings and authorized domains.`;
+      return `${prefix}: Authentication failed. Check Firebase Auth settings and authorized domains.`;
   }
 }
 

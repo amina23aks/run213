@@ -74,6 +74,7 @@ export function AdminProductsClient() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [missingServerEnv, setMissingServerEnv] = useState<string[]>([]);
   const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Sign in with an approved admin email.");
+  const [formErrors, setFormErrors] = useState<string[]>([]);
 
   const title = useMemo(() => (editingId ? "Edit product" : "Create product"), [editingId]);
 
@@ -202,6 +203,12 @@ export function AdminProductsClient() {
 
   async function saveProduct(event: React.FormEvent) {
     event.preventDefault();
+    const validationErrors = validateDraft(draft);
+    setFormErrors(validationErrors);
+    if (validationErrors.length) {
+      setMessage("Fix the product form errors before saving.");
+      return;
+    }
 
     try {
       const body = JSON.stringify(toPayload(draft));
@@ -232,7 +239,10 @@ export function AdminProductsClient() {
 
   function setDraftField<Key extends keyof ProductDraft>(key: Key, value: ProductDraft[Key]) {
     setDraft((current) => ({ ...current, [key]: value }));
+    setFormErrors([]);
   }
+
+  const imagePreviewUrls = parseImageLines(draft.imagesText);
 
   if (!user) {
     return (
@@ -290,6 +300,14 @@ export function AdminProductsClient() {
         <button type="button" onClick={signOutAdmin}>Sign out</button>
       </div>
       <p className="adminNotice">{message}</p>
+      {formErrors.length ? (
+        <div className="adminNotice adminNotice--error" role="alert">
+          <strong>Product form needs attention:</strong>
+          <ul>
+            {formErrors.map((error) => <li key={error}>{error}</li>)}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="adminProductsLayout">
         <form className="adminForm adminCard" onSubmit={saveProduct}>
@@ -333,9 +351,16 @@ export function AdminProductsClient() {
             <textarea placeholder="Built for daily movement..." value={draft.description} onChange={(event) => setDraftField("description", event.target.value)} />
           </AdminField>
 
-          <AdminField label="Images" helper="One URL/path per line. Example: /tshirt.png. At least one image is required.">
+          <AdminField label="Images" helper="One URL/path per line. Example: /tshirt.png. At least one image is required. TODO: replace URL/path entry with signed Cloudinary upload in the Cloudinary sprint.">
             <textarea placeholder="/tshirt.png" value={draft.imagesText} onChange={(event) => setDraftField("imagesText", event.target.value)} />
           </AdminField>
+          <div className="adminImagePreviewGrid" aria-label="Image previews">
+            {imagePreviewUrls.length ? imagePreviewUrls.map((url) => (
+              <div className="adminImagePreview" key={url} style={{ backgroundImage: `url(${url})` }}>
+                <span>{url}</span>
+              </div>
+            )) : <p>Add at least one image path to preview it here.</p>}
+          </div>
 
           <div className="adminFormGrid">
             <AdminField label="Colors" helper="One per line: Black|#111111">
@@ -403,6 +428,25 @@ export function AdminProductsClient() {
       </div>
     </AdminShell>
   );
+}
+
+function validateDraft(draft: ProductDraft): string[] {
+  const errors: string[] = [];
+  if (!draft.name.trim()) errors.push("Product name is required.");
+  if (!draft.slug.trim()) errors.push("Slug is required.");
+  if (!draft.priceDzd.trim()) errors.push("Price DZD is required.");
+  if (!parseImageLines(draft.imagesText).length) errors.push("Add at least one image path, for example /tshirt.png.");
+  if (!parseColorLines(draft.colorsText).length) errors.push("Add at least one color using Name|#hex, for example Black|#111111.");
+  if (draft.stockMode === "limited" && !draft.stockQty.trim()) errors.push("Stock quantity is required when stock mode is limited.");
+  return errors;
+}
+
+function parseImageLines(value: string): string[] {
+  return value.split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
+function parseColorLines(value: string): string[] {
+  return value.split("\n").map((line) => line.trim()).filter((line) => /^[^|]+\|#[0-9a-fA-F]{6}$/.test(line));
 }
 
 function AdminField({ label, helper, children }: { label: string; helper?: string; children: React.ReactNode }) {
