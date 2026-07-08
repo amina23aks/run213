@@ -2,6 +2,7 @@
 
 import type { Auth, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Product, ProductCategory, ProductStatus, ProductStockMode } from "@/types/product";
 
@@ -215,7 +216,7 @@ export function AdminProductsClient() {
 
   if (!user) {
     return (
-      <AdminShell>
+      <AdminShell title="Products" description="Create, edit, and archive storefront products for real testing.">
         <section className="adminLoginCard adminCard">
           <div className="adminCard__heading">
             <p>ADMIN ACCESS</p>
@@ -246,7 +247,7 @@ export function AdminProductsClient() {
 
   if (!isAuthorized) {
     return (
-      <AdminShell>
+      <AdminShell title="Products" description="Create, edit, and archive storefront products for real testing.">
         <div className="adminTopbar">
           <div>
             <span>Signed in</span>
@@ -260,7 +261,7 @@ export function AdminProductsClient() {
   }
 
   return (
-    <AdminShell>
+    <AdminShell title="Products" description="Create, edit, and archive storefront products for real testing.">
       <div className="adminTopbar">
         <div>
           <span>Signed in</span>
@@ -414,18 +415,6 @@ function formatAdminError(error: unknown): string {
   }
 
   return fallback;
-}
-
-function AdminShell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="adminPage">
-      <header>
-        <p>213 RUN ADMIN</p>
-        <h1>Products</h1>
-      </header>
-      {children}
-    </main>
-  );
 }
 
 function toPayload(draft: ProductDraft) {
