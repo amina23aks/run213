@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CartVariantDisplay } from "@/components/cart/CartVariantDisplay";
 import { formatDzd } from "@/constants/products";
 import type { CartItem as CartLineItem } from "@/types/cart";
 
@@ -10,8 +11,6 @@ type CartItemProps = {
 };
 
 export function CartItem({ item, lineKey, onRemove, onUpdateQuantity }: CartItemProps) {
-  const optionText = [item.selectedColor, item.selectedSize ? `Size ${item.selectedSize}` : null].filter(Boolean).join(" / ");
-
   return (
     <article className="cartItem">
       <div className="cartItem__image">
@@ -22,7 +21,7 @@ export function CartItem({ item, lineKey, onRemove, onUpdateQuantity }: CartItem
           <h3>{item.name}</h3>
           <span>{formatDzd(item.priceDzd * item.quantity)}</span>
         </div>
-        <p>{optionText || "Selected item"}</p>
+        <CartVariantDisplay item={item} />
         <div className="cartItem__controls">
           <div aria-label={`${item.name} quantity controls`}>
             <button type="button" aria-label={`Decrease ${item.name} quantity`} onClick={() => onUpdateQuantity(lineKey, item.quantity - 1)}>−</button>
