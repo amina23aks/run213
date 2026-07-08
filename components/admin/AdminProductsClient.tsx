@@ -193,7 +193,7 @@ export function AdminProductsClient() {
       await loadProducts();
       setMessage("Product saved.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Product save failed.");
+      setMessage(formatAdminError(error));
     }
   }
 
@@ -216,18 +216,29 @@ export function AdminProductsClient() {
   if (!user) {
     return (
       <AdminShell>
-        <section className="adminLoginCard">
-          {missingClientEnv.length ? <p className="accountMenu__message">Missing client env: {missingClientEnv.join(", ")}</p> : null}
-          {missingServerEnv.length ? <p className="accountMenu__message">Missing server env: {missingServerEnv.join(", ")}</p> : null}
+        <section className="adminLoginCard adminCard">
+          <div className="adminCard__heading">
+            <p>ADMIN ACCESS</p>
+            <h2>Sign in to manage products</h2>
+            <span>Use an email listed in ADMIN_EMAILS or SUPER_ADMIN_EMAIL.</span>
+          </div>
+          {missingClientEnv.length ? <p className="adminNotice adminNotice--error">Missing client env: {missingClientEnv.join(", ")}</p> : null}
+          {missingServerEnv.length ? <p className="adminNotice adminNotice--error">Missing server env: {missingServerEnv.join(", ")}</p> : null}
           <button className="adminPrimary" type="button" onClick={signInWithGoogle} disabled={!clientAuth || Boolean(missingClientEnv.length)}>
             Sign in with Google
           </button>
           <form className="adminEmailLogin" onSubmit={signInWithEmail}>
-            <input type="email" placeholder="Admin email" value={email} onChange={(event) => setEmail(event.target.value)} />
-            <input type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} />
+            <label>
+              <span>Admin email</span>
+              <input type="email" placeholder="admin@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
+            </label>
+            <label>
+              <span>Password</span>
+              <input type="password" placeholder="Firebase Auth password" value={password} onChange={(event) => setPassword(event.target.value)} />
+            </label>
             <button type="submit" disabled={!clientAuth || Boolean(missingClientEnv.length)}>Sign in with email</button>
           </form>
-          <p>{message}</p>
+          <p className="adminNotice">{message}</p>
         </section>
       </AdminShell>
     );
@@ -237,10 +248,13 @@ export function AdminProductsClient() {
     return (
       <AdminShell>
         <div className="adminTopbar">
-          <p>Signed in as {user.email}</p>
+          <div>
+            <span>Signed in</span>
+            <p>{user.email}</p>
+          </div>
           <button type="button" onClick={signOutAdmin}>Sign out</button>
         </div>
-        <p className="adminMessage">{message}</p>
+        <p className="adminNotice adminNotice--error">{message}</p>
       </AdminShell>
     );
   }
@@ -248,65 +262,158 @@ export function AdminProductsClient() {
   return (
     <AdminShell>
       <div className="adminTopbar">
-        <p>Signed in as {user.email}</p>
+        <div>
+          <span>Signed in</span>
+          <p>{user.email}</p>
+        </div>
         <button type="button" onClick={signOutAdmin}>Sign out</button>
       </div>
-      <p className="adminMessage">{message}</p>
+      <p className="adminNotice">{message}</p>
 
-      <form className="adminForm" onSubmit={saveProduct}>
-        <h2>{title}</h2>
-        <input placeholder="Name" value={draft.name} onChange={(event) => setDraftField("name", event.target.value)} />
-        <input placeholder="slug-example" value={draft.slug} onChange={(event) => setDraftField("slug", event.target.value)} />
-        <textarea placeholder="Description" value={draft.description} onChange={(event) => setDraftField("description", event.target.value)} />
-        <select value={draft.category} onChange={(event) => setDraftField("category", event.target.value as ProductCategory)}>
-          <option value="tshirts">T-Shirts</option>
-          <option value="pants">Pants</option>
-          <option value="hoodies">Hoodies</option>
-          <option value="accessories">Accessories</option>
-        </select>
-        <input placeholder="Price DZD" value={draft.priceDzd} onChange={(event) => setDraftField("priceDzd", event.target.value)} />
-        <input placeholder="Compare at price optional" value={draft.compareAtPriceDzd} onChange={(event) => setDraftField("compareAtPriceDzd", event.target.value)} />
-        <textarea placeholder="Images, one URL/path per line" value={draft.imagesText} onChange={(event) => setDraftField("imagesText", event.target.value)} />
-        <textarea placeholder="Colors, one per line: Black|#111111" value={draft.colorsText} onChange={(event) => setDraftField("colorsText", event.target.value)} />
-        <input placeholder="Sizes comma separated" value={draft.sizesText} onChange={(event) => setDraftField("sizesText", event.target.value)} />
-        <select value={draft.status} onChange={(event) => setDraftField("status", event.target.value as ProductStatus)}>
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
-        </select>
-        <select value={draft.stockMode} onChange={(event) => setDraftField("stockMode", event.target.value as "unlimited" | "limited")}>
-          <option value="unlimited">Unlimited</option>
-          <option value="limited">Limited</option>
-        </select>
-        <input placeholder="Stock qty optional" value={draft.stockQty} onChange={(event) => setDraftField("stockQty", event.target.value)} />
-        <input placeholder="Sort order" value={draft.sortOrder} onChange={(event) => setDraftField("sortOrder", event.target.value)} />
-        <input placeholder="Featured sort order optional" value={draft.featuredSortOrder} onChange={(event) => setDraftField("featuredSortOrder", event.target.value)} />
-        <input placeholder="Look group slug optional" value={draft.lookGroupSlug} onChange={(event) => setDraftField("lookGroupSlug", event.target.value)} />
-        <label><input type="checkbox" checked={draft.inStock} onChange={(event) => setDraftField("inStock", event.target.checked)} /> In stock</label>
-        <label><input type="checkbox" checked={draft.isPromo} onChange={(event) => setDraftField("isPromo", event.target.checked)} /> Promo</label>
-        <label><input type="checkbox" checked={draft.showInDrop001} onChange={(event) => setDraftField("showInDrop001", event.target.checked)} /> Show in DROP_001</label>
-        <label><input type="checkbox" checked={draft.showInFeaturedDrop} onChange={(event) => setDraftField("showInFeaturedDrop", event.target.checked)} /> Show in Featured Drop</label>
-        <label><input type="checkbox" checked={draft.showInShopTheLook} onChange={(event) => setDraftField("showInShopTheLook", event.target.checked)} /> Prepare for Shop The Look</label>
-        <button className="adminPrimary" type="submit">{editingId ? "Save changes" : "Create product"}</button>
-        {editingId ? <button type="button" onClick={() => { setEditingId(null); setDraft(emptyDraft); }}>Cancel edit</button> : null}
-      </form>
+      <div className="adminProductsLayout">
+        <form className="adminForm adminCard" onSubmit={saveProduct}>
+          <div className="adminCard__heading">
+            <p>{editingId ? "EDIT PRODUCT" : "CREATE PRODUCT"}</p>
+            <h2>{title}</h2>
+            <span>Keep the product data clean. Public storefront only shows active products.</span>
+          </div>
 
-      <section className="adminTable">
-        <h2>Products</h2>
-        {products.map((product) => (
-          <article key={product.id}>
-            <strong>{product.name}</strong>
-            <span>{product.status} / {product.category} / {product.priceDzd} DZD</span>
-            <div>
-              <button type="button" onClick={() => editProduct(product)}>Edit</button>
-              <button type="button" onClick={() => archiveProduct(product.id)}>Archive</button>
-            </div>
-          </article>
-        ))}
-        {nextCursor ? <button type="button" onClick={() => loadProducts(nextCursor)}>Load more</button> : null}
-      </section>
+          <div className="adminFormGrid">
+            <AdminField label="Name" helper="Customer-facing product name.">
+              <input placeholder="Oversized Tee" value={draft.name} onChange={(event) => setDraftField("name", event.target.value)} />
+            </AdminField>
+            <AdminField label="Slug" helper="Lowercase URL slug, e.g. oversized-tee.">
+              <input placeholder="oversized-tee" value={draft.slug} onChange={(event) => setDraftField("slug", event.target.value)} />
+            </AdminField>
+            <AdminField label="Category">
+              <select value={draft.category} onChange={(event) => setDraftField("category", event.target.value as ProductCategory)}>
+                <option value="tshirts">T-Shirts</option>
+                <option value="pants">Pants</option>
+                <option value="hoodies">Hoodies</option>
+                <option value="accessories">Accessories</option>
+              </select>
+            </AdminField>
+            <AdminField label="Status" helper="Drafts stay hidden. Active products can appear publicly.">
+              <select value={draft.status} onChange={(event) => setDraftField("status", event.target.value as ProductStatus)}>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="archived">Archived</option>
+              </select>
+            </AdminField>
+            <AdminField label="Price DZD">
+              <input inputMode="numeric" placeholder="2900" value={draft.priceDzd} onChange={(event) => setDraftField("priceDzd", event.target.value)} />
+            </AdminField>
+            <AdminField label="Compare at price" helper="Optional old price for promo display.">
+              <input inputMode="numeric" placeholder="3500" value={draft.compareAtPriceDzd} onChange={(event) => setDraftField("compareAtPriceDzd", event.target.value)} />
+            </AdminField>
+          </div>
+
+          <AdminField label="Description" helper="Short product description for product pages.">
+            <textarea placeholder="Built for daily movement..." value={draft.description} onChange={(event) => setDraftField("description", event.target.value)} />
+          </AdminField>
+
+          <AdminField label="Images" helper="One URL/path per line. Example: /tshirt.png. At least one image is required.">
+            <textarea placeholder="/tshirt.png" value={draft.imagesText} onChange={(event) => setDraftField("imagesText", event.target.value)} />
+          </AdminField>
+
+          <div className="adminFormGrid">
+            <AdminField label="Colors" helper="One per line: Black|#111111">
+              <textarea placeholder={'Black|#111111\nCream|#f5f1e8'} value={draft.colorsText} onChange={(event) => setDraftField("colorsText", event.target.value)} />
+            </AdminField>
+            <AdminField label="Sizes" helper="Comma-separated: S, M, L, XL. Leave empty for accessories.">
+              <input placeholder="S, M, L, XL" value={draft.sizesText} onChange={(event) => setDraftField("sizesText", event.target.value)} />
+            </AdminField>
+            <AdminField label="Stock mode">
+              <select value={draft.stockMode} onChange={(event) => setDraftField("stockMode", event.target.value as "unlimited" | "limited")}>
+                <option value="unlimited">Unlimited</option>
+                <option value="limited">Limited</option>
+              </select>
+            </AdminField>
+            <AdminField label="Stock quantity" helper="Only required when stock mode is limited.">
+              <input inputMode="numeric" placeholder="25" value={draft.stockQty} onChange={(event) => setDraftField("stockQty", event.target.value)} />
+            </AdminField>
+            <AdminField label="Sort order">
+              <input inputMode="numeric" placeholder="100" value={draft.sortOrder} onChange={(event) => setDraftField("sortOrder", event.target.value)} />
+            </AdminField>
+            <AdminField label="Featured sort order" helper="Optional order for Featured Drop.">
+              <input inputMode="numeric" placeholder="10" value={draft.featuredSortOrder} onChange={(event) => setDraftField("featuredSortOrder", event.target.value)} />
+            </AdminField>
+            <AdminField label="Look group slug" helper="Future Shop The Look grouping.">
+              <input placeholder="summer-road" value={draft.lookGroupSlug} onChange={(event) => setDraftField("lookGroupSlug", event.target.value)} />
+            </AdminField>
+          </div>
+
+          <div className="adminCheckboxGrid">
+            <label><input type="checkbox" checked={draft.inStock} onChange={(event) => setDraftField("inStock", event.target.checked)} /> <span>In stock</span></label>
+            <label><input type="checkbox" checked={draft.isPromo} onChange={(event) => setDraftField("isPromo", event.target.checked)} /> <span>Promo</span></label>
+            <label><input type="checkbox" checked={draft.showInDrop001} onChange={(event) => setDraftField("showInDrop001", event.target.checked)} /> <span>Show in DROP_001</span></label>
+            <label><input type="checkbox" checked={draft.showInFeaturedDrop} onChange={(event) => setDraftField("showInFeaturedDrop", event.target.checked)} /> <span>Show in Featured Drop</span></label>
+            <label><input type="checkbox" checked={draft.showInShopTheLook} onChange={(event) => setDraftField("showInShopTheLook", event.target.checked)} /> <span>Prepare for Shop The Look</span></label>
+          </div>
+
+          <div className="adminActionsRow">
+            <button className="adminPrimary" type="submit">{editingId ? "Save changes" : "Create product"}</button>
+            {editingId ? <button type="button" onClick={() => { setEditingId(null); setDraft(emptyDraft); }}>Cancel edit</button> : null}
+          </div>
+        </form>
+
+        <section className="adminTable adminCard">
+          <div className="adminCard__heading">
+            <p>PRODUCTS</p>
+            <h2>Product list</h2>
+            <span>Limited paginated admin view. Archive hides products from the storefront.</span>
+          </div>
+          {products.map((product) => (
+            <article key={product.id}>
+              <div>
+                <strong>{product.name}</strong>
+                <small>{product.slug}</small>
+              </div>
+              <span className={`adminStatus adminStatus--${product.status}`}>{product.status}</span>
+              <span>{product.category} / {product.priceDzd} DZD</span>
+              <div>
+                <button type="button" onClick={() => editProduct(product)}>Edit</button>
+                <button type="button" onClick={() => archiveProduct(product.id)}>Archive</button>
+              </div>
+            </article>
+          ))}
+          {nextCursor ? <button type="button" onClick={() => loadProducts(nextCursor)}>Load more</button> : null}
+        </section>
+      </div>
     </AdminShell>
   );
+}
+
+function AdminField({ label, helper, children }: { label: string; helper?: string; children: React.ReactNode }) {
+  return (
+    <label className="adminField">
+      <span>{label}</span>
+      {children}
+      {helper ? <small>{helper}</small> : null}
+    </label>
+  );
+}
+
+function formatAdminError(error: unknown): string {
+  const fallback = "Product save failed. Check the highlighted fields and try again.";
+
+  if (!(error instanceof Error)) return fallback;
+
+  try {
+    const parsed = JSON.parse(error.message) as { error?: unknown; issues?: { formErrors?: string[]; fieldErrors?: Record<string, string[]> } };
+    if (typeof parsed.error === "string" && parsed.error !== "Invalid product input") return parsed.error;
+    const fieldErrors = parsed.issues?.fieldErrors;
+    if (fieldErrors) {
+      const firstEntry = Object.entries(fieldErrors).find(([, messages]) => messages.length > 0);
+      if (firstEntry) return `${firstEntry[0]}: ${firstEntry[1][0]}`;
+    }
+    const firstFormError = parsed.issues?.formErrors?.[0];
+    if (firstFormError) return firstFormError;
+  } catch {
+    if (error.message && !error.message.trim().startsWith("{")) return error.message;
+  }
+
+  return fallback;
 }
 
 function AdminShell({ children }: { children: React.ReactNode }) {
