@@ -437,3 +437,11 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .drawerCheckoutForm__grid { grid-template-columns: 1fr; }
   .cartDrawer__footer { max-height: 62svh; }
 }
+
+.checkoutDeliveryType label, .drawerDeliveryMode label { position: relative; cursor: pointer; }
+.checkoutDeliveryType label input, .drawerDeliveryMode label input { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.checkoutDeliveryType label span, .drawerDeliveryMode label span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.checkoutDeliveryType label span::before, .drawerDeliveryMode label span::before { display: inline-block; width: 0.52rem; height: 0.52rem; flex: 0 0 auto; border: 1px solid rgba(7, 7, 6, 0.24); border-radius: 999px; background: rgba(255, 255, 255, 0.64); content: ""; }
+.checkoutDeliveryType label:has(input:checked), .drawerDeliveryMode label:has(input:checked) { border-color: rgba(7, 7, 6, 0.38); background: rgba(199, 244, 0, 0.32); box-shadow: inset 0 0 0 1px rgba(199, 244, 0, 0.46); }
+.checkoutDeliveryType label:has(input:checked) span::before, .drawerDeliveryMode label:has(input:checked) span::before { border-color: var(--foreground); background: var(--lime); box-shadow: inset 0 0 0 2px rgba(255, 250, 240, 0.88); }
+.checkoutDeliveryType label:has(input:focus-visible), .drawerDeliveryMode label:has(input:focus-visible) { outline: 2px solid var(--lime); outline-offset: 2px; }
