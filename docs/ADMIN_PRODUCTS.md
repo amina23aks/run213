@@ -91,3 +91,27 @@ Public storefront reads require `status == "active"`. If Firestore is empty or u
 4. Create admin users in Firebase Auth.
 5. Add their emails to `SUPER_ADMIN_EMAIL` or `ADMIN_EMAILS`.
 6. Create/deploy Firestore indexes if Firebase prompts for the homepage placement queries.
+
+## Firebase Auth providers and Vercel domains
+
+Enable these Firebase Authentication providers before testing account/admin login:
+
+1. Google provider.
+2. Email/Password provider if email login or sign up should work.
+
+For Vercel deployments, Firebase Auth also requires every login domain to be listed under:
+
+```text
+Firebase Console → Authentication → Settings → Authorized domains
+```
+
+Verify these domains are present as needed:
+
+- `localhost` for local development.
+- the production Vercel domain, for example `your-project.vercel.app`.
+- any custom production domain.
+- each preview domain pattern you use for testing, or the exact preview deployment domain shown by Vercel.
+
+If Google login fails with `auth/unauthorized-domain`, add the current domain to Firebase Authorized domains. If env vars changed in Vercel, redeploy Preview and Production after saving them; already-built deployments do not pick up new `NEXT_PUBLIC_*` values automatically.
+
+The account modal first tries Google popup sign-in. If the browser blocks the popup or Firebase reports a cancelled popup request, the UI falls back to redirect sign-in and displays the Firebase auth code message.

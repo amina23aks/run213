@@ -3,6 +3,7 @@
 import type { Auth, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { extractFirebaseAuthCode, getAuthErrorMessage, shouldFallbackToRedirect } from "@/lib/auth-errors";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Product, ProductCategory, ProductStatus, ProductStockMode } from "@/types/product";
 
@@ -129,6 +130,8 @@ export function AdminProductsClient() {
     Promise.all([import("@/lib/firebase/client"), import("firebase/auth")])
       .then(([client, authModule]) => {
         setClientAuth(client.auth);
+        authModule.getRedirectResult(client.auth)
+          .catch((error: unknown) => setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error))));
         unsubscribe = authModule.onAuthStateChanged(client.auth, (nextUser) => {
           setUser(nextUser);
           setIsAuthorized(false);
@@ -160,18 +163,35 @@ export function AdminProductsClient() {
 
   async function signInWithGoogle() {
     if (!clientAuth) return;
-    const [{ signInWithPopup }, { googleProvider }] = await Promise.all([
-      import("firebase/auth"),
-      import("@/lib/firebase/client"),
-    ]);
-    await signInWithPopup(clientAuth, googleProvider);
+
+    try {
+      const [{ signInWithPopup }, { googleProvider }] = await Promise.all([
+        import("firebase/auth"),
+        import("@/lib/firebase/client"),
+      ]);
+      await signInWithPopup(clientAuth, googleProvider);
+    } catch (error: unknown) {
+      const code = extractFirebaseAuthCode(error);
+      setMessage(getAuthErrorMessage(code));
+      if (shouldFallbackToRedirect(code)) {
+        const [{ signInWithRedirect }, { googleProvider }] = await Promise.all([
+          import("firebase/auth"),
+          import("@/lib/firebase/client"),
+        ]);
+        await signInWithRedirect(clientAuth, googleProvider);
+      }
+    }
   }
 
   async function signInWithEmail(event: React.FormEvent) {
     event.preventDefault();
     if (!clientAuth) return;
-    const { signInWithEmailAndPassword } = await import("firebase/auth");
-    await signInWithEmailAndPassword(clientAuth, email, password);
+    try {
+      const { signInWithEmailAndPassword } = await import("firebase/auth");
+      await signInWithEmailAndPassword(clientAuth, email, password);
+    } catch (error: unknown) {
+      setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error)));
+    }
   }
 
   async function signOutAdmin() {

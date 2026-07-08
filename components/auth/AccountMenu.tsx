@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Auth, User } from "firebase/auth";
 import { useEffect, useState } from "react";
+import { getAuthErrorMessage, extractFirebaseAuthCode, shouldFallbackToRedirect } from "@/lib/auth-errors";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 
 const missingClientEnv = getMissingFirebaseClientEnv();
@@ -29,6 +30,8 @@ export function AccountMenu() {
     Promise.all([import("@/lib/firebase/client"), import("firebase/auth")])
       .then(([client, authModule]) => {
         setAuth(client.auth);
+        authModule.getRedirectResult(client.auth)
+          .catch((error: unknown) => setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error))));
         unsubscribe = authModule.onAuthStateChanged(client.auth, (nextUser) => {
           setUser(nextUser);
           setAdminState(nextUser ? "checking" : "unknown");
@@ -77,8 +80,16 @@ export function AccountMenu() {
         import("@/lib/firebase/client"),
       ]);
       await signInWithPopup(auth, googleProvider);
-    } catch {
-      setMessage("Google sign in was not completed. Try again or use email.");
+    } catch (error: unknown) {
+      const code = extractFirebaseAuthCode(error);
+      setMessage(getAuthErrorMessage(code));
+      if (shouldFallbackToRedirect(code)) {
+        const [{ signInWithRedirect }, { googleProvider }] = await Promise.all([
+          import("firebase/auth"),
+          import("@/lib/firebase/client"),
+        ]);
+        await signInWithRedirect(auth, googleProvider);
+      }
     } finally {
       setBusy(false);
     }
@@ -109,8 +120,8 @@ export function AccountMenu() {
         await authModule.createUserWithEmailAndPassword(auth, email, password);
       }
       setPassword("");
-    } catch {
-      setMessage(mode === "login" ? "Email sign in failed. Check your email and password." : "Account creation failed. Check Firebase Email/Password settings.");
+    } catch (error: unknown) {
+      setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error)));
     } finally {
       setBusy(false);
     }
