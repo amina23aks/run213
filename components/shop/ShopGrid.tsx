@@ -11,7 +11,7 @@ export function ShopGrid({ products }: ShopGridProps) {
     <section className="shopProducts" aria-label="213 RUN products">
       <div className="shopGrid">
         {products.map((product) => (
-          <ProductCard product={toProductCardView(product)} key={product.id} promo={product.isPromo} />
+          <ProductCard product={toProductCardView(product)} sourceProduct={product} key={product.id} promo={product.isPromo} />
         ))}
       </div>
       <div className="shopLoadMore">

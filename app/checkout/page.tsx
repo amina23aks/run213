@@ -3,7 +3,14 @@ import { CheckoutSummary } from "@/components/checkout/CheckoutSummary";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 
-export default function CheckoutPage() {
+type CheckoutPageProps = {
+  searchParams: Promise<{ status?: string; orderNumber?: string }>;
+};
+
+export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
+  const params = await searchParams;
+  const isSuccess = params.status === "success" && Boolean(params.orderNumber);
+
   return (
     <>
       <Header />
@@ -13,10 +20,18 @@ export default function CheckoutPage() {
           <h1 id="checkout-title">CHECKOUT</h1>
           <p>Confirm your details. We’ll prepare your order.</p>
         </section>
-        <section className="checkoutLayout" aria-label="Checkout details">
-          <CheckoutForm />
-          <CheckoutSummary />
-        </section>
+        {isSuccess ? (
+          <section className="checkoutSuccessState" aria-live="polite">
+            <span>ORDER CREATED</span>
+            <h2>{params.orderNumber}</h2>
+            <p>Your pending cash-on-delivery order was created. We will confirm delivery details before shipping.</p>
+          </section>
+        ) : (
+          <section className="checkoutLayout" aria-label="Checkout details">
+            <CheckoutForm />
+            <CheckoutSummary />
+          </section>
+        )}
       </main>
       <div className="club-footer-shell">
         <Footer />

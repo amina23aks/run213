@@ -1,70 +1,111 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { useCart } from "@/context/cart";
+import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
+import type { DeliveryMode } from "@/types/order";
+
 export function CheckoutForm() {
+  const router = useRouter();
+  const { items, clearCart } = useCart();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    const formData = new FormData(event.currentTarget);
+    const values: OrderFormValues = {
+      fullName: String(formData.get("fullName") ?? ""),
+      phone: String(formData.get("phone") ?? ""),
+      wilaya: String(formData.get("wilaya") ?? ""),
+      deliveryMode: String(formData.get("deliveryType") ?? "home") as DeliveryMode,
+      address: String(formData.get("address") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+    };
+    const validationError = validateOrderFormValues(values, items);
+
+    if (validationError) {
+      setMessage(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage(null);
+
+    try {
+      const order = await submitOrderToApi(buildCreateOrderRequest(values, items));
+      clearCart();
+      router.push(`/checkout?status=success&orderNumber=${encodeURIComponent(order.orderNumber)}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not create order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
-    <form className="checkoutForm" action="#">
-      <section className="checkoutCard" aria-labelledby="customer-info-title">
-        <h2 id="customer-info-title">Customer information</h2>
+    <form className="checkoutForm checkoutForm--compact" action="#" onSubmit={handleSubmit}>
+      <section className="checkoutCard checkoutCard--compact" aria-labelledby="checkout-details-title">
+        <div className="checkoutCard__heading">
+          <h2 id="checkout-details-title">Delivery details</h2>
+          <p>Cash on delivery. Final totals are confirmed by the server.</p>
+        </div>
+
         <div className="checkoutFields checkoutFields--two">
           <label>
             <span>Full name</span>
             <input type="text" name="fullName" placeholder="Your full name" required />
           </label>
           <label>
-            <span>Phone number</span>
+            <span>Phone</span>
             <input type="tel" name="phone" placeholder="0550 00 00 00" required />
           </label>
         </div>
-        <label>
-          <span>Email optional</span>
-          <input type="email" name="email" placeholder="you@example.com" />
-        </label>
-      </section>
 
-      <section className="checkoutCard" aria-labelledby="delivery-info-title">
-        <h2 id="delivery-info-title">Delivery information</h2>
         <div className="checkoutFields checkoutFields--two">
           <label>
             <span>Wilaya</span>
-            <input type="text" name="wilaya" placeholder="Algiers" required />
+            <select name="wilaya" required defaultValue="">
+              <option value="" disabled>Choose wilaya</option>
+              {ALGERIA_WILAYAS.map((wilaya) => <option value={wilaya.name} key={wilaya.code}>{wilaya.label}</option>)}
+            </select>
           </label>
-          <label>
-            <span>Commune</span>
-            <input type="text" name="commune" placeholder="Commune" required />
-          </label>
+          <fieldset className="checkoutDeliveryType checkoutDeliveryType--compact">
+            <legend>Delivery mode</legend>
+            <label>
+              <input type="radio" name="deliveryType" value="home" defaultChecked />
+              <span>Home</span>
+            </label>
+            <label>
+              <input type="radio" name="deliveryType" value="desk" />
+              <span>Desk</span>
+            </label>
+          </fieldset>
         </div>
+
         <label>
           <span>Address</span>
           <input type="text" name="address" placeholder="Street, building, floor" required />
         </label>
-        <fieldset className="checkoutDeliveryType">
-          <legend>Delivery type</legend>
-          <label>
-            <input type="radio" name="deliveryType" defaultChecked />
-            <span>Home delivery</span>
-          </label>
-          <label>
-            <input type="radio" name="deliveryType" />
-            <span>Desk pickup</span>
-          </label>
-        </fieldset>
-      </section>
 
-      <section className="checkoutCard" aria-labelledby="order-note-title">
-        <h2 id="order-note-title">Order note optional</h2>
         <label>
-          <span>Notes for delivery</span>
-          <textarea name="notes" placeholder="Anything we should know before delivery?" rows={4} />
+          <span>Notes optional</span>
+          <textarea name="notes" placeholder="Delivery note" rows={3} />
         </label>
-      </section>
 
-      <section className="checkoutCard" aria-labelledby="payment-method-title">
-        <h2 id="payment-method-title">Payment method</h2>
         <div className="checkoutPaymentMethod">
-          <span>Cash on delivery</span>
+          <span>Payment method</span>
           <strong>COD</strong>
         </div>
-      </section>
 
-      <button className="checkoutSubmit" type="button">PLACE ORDER</button>
+        {message ? <p className="checkoutFormMessage" role="status">{message}</p> : null}
+        <button className="checkoutSubmit" type="submit" disabled={isSubmitting}>{isSubmitting ? "CREATING ORDER..." : "CONFIRM ORDER"}</button>
+      </section>
     </form>
   );
 }

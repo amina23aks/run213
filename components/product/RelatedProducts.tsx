@@ -10,7 +10,7 @@ export function RelatedProducts() {
       </div>
       <div className="relatedProducts__grid">
         {relatedDropProducts.map((product) => (
-          <ProductCard product={toProductCardView(product)} key={product.slug} promo={product.isPromo} />
+          <ProductCard product={toProductCardView(product)} sourceProduct={product} key={product.slug} promo={product.isPromo} />
         ))}
       </div>
     </section>
