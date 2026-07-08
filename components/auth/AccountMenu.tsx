@@ -163,6 +163,8 @@ export function AccountMenu() {
                   <strong>{user.email}</strong>
                 </div>
                 <div className="accountMenu__links">
+                  <Link className="accountMenu__link" href="/orders" onClick={() => setIsOpen(false)}>My orders →</Link>
+                  <Link className="accountMenu__link" href="/favorites" onClick={() => setIsOpen(false)}>Favorites →</Link>
                   {adminState === "checking" ? <p className="accountMenu__muted">Checking admin access…</p> : null}
                   {adminState === "yes" ? <Link className="accountMenu__link accountMenu__link--admin" href="/admin/products" onClick={() => setIsOpen(false)}>Admin products →</Link> : null}
                 </div>

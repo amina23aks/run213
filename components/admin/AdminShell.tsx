@@ -6,11 +6,11 @@ import type { ReactNode } from "react";
 
 const adminNavItems = [
   { label: "Overview", href: "/admin", status: "ready" },
-  { label: "Orders", href: "#orders-coming-soon", status: "soon" },
+  { label: "Orders", href: "/admin/orders", status: "soon" },
   { label: "Products", href: "/admin/products", status: "ready" },
-  { label: "Favorites", href: "#favorites-coming-soon", status: "soon" },
-  { label: "Wishlist", href: "#wishlist-coming-soon", status: "soon" },
-  { label: "Settings", href: "#settings-coming-soon", status: "soon" },
+  { label: "Favorites", href: "/admin/favorites", status: "soon" },
+  { label: "Wishlist", href: "/admin/wishlist", status: "soon" },
+  { label: "Settings", href: "/admin/settings", status: "soon" },
 ] as const;
 
 type AdminShellProps = {
@@ -33,18 +33,10 @@ export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, chil
         <nav className="adminSidebar__nav">
           {adminNavItems.map((item) => {
             const isActive = pathname === item.href;
-            if (item.status === "soon") {
-              return (
-                <button className="adminSidebar__item isDisabled" type="button" key={item.label} aria-disabled="true">
-                  <span>{item.label}</span>
-                  <small>soon</small>
-                </button>
-              );
-            }
-
             return (
               <Link className={isActive ? "adminSidebar__item isActive" : "adminSidebar__item"} href={item.href} key={item.label}>
                 <span>{item.label}</span>
+                {item.status === "soon" ? <small>soon</small> : null}
               </Link>
             );
           })}
