@@ -504,3 +504,25 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .adminTopbar,
   .adminTable article { align-items: stretch; grid-template-columns: 1fr; flex-direction: column; }
 }
+
+.adminLoginCard,
+.adminEmailLogin {
+  display: grid;
+  gap: 14px;
+}
+
+.adminLoginCard {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #111211;
+  border-radius: 24px;
+  max-width: 520px;
+  padding: 20px;
+}
+
+.adminEmailLogin input {
+  background: #181a18;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  color: #f4f4f0;
+  padding: 12px 14px;
+}
