@@ -2,6 +2,7 @@
 
 import type { Auth, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Product, ProductCategory, ProductStatus, ProductStockMode } from "@/types/product";
 
 type ProductDraft = {
@@ -32,6 +33,8 @@ type AdminProductsResponse = {
   products: Product[];
   nextCursor: string | null;
 };
+
+const missingClientEnv = getMissingFirebaseClientEnv();
 
 const emptyDraft: ProductDraft = {
   name: "",
@@ -67,7 +70,8 @@ export function AdminProductsClient() {
   const [password, setPassword] = useState("");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [message, setMessage] = useState("Sign in with an approved admin email.");
+  const [missingServerEnv, setMissingServerEnv] = useState<string[]>([]);
+  const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Sign in with an approved admin email.");
 
   const title = useMemo(() => (editingId ? "Edit product" : "Create product"), [editingId]);
 
@@ -111,6 +115,15 @@ export function AdminProductsClient() {
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
+
+    fetch("/api/admin/config")
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Config unavailable")))
+      .then((data: { missingServerEnv: string[] }) => setMissingServerEnv(data.missingServerEnv))
+      .catch(() => setMissingServerEnv(["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"]));
+
+    if (missingClientEnv.length) {
+      return () => undefined;
+    }
 
     Promise.all([import("@/lib/firebase/client"), import("firebase/auth")])
       .then(([client, authModule]) => {
@@ -204,13 +217,15 @@ export function AdminProductsClient() {
     return (
       <AdminShell>
         <section className="adminLoginCard">
-          <button className="adminPrimary" type="button" onClick={signInWithGoogle} disabled={!clientAuth}>
+          {missingClientEnv.length ? <p className="accountMenu__message">Missing client env: {missingClientEnv.join(", ")}</p> : null}
+          {missingServerEnv.length ? <p className="accountMenu__message">Missing server env: {missingServerEnv.join(", ")}</p> : null}
+          <button className="adminPrimary" type="button" onClick={signInWithGoogle} disabled={!clientAuth || Boolean(missingClientEnv.length)}>
             Sign in with Google
           </button>
           <form className="adminEmailLogin" onSubmit={signInWithEmail}>
             <input type="email" placeholder="Admin email" value={email} onChange={(event) => setEmail(event.target.value)} />
             <input type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} />
-            <button type="submit" disabled={!clientAuth}>Sign in with email</button>
+            <button type="submit" disabled={!clientAuth || Boolean(missingClientEnv.length)}>Sign in with email</button>
           </form>
           <p>{message}</p>
         </section>
