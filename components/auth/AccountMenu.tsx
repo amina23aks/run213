@@ -19,6 +19,7 @@ export function AccountMenu() {
   const [user, setUser] = useState<User | null>(null);
   const [adminState, setAdminState] = useState<AdminState>("unknown");
   const [mode, setMode] = useState<AuthMode>("login");
+  const [showAuthForm, setShowAuthForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,9 +27,10 @@ export function AccountMenu() {
   const [message, setMessage] = useState<string | null>(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : null);
 
   const modalTitle = useMemo(() => {
-    if (user) return "Your account";
+    if (user) return "Account";
+    if (!showAuthForm) return "Account";
     return mode === "login" ? "Welcome back" : "Join 213 RUN";
-  }, [mode, user]);
+  }, [mode, showAuthForm, user]);
 
   useEffect(() => {
     if (missingClientEnv.length) return;
@@ -65,7 +67,10 @@ export function AccountMenu() {
     if (!isOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) setIsOpen(false);
+      if (event.key === "Escape" && !busy) {
+        setIsOpen(false);
+        setShowAuthForm(false);
+      }
     };
 
     document.addEventListener("keydown", closeOnEscape);
@@ -75,6 +80,14 @@ export function AccountMenu() {
   function closeModal() {
     if (busy) return;
     setIsOpen(false);
+    setShowAuthForm(false);
+  }
+
+  function openAuthForm(nextMode: AuthMode = "login") {
+    setMode(nextMode);
+    setShowAuthForm(true);
+    setMessage(null);
+    setFormErrors({});
   }
 
   function switchMode(nextMode: AuthMode) {
@@ -193,7 +206,7 @@ export function AccountMenu() {
                 onClose={() => setIsOpen(false)}
                 onSignOut={signOutUser}
               />
-            ) : (
+            ) : showAuthForm ? (
               <SignedOutPanel
                 authReady={Boolean(auth) && !missingClientEnv.length}
                 busy={busy}
@@ -207,12 +220,24 @@ export function AccountMenu() {
                 onSubmit={submitEmailAuth}
                 password={password}
               />
+            ) : (
+              <SignedOutMenu onOpenAuth={openAuthForm} />
             )}
 
             {message ? <p className="accountMenu__message" role="alert">{message}</p> : null}
           </section>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+
+function SignedOutMenu({ onOpenAuth }: { onOpenAuth: (mode?: AuthMode) => void }) {
+  return (
+    <div className="accountMenu__compact">
+      <p>Sign in to manage orders and saved products.</p>
+      <button className="accountMenu__primary" type="button" onClick={() => onOpenAuth("login")}>Login / Sign up</button>
     </div>
   );
 }

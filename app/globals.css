@@ -2545,3 +2545,66 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
     justify-self: start;
   }
 }
+
+/* Runtime fix: compact account first step and single-column products */
+.accountDrawer__panel .accountMenu__compact {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.accountDrawer__panel .accountMenu__compact p {
+  color: #b5b5ae;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.accountDrawer__panel .accountMenu__secondary {
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.accountDrawer__panel .accountMenu__secondary span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adminProductsWorkspace {
+  grid-template-columns: 1fr;
+  justify-items: stretch;
+}
+
+.adminProductForm,
+.adminProductList {
+  margin-inline: auto;
+  max-width: 72rem;
+  width: 100%;
+}
+
+.adminProductList {
+  max-width: 72rem;
+}
+
+.adminProductForm .adminCard__heading h2,
+.adminProductList .adminCard__heading h2 {
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  line-height: 0.98;
+}
+
+.adminProductForm .adminCard__heading span,
+.adminProductList .adminCard__heading span {
+  font-size: 0.82rem;
+}
+
+@media (min-width: 1600px) {
+  .adminProductsWorkspace {
+    grid-template-columns: minmax(0, 1.15fr) minmax(28rem, 0.85fr);
+  }
+
+  .adminProductForm,
+  .adminProductList {
+    max-width: none;
+  }
+}
