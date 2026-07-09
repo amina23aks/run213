@@ -11,10 +11,11 @@ const ORDERS_COLLECTION = "orders";
 const PRODUCTS_COLLECTION = "products";
 
 export async function createOrder(input: CreateOrderRequest): Promise<CreateOrderResponse> {
-  const [{ adminDb }, { Timestamp }] = await Promise.all([
+  const [{ getAdminDb }, { Timestamp }] = await Promise.all([
     import("@/lib/firebase/admin"),
     import("firebase-admin/firestore"),
   ]);
+  const adminDb = getAdminDb();
 
   const now = new Date();
   const nowIso = now.toISOString();
@@ -203,6 +204,11 @@ function parseActiveProduct(id: string, data: FirebaseFirestore.DocumentData): P
     stockQty: isNumber(data.stockQty) ? data.stockQty : null,
     inStock: typeof data.inStock === "boolean" ? data.inStock : true,
     featured: typeof data.featured === "boolean" ? data.featured : false,
+    showInDrop001: typeof data.showInDrop001 === "boolean" ? data.showInDrop001 : false,
+    showInFeaturedDrop: typeof data.showInFeaturedDrop === "boolean" ? data.showInFeaturedDrop : false,
+    showInShopTheLook: typeof data.showInShopTheLook === "boolean" ? data.showInShopTheLook : false,
+    featuredSortOrder: isNumber(data.featuredSortOrder) ? data.featuredSortOrder : null,
+    lookGroupSlug: isString(data.lookGroupSlug) ? data.lookGroupSlug : null,
     isPromo: typeof data.isPromo === "boolean" ? data.isPromo : false,
     dropSlug: data.dropSlug === "drop-001" ? "drop-001" : null,
     sortOrder: isNumber(data.sortOrder) ? data.sortOrder : 999,

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { AccountMenu } from "@/components/auth/AccountMenu";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCart } from "@/context/cart";
 
@@ -55,6 +56,7 @@ export function Header() {
       </nav>
       <div className="site-header__icons" aria-label="Header actions">
         <button type="button" aria-label="Favorites"><IconHeart /></button>
+        <AccountMenu />
         <button className="site-header__cart" type="button" aria-label="Open cart" onClick={() => setIsCartOpen(true)}><IconCart />{isHydrated && itemCount > 0 ? <span>{itemCount}</span> : null}</button>
         <button type="button" aria-label="Menu"><IconMenu /></button>
       </div>
