@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { memo, startTransition, useCallback, useEffect, useMemo, useState } from "react";
-import { AccountMenu } from "@/components/auth/AccountMenu";
 
 const adminNavItems = [
   { label: "Overview", href: "/admin" },
@@ -78,7 +77,6 @@ export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, chil
 
         <div className="adminSidebar__footer">
           <p className="adminSidebar__note">BUILT. NOT FOUND. Keep the operations clean, focused, and ready for every drop.</p>
-          <AccountMenu />
         </div>
       </aside>
 

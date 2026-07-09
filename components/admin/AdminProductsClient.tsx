@@ -1,13 +1,13 @@
 "use client";
 
-import type { Auth, User } from "firebase/auth";
+import type { User } from "firebase/auth";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminProductForm } from "@/components/admin/products/AdminProductForm";
 import { AdminProductList } from "@/components/admin/products/AdminProductList";
 import type { ProductDraft, ProductDraftColor } from "@/components/admin/products/types";
-import { extractFirebaseAuthCode, getAuthErrorMessage, shouldFallbackToRedirect } from "@/lib/auth-errors";
+import { extractFirebaseAuthCode, getAuthErrorMessage } from "@/lib/auth-errors";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Product } from "@/types/product";
 
@@ -45,12 +45,9 @@ const emptyDraft: ProductDraft = {
 
 export function AdminProductsClient() {
   const [user, setUser] = useState<User | null>(null);
-  const [clientAuth, setClientAuth] = useState<Auth | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [missingServerEnv, setMissingServerEnv] = useState<string[]>([]);
@@ -109,7 +106,6 @@ export function AdminProductsClient() {
 
     Promise.all([import("@/lib/firebase/client"), import("firebase/auth")])
       .then(([client, authModule]) => {
-        setClientAuth(client.auth);
         authModule.getRedirectResult(client.auth)
           .catch((error: unknown) => setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error))));
         unsubscribe = authModule.onAuthStateChanged(client.auth, (nextUser) => {
@@ -139,45 +135,6 @@ export function AdminProductsClient() {
 
     return () => unsubscribe?.();
   }, []);
-
-  async function signInWithGoogle() {
-    if (!clientAuth) return;
-
-    try {
-      const [{ signInWithPopup }, { googleProvider }] = await Promise.all([
-        import("firebase/auth"),
-        import("@/lib/firebase/client"),
-      ]);
-      await signInWithPopup(clientAuth, googleProvider);
-    } catch (error: unknown) {
-      const code = extractFirebaseAuthCode(error);
-      setMessage(getAuthErrorMessage(code));
-      if (shouldFallbackToRedirect(code)) {
-        const [{ signInWithRedirect }, { googleProvider }] = await Promise.all([
-          import("firebase/auth"),
-          import("@/lib/firebase/client"),
-        ]);
-        await signInWithRedirect(clientAuth, googleProvider);
-      }
-    }
-  }
-
-  async function signInWithEmail(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!clientAuth) return;
-    try {
-      const { signInWithEmailAndPassword } = await import("firebase/auth");
-      await signInWithEmailAndPassword(clientAuth, email, password);
-    } catch (error: unknown) {
-      setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error)));
-    }
-  }
-
-  async function signOutAdmin() {
-    if (!clientAuth) return;
-    const { signOut } = await import("firebase/auth");
-    await signOut(clientAuth);
-  }
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -282,49 +239,16 @@ export function AdminProductsClient() {
     setFormErrors([]);
   }
 
-  if (!user) {
+  if (!user || !isAuthorized) {
     return (
       <AdminShell title="Products" description="Create, edit, and archive storefront products for real testing.">
-        <section className="adminLoginCard adminCard">
-          <div className="adminCard__heading">
-            <p>ADMIN ACCESS</p>
-            <h2>Sign in to manage products</h2>
-            <span>Use an email listed in ADMIN_EMAILS or SUPER_ADMIN_EMAIL.</span>
-          </div>
-          {missingClientEnv.length ? <p className="adminNotice adminNotice--error">Missing client env: {missingClientEnv.join(", ")}</p> : null}
-          {missingServerEnv.length ? <p className="adminNotice adminNotice--error">Missing server env: {missingServerEnv.join(", ")}</p> : null}
-          <button className="adminPrimary" type="button" onClick={signInWithGoogle} disabled={!clientAuth || Boolean(missingClientEnv.length)}>
-            Sign in with Google
-          </button>
-          <form className="adminEmailLogin" onSubmit={signInWithEmail}>
-            <label>
-              <span>Admin email</span>
-              <input type="email" placeholder="admin@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
-            </label>
-            <label>
-              <span>Password</span>
-              <input type="password" placeholder="Firebase Auth password" value={password} onChange={(event) => setPassword(event.target.value)} />
-            </label>
-            <button type="submit" disabled={!clientAuth || Boolean(missingClientEnv.length)}>Sign in with email</button>
-          </form>
-          <p className="adminNotice">{message}</p>
-        </section>
-      </AdminShell>
-    );
-  }
-
-  if (!isAuthorized) {
-    return (
-      <AdminShell title="Products" description="Create, edit, and archive storefront products for real testing.">
-        <AdminProductsTopbar email={user.email} onSignOut={signOutAdmin} />
-        <p className="adminNotice adminNotice--error">{message}</p>
+        <AdminAccessState missingClientEnv={missingClientEnv} missingServerEnv={missingServerEnv} message={message} />
       </AdminShell>
     );
   }
 
   return (
     <AdminShell title="Products" description="Create, edit, and archive storefront products for real testing.">
-      <AdminProductsTopbar email={user.email} onSignOut={signOutAdmin} />
       <p className="adminNotice">{message}</p>
       <div className="adminProductsWorkspace">
         <AdminProductForm
@@ -347,15 +271,18 @@ export function AdminProductsClient() {
   );
 }
 
-function AdminProductsTopbar({ email, onSignOut }: { email: string | null; onSignOut: () => void }) {
+function AdminAccessState({ missingClientEnv, missingServerEnv, message }: { missingClientEnv: string[]; missingServerEnv: string[]; message: string }) {
   return (
-    <div className="adminTopbar">
-      <div>
-        <span>Signed in</span>
-        <p>{email}</p>
+    <section className="adminAccessState adminCard">
+      <div className="adminCard__heading">
+        <p>ADMIN ACCESS</p>
+        <h2>Admin access required</h2>
+        <span>Sign in from the account icon, then return to this page.</span>
       </div>
-      <button type="button" onClick={onSignOut}>Sign out</button>
-    </div>
+      {missingClientEnv.length ? <p className="adminNotice adminNotice--error">Missing client env: {missingClientEnv.join(", ")}</p> : null}
+      {missingServerEnv.length ? <p className="adminNotice adminNotice--error">Missing server env: {missingServerEnv.join(", ")}</p> : null}
+      <p className="adminNotice">{message}</p>
+    </section>
   );
 }
 

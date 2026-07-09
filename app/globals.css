@@ -2608,3 +2608,135 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
     max-width: none;
   }
 }
+
+/* Emergency account/auth cleanup */
+.accountPopover {
+  background: #fbf8f0;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2.8rem rgba(5, 5, 5, 0.18);
+  color: #050505;
+  display: grid;
+  gap: 0.65rem;
+  min-width: 13.5rem;
+  padding: 0.75rem;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.65rem);
+  z-index: 80;
+}
+
+.accountPopover__login,
+.accountPopover__signedIn button {
+  align-items: center;
+  background: #c7f400;
+  border: 1px solid #c7f400;
+  border-radius: 999px;
+  color: #050505;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 950;
+  justify-content: center;
+  min-height: 2.45rem;
+  padding: 0 0.95rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.accountPopover__signedIn {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.accountPopover__signedIn span {
+  background: #eee8dc;
+  border-radius: 0.75rem;
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  padding: 0.7rem;
+}
+
+.accountAuthModal {
+  align-items: center;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 130;
+}
+
+.accountAuthModal__backdrop {
+  background: rgba(5, 5, 5, 0.58);
+  border: 0;
+  inset: 0;
+  position: absolute;
+}
+
+.accountAuthModal__card {
+  background: #fbf8f0;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 1.45rem;
+  box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.28);
+  color: #050505;
+  display: grid;
+  gap: 0.85rem;
+  max-width: 25.5rem;
+  padding: 1.25rem;
+  position: relative;
+  width: min(100%, 25.5rem);
+  z-index: 1;
+}
+
+.accountAuthModal__card h2 {
+  font-size: clamp(1.8rem, 6vw, 2.55rem);
+  font-weight: 950;
+  letter-spacing: -0.06em;
+  line-height: 0.92;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.accountAuthModal__close {
+  align-items: center;
+  background: #eee8dc;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 999px;
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 0.9rem;
+  top: 0.9rem;
+  width: 2rem;
+}
+
+.accountAuthModal__card .accountMenu__secondary {
+  justify-content: center;
+  width: 100%;
+}
+
+.accountAuthModal__helper {
+  color: #5f5f5f;
+  font-size: 0.8rem;
+  margin: 0;
+  text-align: center;
+}
+
+.accountAuthModal__helper button {
+  border: 0;
+  color: #050505;
+  font-weight: 950;
+  text-decoration: underline;
+}
+
+.adminAccessState {
+  display: grid;
+  gap: 1rem;
+  max-width: 42rem;
+  padding: clamp(1rem, 3vw, 1.4rem);
+}
