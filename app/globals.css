@@ -1189,3 +1189,311 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   color: #5f5f5f;
   line-height: 1.5;
 }
+
+/* Admin shell rebuild — 213 RUN dark control center */
+.adminShell {
+  background: radial-gradient(circle at 85% 0%, rgba(199, 244, 0, 0.18), transparent 30%), #f5f1e8;
+  color: #050505;
+  display: grid;
+  grid-template-columns: minmax(15.5rem, 17.5rem) minmax(0, 1fr);
+  min-height: 100svh;
+}
+
+.adminSidebar {
+  background: linear-gradient(180deg, #070807 0%, #111211 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  color: #f4f4f0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-height: 100svh;
+  padding: 1.2rem;
+  position: sticky;
+  top: 0;
+}
+
+.adminSidebar__topline,
+.adminSidebar__footer {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.adminSidebar__topline {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.adminSidebar__brand {
+  align-items: center;
+  color: #f4f4f0;
+  display: inline-flex;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.adminSidebar__brand span {
+  align-items: center;
+  background: #c7f400;
+  border-radius: 1rem;
+  color: #050505;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  font-weight: 950;
+  height: 2.9rem;
+  justify-content: center;
+  letter-spacing: -0.06em;
+  width: 3.25rem;
+}
+
+.adminSidebar__brand strong {
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  line-height: 1.1;
+}
+
+.adminSidebar__toggle {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: #f4f4f0;
+  display: none;
+  gap: 0.45rem;
+  min-height: 2.4rem;
+  padding: 0 0.8rem;
+}
+
+.adminSidebar__toggle span {
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.adminSidebar__summary {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.95rem;
+}
+
+.adminSidebar__summary p,
+.adminMain__header p {
+  color: #c7f400;
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.adminSidebar__summary span {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 950;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin-top: 0.35rem;
+  text-transform: uppercase;
+}
+
+.adminSidebar__nav {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.adminSidebar__item {
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 1rem;
+  color: #d8d8d0;
+  display: flex;
+  font-size: 0.9rem;
+  font-weight: 850;
+  justify-content: space-between;
+  min-height: 3rem;
+  padding: 0 0.9rem;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.adminSidebar__item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.adminSidebar__item.isActive {
+  background: #c7f400;
+  border-color: #c7f400;
+  color: #050505;
+  font-weight: 950;
+}
+
+.adminSidebar__item small {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.adminSidebar__footer {
+  flex-direction: column;
+  margin-top: auto;
+}
+
+.adminSidebar__note {
+  color: #b5b5ae;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.adminSidebar__footer .accountMenu__trigger {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: #f4f4f0;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  width: 100%;
+}
+
+.adminSidebar__footer .accountMenu__trigger::after {
+  content: "Account";
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.adminMain {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.adminMain__header,
+.adminMain__content > .adminCard,
+.adminCard {
+  background: rgba(251, 248, 240, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  box-shadow: 0 1rem 3.4rem rgba(7, 7, 6, 0.08);
+}
+
+.adminMain__header {
+  align-items: end;
+  border-radius: 1.6rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: clamp(1rem, 2.6vw, 1.45rem);
+}
+
+.adminMain__header h1 {
+  color: #050505;
+  font-size: clamp(2.35rem, 6vw, 4.8rem);
+  font-weight: 950;
+  letter-spacing: -0.065em;
+  line-height: 0.88;
+  margin: 0.22rem 0 0;
+  text-transform: uppercase;
+}
+
+.adminMain__header span {
+  color: #5f5f5f;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.45;
+  max-width: 30rem;
+}
+
+.adminMain__content {
+  min-width: 0;
+}
+
+.adminShell--loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.adminLoader {
+  align-items: center;
+  align-self: center;
+  background: #111211;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+  color: #f4f4f0;
+  display: flex;
+  gap: 1rem;
+  max-width: 28rem;
+  padding: 1.25rem;
+}
+
+.adminLoader__spinner {
+  animation: adminSpin 800ms linear infinite;
+  border: 4px solid rgba(244, 244, 240, 0.28);
+  border-top-color: #c7f400;
+  border-radius: 999px;
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
+.adminLoader p {
+  font-weight: 950;
+  margin: 0;
+}
+
+.adminLoader span:not(.adminLoader__spinner) {
+  color: #b5b5ae;
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
+}
+
+@keyframes adminSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .adminShell {
+    grid-template-columns: 1fr;
+  }
+
+  .adminSidebar {
+    min-height: auto;
+    padding: 1rem;
+    position: sticky;
+    z-index: 40;
+  }
+
+  .adminSidebar__toggle {
+    display: inline-flex;
+  }
+
+  .adminSidebar__summary,
+  .adminSidebar__note,
+  .adminSidebar__footer .accountMenu {
+    display: none;
+  }
+
+  .adminSidebar__nav {
+    display: none;
+  }
+
+  .adminSidebar__nav.isOpen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .adminMain__header {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .adminSidebar__nav.isOpen {
+    grid-template-columns: 1fr;
+  }
+}
