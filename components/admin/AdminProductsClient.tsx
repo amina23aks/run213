@@ -16,6 +16,18 @@ type AdminProductsResponse = {
   nextCursor: string | null;
 };
 
+type AdminConfigResponse = {
+  missingServerEnv: string[];
+  missingCloudinaryEnv?: string[];
+  cloudinaryConfigured?: boolean;
+};
+
+type UploadImageResponse = {
+  secureUrl?: unknown;
+  publicId?: unknown;
+  error?: unknown;
+};
+
 const missingClientEnv = getMissingFirebaseClientEnv();
 
 const emptyDraft: ProductDraft = {
@@ -51,6 +63,8 @@ export function AdminProductsClient() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [missingServerEnv, setMissingServerEnv] = useState<string[]>([]);
+  const [cloudinaryConfigured, setCloudinaryConfigured] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Sign in with an approved admin email.");
   const [formErrors, setFormErrors] = useState<string[]>([]);
 
@@ -97,8 +111,14 @@ export function AdminProductsClient() {
 
     fetch("/api/admin/config")
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Config unavailable")))
-      .then((data: { missingServerEnv: string[] }) => setMissingServerEnv(data.missingServerEnv))
-      .catch(() => setMissingServerEnv(["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"]));
+      .then((data: AdminConfigResponse) => {
+        setMissingServerEnv(data.missingServerEnv);
+        setCloudinaryConfigured(data.cloudinaryConfigured === true);
+      })
+      .catch(() => {
+        setMissingServerEnv(["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"]);
+        setCloudinaryConfigured(false);
+      });
 
     if (missingClientEnv.length) {
       return () => undefined;
@@ -188,6 +208,48 @@ export function AdminProductsClient() {
     setFormErrors([]);
   }
 
+
+  async function uploadImage(file: File) {
+    if (!user) {
+      setMessage("Sign in with an approved admin email before uploading images.");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const token = await user.getIdToken();
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch("/api/admin/uploads/image", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+      const data = (await response.json()) as UploadImageResponse;
+
+      if (!response.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Image upload failed. Try again.");
+      }
+
+      if (typeof data.secureUrl !== "string") {
+        throw new Error("Image upload failed. Try again.");
+      }
+
+      const uploadedImageUrl = data.secureUrl;
+      const uploadedImageId = typeof data.publicId === "string" ? data.publicId : `image-${Date.now()}`;
+      setDraft((current) => ({
+        ...current,
+        images: [...current.images, { id: uploadedImageId, url: uploadedImageUrl }],
+      }));
+      setFormErrors([]);
+      setMessage("Image uploaded.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Image upload failed. Try again.");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
   function addImageUrl() {
     const url = draft.imageUrlDraft.trim();
     if (!url) {
@@ -264,6 +326,9 @@ export function AdminProductsClient() {
           onRemoveImage={removeImage}
           onSubmit={saveProduct}
           onToggleSize={toggleSize}
+          onUploadImage={uploadImage}
+          uploadingImage={uploadingImage}
+          cloudinaryConfigured={cloudinaryConfigured}
         />
         <AdminProductList products={products} nextCursor={nextCursor} onArchive={archiveProduct} onEdit={editProduct} onLoadMore={loadProducts} />
       </div>

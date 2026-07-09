@@ -23,8 +23,8 @@ export async function listActiveProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT)
     const products = snapshot.docs.map((doc) => parseProduct(doc.id, doc.data())).filter((product): product is Product => product !== null);
 
     return products.length ? products : shopProducts.slice(0, clampLimit(requestedLimit));
-  } catch (error) {
-    console.warn("Falling back to static products because active products could not be read with the server admin API.", error);
+  } catch {
+    console.warn("Falling back to static products because active products could not be read with the server admin API.");
     return shopProducts.slice(0, clampLimit(requestedLimit));
   }
 }
@@ -52,8 +52,8 @@ export async function listActiveProductsByPlacement(placement: "showInDrop001" |
     const products = snapshot.docs.map((doc) => parseProduct(doc.id, doc.data())).filter((product): product is Product => product !== null);
 
     return products.length ? products : fallbackProducts;
-  } catch (error) {
-    console.warn(`Falling back to static products because server active ${placement} products could not be read.`, error);
+  } catch {
+    console.warn(`Falling back to static products because server active ${placement} products could not be read.`);
     return fallbackProducts;
   }
 }
@@ -82,8 +82,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const product = snapshot.docs[0] ? parseProduct(snapshot.docs[0].id, snapshot.docs[0].data()) : null;
 
     return product ?? getStaticProductBySlug(slug) ?? null;
-  } catch (error) {
-    console.warn(`Falling back to static product for slug "${slug}" because server active product read failed.`, error);
+  } catch {
+    console.warn(`Falling back to static product for slug "${slug}" because server active product read failed.`);
     return getStaticProductBySlug(slug) ?? null;
   }
 }

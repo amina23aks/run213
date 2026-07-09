@@ -19,6 +19,9 @@ type AdminProductFormProps = {
   onRemoveImage: (id: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onToggleSize: (size: string) => void;
+  onUploadImage: (file: File) => void;
+  uploadingImage: boolean;
+  cloudinaryConfigured: boolean;
 };
 
 export function AdminProductForm({
@@ -34,6 +37,9 @@ export function AdminProductForm({
   onRemoveImage,
   onSubmit,
   onToggleSize,
+  onUploadImage,
+  uploadingImage,
+  cloudinaryConfigured,
 }: AdminProductFormProps) {
   return (
     <form className="adminProductForm adminCard" onSubmit={onSubmit}>
@@ -166,9 +172,25 @@ export function AdminProductForm({
       </AdminProductSection>
 
       <AdminProductSection eyebrow="08" title="Images">
-        <div className="adminUploadPlaceholder">
-          <button type="button" disabled>Upload image</button>
-          <span>Signed Cloudinary upload is not enabled in this sprint. Use URL/path fallback below.</span>
+        <div className="adminUploadPanel">
+          {cloudinaryConfigured ? (
+            <label className={`adminUploadButton${uploadingImage ? " isBusy" : ""}`}>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={uploadingImage}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) onUploadImage(file);
+                }}
+              />
+              <span>{uploadingImage ? "Uploading…" : "Upload image"}</span>
+            </label>
+          ) : (
+            <button className="adminUploadButton" type="button" disabled>Cloudinary not configured</button>
+          )}
+          <span>JPG, PNG, or WEBP. Max 5MB. You can also add a URL/path below.</span>
         </div>
         <div className="adminProductInlineInput">
           <input placeholder="/tshirt.png" value={draft.imageUrlDraft} onChange={(event) => onChange("imageUrlDraft", event.target.value)} />
