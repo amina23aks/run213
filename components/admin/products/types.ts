@@ -1,5 +1,16 @@
 import type { ProductCategory, ProductStatus, ProductStockMode } from "@/types/product";
 
+export type ProductDraftColor = {
+  id: string;
+  name: string;
+  hex: string;
+};
+
+export type ProductDraftImage = {
+  id: string;
+  url: string;
+};
+
 export type ProductDraft = {
   name: string;
   slug: string;
@@ -7,9 +18,10 @@ export type ProductDraft = {
   category: ProductCategory;
   priceDzd: string;
   compareAtPriceDzd: string;
-  imagesText: string;
-  colorsText: string;
-  sizesText: string;
+  images: ProductDraftImage[];
+  imageUrlDraft: string;
+  colors: ProductDraftColor[];
+  sizes: string[];
   status: ProductStatus;
   inStock: boolean;
   stockMode: Extract<ProductStockMode, "unlimited" | "limited">;
@@ -22,9 +34,4 @@ export type ProductDraft = {
   showInShopTheLook: boolean;
   featuredSortOrder: string;
   lookGroupSlug: string;
-};
-
-export type ParsedColor = {
-  name: string;
-  hex: string;
 };

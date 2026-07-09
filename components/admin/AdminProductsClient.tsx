@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminProductForm } from "@/components/admin/products/AdminProductForm";
 import { AdminProductList } from "@/components/admin/products/AdminProductList";
-import type { ParsedColor, ProductDraft } from "@/components/admin/products/types";
+import type { ProductDraft, ProductDraftColor } from "@/components/admin/products/types";
 import { extractFirebaseAuthCode, getAuthErrorMessage, shouldFallbackToRedirect } from "@/lib/auth-errors";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Product } from "@/types/product";
@@ -25,9 +25,10 @@ const emptyDraft: ProductDraft = {
   category: "tshirts",
   priceDzd: "",
   compareAtPriceDzd: "",
-  imagesText: "",
-  colorsText: "Black|#111111",
-  sizesText: "S, M, L, XL",
+  images: [],
+  imageUrlDraft: "",
+  colors: [{ id: "color-1", name: "Black", hex: "#111111" }],
+  sizes: ["S", "M", "L", "XL"],
   status: "draft",
   inStock: true,
   stockMode: "unlimited",
@@ -230,6 +231,57 @@ export function AdminProductsClient() {
     setFormErrors([]);
   }
 
+  function addImageUrl() {
+    const url = draft.imageUrlDraft.trim();
+    if (!url) {
+      setMessage("Enter an image URL or path first.");
+      return;
+    }
+    setDraft((current) => ({
+      ...current,
+      imageUrlDraft: "",
+      images: [...current.images, { id: `image-${Date.now()}`, url }],
+    }));
+    setFormErrors([]);
+  }
+
+  function removeImage(id: string) {
+    setDraft((current) => ({ ...current, images: current.images.filter((image) => image.id !== id) }));
+    setFormErrors([]);
+  }
+
+  function addColor() {
+    setDraft((current) => ({
+      ...current,
+      colors: [...current.colors, { id: `color-${Date.now()}`, name: "", hex: "#000000" }],
+    }));
+    setFormErrors([]);
+  }
+
+  function updateColor(id: string, patch: Partial<Omit<ProductDraftColor, "id">>) {
+    setDraft((current) => ({
+      ...current,
+      colors: current.colors.map((color) => color.id === id ? { ...color, ...patch } : color),
+    }));
+    setFormErrors([]);
+  }
+
+  function removeColor(id: string) {
+    setDraft((current) => ({
+      ...current,
+      colors: current.colors.length > 1 ? current.colors.filter((color) => color.id !== id) : current.colors,
+    }));
+    setFormErrors([]);
+  }
+
+  function toggleSize(size: string) {
+    setDraft((current) => ({
+      ...current,
+      sizes: current.sizes.includes(size) ? current.sizes.filter((item) => item !== size) : [...current.sizes, size],
+    }));
+    setFormErrors([]);
+  }
+
   if (!user) {
     return (
       <AdminShell title="Products" description="Create, edit, and archive storefront products for real testing.">
@@ -279,12 +331,15 @@ export function AdminProductsClient() {
           draft={draft}
           editingId={editingId}
           errors={formErrors}
-          imageUrls={parseImageLines(draft.imagesText)}
+          onAddColor={addColor}
+          onAddImageUrl={addImageUrl}
           onCancelEdit={cancelEdit}
           onChange={setDraftField}
+          onColorChange={updateColor}
+          onRemoveColor={removeColor}
+          onRemoveImage={removeImage}
           onSubmit={saveProduct}
-          parsedColors={parseColorLines(draft.colorsText)}
-          parsedSizes={parseSizes(draft.sizesText)}
+          onToggleSize={toggleSize}
         />
         <AdminProductList products={products} nextCursor={nextCursor} onArchive={archiveProduct} onEdit={editProduct} onLoadMore={loadProducts} />
       </div>
@@ -309,30 +364,12 @@ function validateDraft(draft: ProductDraft): string[] {
   if (!draft.name.trim()) errors.push("Product name is required.");
   if (!draft.slug.trim()) errors.push("Slug is required.");
   if (!draft.priceDzd.trim()) errors.push("Price DZD is required.");
-  if (!parseImageLines(draft.imagesText).length) errors.push("Add at least one image path, for example /tshirt.png.");
-  if (!parseColorLines(draft.colorsText).length) errors.push("Add at least one color using Name|#HEX, for example Black|#111111.");
+  if (!draft.images.length) errors.push("Add at least one image path, for example /tshirt.png.");
+  if (!draft.colors.some((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))) errors.push("Add at least one color with a name and valid #HEX value.");
   if (draft.stockMode === "limited" && !draft.stockQty.trim()) errors.push("Stock quantity is required when stock mode is limited.");
   return errors;
 }
 
-function parseImageLines(value: string): string[] {
-  return value.split("\n").map((line) => line.trim()).filter(Boolean);
-}
-
-function parseColorLines(value: string): ParsedColor[] {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .map((line) => {
-      const [name, hex] = line.split("|").map((part) => part?.trim() ?? "");
-      return { name, hex };
-    })
-    .filter((color) => Boolean(color.name) && /^#[0-9a-fA-F]{6}$/.test(color.hex));
-}
-
-function parseSizes(value: string): string[] {
-  return value.split(",").map((label) => label.trim()).filter(Boolean);
-}
 
 function formatAdminError(error: unknown): string {
   const fallback = "Product save failed. Check the highlighted fields and try again.";
@@ -365,9 +402,11 @@ function toPayload(draft: ProductDraft) {
     category: draft.category,
     priceDzd: draft.priceDzd,
     compareAtPriceDzd: draft.compareAtPriceDzd,
-    images: parseImageLines(draft.imagesText).map((url) => ({ url, alt: draft.name })),
-    colors: parseColorLines(draft.colorsText),
-    sizes: parseSizes(draft.sizesText).map((label) => ({ label })),
+    images: draft.images.map((image) => ({ url: image.url, alt: draft.name })),
+    colors: draft.colors
+      .filter((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
+      .map((color) => ({ name: color.name.trim(), hex: color.hex.trim() })),
+    sizes: draft.sizes.map((label) => ({ label })),
     status: draft.status,
     inStock: draft.inStock,
     stockMode: draft.stockMode,
@@ -391,9 +430,10 @@ function fromProduct(product: Product): ProductDraft {
     category: product.category,
     priceDzd: String(product.priceDzd),
     compareAtPriceDzd: product.compareAtPriceDzd ? String(product.compareAtPriceDzd) : "",
-    imagesText: product.images.map((image) => image.url).join("\n"),
-    colorsText: product.colors.map((color) => `${color.name}|${color.hex}`).join("\n"),
-    sizesText: product.sizes.map((size) => size.label).join(", "),
+    images: product.images.map((image, index) => ({ id: `image-${index}-${image.url}`, url: image.url })),
+    imageUrlDraft: "",
+    colors: product.colors.length ? product.colors.map((color, index) => ({ id: `color-${index}-${color.hex}`, name: color.name, hex: color.hex })) : [{ id: "color-1", name: "Black", hex: "#111111" }],
+    sizes: product.sizes.map((size) => size.label),
     status: product.status,
     inStock: product.inStock,
     stockMode: product.stockMode === "limited" ? "limited" : "unlimited",

@@ -2,51 +2,57 @@ import type { FormEvent } from "react";
 import type { ProductCategory, ProductStatus } from "@/types/product";
 import { AdminProductField, AdminProductSection } from "@/components/admin/products/AdminProductFields";
 import { AdminProductImagePreview } from "@/components/admin/products/AdminProductImagePreview";
-import type { ParsedColor, ProductDraft } from "@/components/admin/products/types";
+import type { ProductDraft, ProductDraftColor } from "@/components/admin/products/types";
+
+const sizeOptions = ["S", "M", "L", "XL", "XXL"] as const;
 
 type AdminProductFormProps = {
   draft: ProductDraft;
   editingId: string | null;
   errors: string[];
-  imageUrls: string[];
-  parsedColors: ParsedColor[];
-  parsedSizes: string[];
+  onAddColor: () => void;
+  onAddImageUrl: () => void;
   onCancelEdit: () => void;
   onChange: <Key extends keyof ProductDraft>(key: Key, value: ProductDraft[Key]) => void;
+  onColorChange: (id: string, patch: Partial<Omit<ProductDraftColor, "id">>) => void;
+  onRemoveColor: (id: string) => void;
+  onRemoveImage: (id: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onToggleSize: (size: string) => void;
 };
 
 export function AdminProductForm({
   draft,
   editingId,
   errors,
-  imageUrls,
-  parsedColors,
-  parsedSizes,
+  onAddColor,
+  onAddImageUrl,
   onCancelEdit,
   onChange,
+  onColorChange,
+  onRemoveColor,
+  onRemoveImage,
   onSubmit,
+  onToggleSize,
 }: AdminProductFormProps) {
   return (
     <form className="adminProductForm adminCard" onSubmit={onSubmit}>
       <div className="adminCard__heading">
         <p>{editingId ? "EDIT PRODUCT" : "CREATE PRODUCT"}</p>
         <h2>{editingId ? "Edit product" : "Create product"}</h2>
-        <span>Clean product data keeps the storefront stable. Active products can appear publicly.</span>
+        <span>Use the compact editor. Values stay server-validated through the secure admin API.</span>
       </div>
 
       {errors.length ? (
         <div className="adminProductErrors" role="alert">
           <strong>Fix these before saving:</strong>
-          <ul>
-            {errors.map((error) => <li key={error}>{error}</li>)}
-          </ul>
+          <ul>{errors.map((error) => <li key={error}>{error}</li>)}</ul>
         </div>
       ) : null}
 
       <AdminProductSection eyebrow="01" title="Basic info">
         <div className="adminProductGrid adminProductGrid--two">
-          <AdminProductField label="Name" helper="Customer-facing product name.">
+          <AdminProductField label="Product name" helper="Slug preview updates from your slug field.">
             <input placeholder="Oversized Tee" value={draft.name} onChange={(event) => onChange("name", event.target.value)} />
           </AdminProductField>
           <AdminProductField label="Slug" helper="Lowercase URL slug, e.g. oversized-tee.">
@@ -54,19 +60,19 @@ export function AdminProductForm({
           </AdminProductField>
         </div>
         <AdminProductField label="Description" helper="Short product description for product pages.">
-          <textarea placeholder="Built for daily movement..." value={draft.description} onChange={(event) => onChange("description", event.target.value)} />
+          <textarea rows={3} placeholder="Built for daily movement..." value={draft.description} onChange={(event) => onChange("description", event.target.value)} />
         </AdminProductField>
       </AdminProductSection>
 
-      <AdminProductSection eyebrow="02" title="Visibility">
-        <div className="adminProductGrid adminProductGrid--three">
-          <AdminProductField label="Status" helper="Drafts stay hidden. Active products can appear publicly.">
-            <select value={draft.status} onChange={(event) => onChange("status", event.target.value as ProductStatus)}>
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="archived">Archived</option>
-            </select>
-          </AdminProductField>
+      <AdminProductSection eyebrow="02" title="Visibility / status">
+        <div className="adminPillGroup" aria-label="Product status">
+          {(["draft", "active", "archived"] as const).map((status) => (
+            <button className={draft.status === status ? "isSelected" : undefined} key={status} type="button" onClick={() => onChange("status", status as ProductStatus)}>
+              {status}
+            </button>
+          ))}
+        </div>
+        <div className="adminProductGrid adminProductGrid--two">
           <ToggleCard label="In stock" checked={draft.inStock} onChange={(checked) => onChange("inStock", checked)} />
           <ToggleCard label="Promo" checked={draft.isPromo} onChange={(checked) => onChange("isPromo", checked)} />
         </div>
@@ -83,7 +89,7 @@ export function AdminProductForm({
         </div>
       </AdminProductSection>
 
-      <AdminProductSection eyebrow="04" title="Catalog">
+      <AdminProductSection eyebrow="04" title="Category / design / drop">
         <div className="adminProductGrid adminProductGrid--three">
           <AdminProductField label="Category">
             <select value={draft.category} onChange={(event) => onChange("category", event.target.value as ProductCategory)}>
@@ -106,56 +112,72 @@ export function AdminProductForm({
       </AdminProductSection>
 
       <AdminProductSection eyebrow="05" title="Stock">
-        <div className="adminProductGrid adminProductGrid--two">
-          <AdminProductField label="Stock mode">
-            <select value={draft.stockMode} onChange={(event) => onChange("stockMode", event.target.value as ProductDraft["stockMode"])}>
-              <option value="unlimited">Unlimited</option>
-              <option value="limited">Limited</option>
-            </select>
-          </AdminProductField>
-          <AdminProductField label="Stock quantity" helper="Only required when stock mode is limited.">
+        <div className="adminPillGroup" aria-label="Stock mode">
+          {(["unlimited", "limited"] as const).map((mode) => (
+            <button className={draft.stockMode === mode ? "isSelected" : undefined} key={mode} type="button" onClick={() => onChange("stockMode", mode)}>
+              {mode}
+            </button>
+          ))}
+        </div>
+        {draft.stockMode === "limited" ? (
+          <AdminProductField label="Stock quantity" helper="Required when stock mode is limited.">
             <input inputMode="numeric" placeholder="25" value={draft.stockQty} onChange={(event) => onChange("stockQty", event.target.value)} />
           </AdminProductField>
+        ) : <p className="adminProductHint">Unlimited stock does not require a quantity.</p>}
+      </AdminProductSection>
+
+      <AdminProductSection eyebrow="06" title="Sizes">
+        <div className="adminSizeSelector" aria-label="Product sizes">
+          {sizeOptions.map((size) => {
+            const checked = draft.sizes.includes(size);
+            return (
+              <label className={checked ? "isSelected" : undefined} key={size}>
+                <input type="checkbox" checked={checked} onChange={() => onToggleSize(size)} />
+                <span>{size}</span>
+              </label>
+            );
+          })}
+        </div>
+        <div className="adminSelectedPreview">
+          <span>Selected</span>
+          {draft.sizes.length ? draft.sizes.map((size) => <i key={size}>{size}</i>) : <small>No sizes selected. Good for accessories.</small>}
         </div>
       </AdminProductSection>
 
-      <AdminProductSection eyebrow="06" title="Variants">
-        <div className="adminProductGrid adminProductGrid--two">
-          <AdminProductField label="Colors" helper="One per line: Name|#HEX. Example Black|#111111">
-            <textarea placeholder={'Black|#111111\nCream|#f5f1e8'} value={draft.colorsText} onChange={(event) => onChange("colorsText", event.target.value)} />
-          </AdminProductField>
-          <AdminProductField label="Sizes" helper="Comma-separated. Leave empty for accessories.">
-            <input placeholder="S, M, L, XL" value={draft.sizesText} onChange={(event) => onChange("sizesText", event.target.value)} />
-          </AdminProductField>
+      <AdminProductSection eyebrow="07" title="Colors">
+        <div className="adminColorRows">
+          {draft.colors.map((color) => (
+            <div className="adminColorRow" key={color.id}>
+              <label className="adminColorPicker" aria-label={`Pick ${color.name || "color"}`}>
+                <input type="color" value={isHexColor(color.hex) ? color.hex : "#000000"} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} />
+                <span style={{ backgroundColor: isHexColor(color.hex) ? color.hex : "#000000" }} />
+              </label>
+              <AdminProductField label="Color name">
+                <input placeholder="Black" value={color.name} onChange={(event) => onColorChange(color.id, { name: event.target.value })} />
+              </AdminProductField>
+              <AdminProductField label="Hex">
+                <input placeholder="#111111" value={color.hex} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} />
+              </AdminProductField>
+              <button type="button" onClick={() => onRemoveColor(color.id)}>Remove</button>
+            </div>
+          ))}
         </div>
-        <div className="adminVariantPreview">
-          <div>
-            <span>Color preview</span>
-            {parsedColors.length ? (
-              <div className="adminColorDots">
-                {parsedColors.map((color) => <i key={`${color.name}-${color.hex}`} style={{ backgroundColor: color.hex }} title={`${color.name} ${color.hex}`} />)}
-              </div>
-            ) : <small>No valid colors yet.</small>}
-          </div>
-          <div>
-            <span>Size preview</span>
-            {parsedSizes.length ? (
-              <div className="adminSizePills">
-                {parsedSizes.map((size) => <i key={size}>{size}</i>)}
-              </div>
-            ) : <small>No sizes. Good for accessories.</small>}
-          </div>
-        </div>
+        <button className="adminInlineAdd" type="button" onClick={onAddColor}>+ Add color</button>
       </AdminProductSection>
 
-      <AdminProductSection eyebrow="07" title="Images">
-        <AdminProductField label="Image URLs / paths" helper="One URL/path per line. Example /tshirt.png. Cloudinary upload comes later.">
-          <textarea placeholder="/tshirt.png" value={draft.imagesText} onChange={(event) => onChange("imagesText", event.target.value)} />
-        </AdminProductField>
-        <AdminProductImagePreview urls={imageUrls} />
+      <AdminProductSection eyebrow="08" title="Images">
+        <div className="adminUploadPlaceholder">
+          <button type="button" disabled>Upload image</button>
+          <span>Signed Cloudinary upload is not enabled in this sprint. Use URL/path fallback below.</span>
+        </div>
+        <div className="adminProductInlineInput">
+          <input placeholder="/tshirt.png" value={draft.imageUrlDraft} onChange={(event) => onChange("imageUrlDraft", event.target.value)} />
+          <button type="button" onClick={onAddImageUrl}>Add URL/path</button>
+        </div>
+        <AdminProductImagePreview images={draft.images} onRemove={onRemoveImage} />
       </AdminProductSection>
 
-      <AdminProductSection eyebrow="08" title="Homepage placement">
+      <AdminProductSection eyebrow="09" title="Homepage placement">
         <div className="adminProductGrid adminProductGrid--three">
           <ToggleCard label="Show in DROP_001" checked={draft.showInDrop001} onChange={(checked) => onChange("showInDrop001", checked)} />
           <ToggleCard label="Show in Featured Drop" checked={draft.showInFeaturedDrop} onChange={(checked) => onChange("showInFeaturedDrop", checked)} />
@@ -186,4 +208,8 @@ function ToggleCard({ label, checked, onChange }: { label: string; checked: bool
       <span>{label}</span>
     </label>
   );
+}
+
+function isHexColor(value: string) {
+  return /^#[0-9a-fA-F]{6}$/.test(value);
 }

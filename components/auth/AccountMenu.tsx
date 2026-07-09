@@ -172,17 +172,17 @@ export function AccountMenu() {
       </button>
 
       {isOpen ? (
-        <div className="accountModal" role="dialog" aria-modal="true" aria-label="Account menu">
-          <button className="accountModal__backdrop" type="button" aria-label="Close account menu" onClick={closeModal} />
-          <section className="accountModal__panel">
-            <button className="accountModal__close" type="button" aria-label="Close account menu" onClick={closeModal} disabled={busy}>
+        <div className="accountDrawer" role="presentation">
+          <button className="accountDrawer__backdrop" type="button" aria-label="Close account menu" onClick={closeModal} />
+          <section className="accountDrawer__panel" role="menu" aria-label="Account menu">
+            <button className="accountDrawer__close" type="button" aria-label="Close account menu" onClick={closeModal} disabled={busy}>
               <IconClose />
             </button>
 
-            <div className="accountModal__header">
+            <div className="accountDrawer__header">
               <p className="accountMenu__eyebrow">ACCOUNT</p>
               <h2>{modalTitle}</h2>
-              <p className="accountModal__intro">BUILT. NOT FOUND. Manage orders, saved pieces, and admin access from one clean account panel.</p>
+              <p className="accountDrawer__intro">BUILT. NOT FOUND. Manage orders, saved pieces, and admin access from one clean account panel.</p>
             </div>
 
             {user ? (
