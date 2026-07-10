@@ -27,7 +27,10 @@ export type Product = {
   category: ProductCategory;
   status: ProductStatus;
   priceDzd: number;
+  basePriceDzd?: number | null;
   compareAtPriceDzd: number | null;
+  costPriceDzd?: number | null;
+  discountPercent?: number;
   images: ProductImage[];
   colors: ProductColor[];
   sizes: ProductSize[];
@@ -35,6 +38,9 @@ export type Product = {
   stockQty: number | null;
   inStock: boolean;
   featured: boolean;
+  sizeGuideEnabled?: boolean;
+  sizeGuideImageUrl?: string | null;
+  sizeGuideImagePublicId?: string | null;
   isPromo: boolean;
   dropSlug: "drop-001" | null;
   sortOrder: number;

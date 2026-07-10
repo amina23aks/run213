@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
@@ -73,11 +74,11 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       <div className="productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
         <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`}>♡</button>
-        <Image src={product.image} alt={`${product.name} placeholder`} width={420} height={520} />
+        {sourceProduct ? <Link href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}><Image src={product.image} alt={`${product.name} product image`} width={420} height={520} /></Link> : <Image src={product.image} alt={`${product.name} placeholder`} width={420} height={520} />}
       </div>
 
       <div className="productInfo">
-        <h3 className="productTitle">{product.name}</h3>
+        <h3 className="productTitle">{sourceProduct ? <Link href={`/product/${sourceProduct.slug}`}>{product.name}</Link> : product.name}</h3>
         <div className="productPriceRow">
           <span className="currentPrice">{product.price}</span>
           {product.oldPrice ? <span className="oldPrice">{product.oldPrice}</span> : null}

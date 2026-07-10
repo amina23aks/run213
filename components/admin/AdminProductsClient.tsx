@@ -35,17 +35,22 @@ const emptyDraft: ProductDraft = {
   slug: "",
   description: "",
   category: "tshirts",
+  basePriceDzd: "",
   priceDzd: "",
+  discountPercent: "0",
+  costPriceDzd: "",
   compareAtPriceDzd: "",
   images: [],
-  imageUrlDraft: "",
   colors: [{ id: "color-1", name: "Black", hex: "#111111" }],
   sizes: ["S", "M", "L", "XL"],
   status: "draft",
-  inStock: true,
   stockMode: "unlimited",
   stockQty: "",
   isPromo: false,
+  featured: false,
+  sizeGuideEnabled: false,
+  sizeGuideImageUrl: "",
+  sizeGuideImagePublicId: "",
   dropSlug: "drop-001",
   sortOrder: "100",
   showInDrop001: false,
@@ -65,8 +70,16 @@ export function AdminProductsClient() {
   const [missingServerEnv, setMissingServerEnv] = useState<string[]>([]);
   const [cloudinaryConfigured, setCloudinaryConfigured] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingSizeGuide, setUploadingSizeGuide] = useState(false);
   const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Sign in with an approved admin email.");
   const [formErrors, setFormErrors] = useState<string[]>([]);
+
+  const showTemporaryMessage = useCallback((nextMessage: string) => {
+    setMessage(nextMessage);
+    window.setTimeout(() => {
+      setMessage((current) => current === nextMessage ? "" : current);
+    }, 3200);
+  }, []);
 
   const adminFetch = useCallback(
     async (url: string, init?: RequestInit) => {
@@ -97,13 +110,13 @@ export function AdminProductsClient() {
         setProducts((current) => (cursor ? [...current, ...data.products] : data.products));
         setNextCursor(data.nextCursor);
         setIsAuthorized(true);
-        setMessage("Products loaded.");
+        showTemporaryMessage("Products loaded.");
       } catch {
         setIsAuthorized(false);
         setMessage("Access denied or Firebase admin env is missing.");
       }
     },
-    [adminFetch],
+    [adminFetch, showTemporaryMessage],
   );
 
   useEffect(() => {
@@ -142,7 +155,7 @@ export function AdminProductsClient() {
                 setProducts(data.products);
                 setNextCursor(data.nextCursor);
                 setIsAuthorized(true);
-                setMessage("Products loaded.");
+                showTemporaryMessage("Products loaded.");
               })
               .catch(() => {
                 setIsAuthorized(false);
@@ -154,7 +167,7 @@ export function AdminProductsClient() {
       .catch(() => setMessage("Firebase client env is missing."));
 
     return () => unsubscribe?.();
-  }, []);
+  }, [showTemporaryMessage]);
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -174,7 +187,7 @@ export function AdminProductsClient() {
       setDraft(emptyDraft);
       setEditingId(null);
       await loadProducts();
-      setMessage("Product saved.");
+      showTemporaryMessage("Product saved.");
     } catch (error) {
       setMessage(formatAdminError(error));
     }
@@ -184,7 +197,7 @@ export function AdminProductsClient() {
     try {
       await adminFetch(`/api/admin/products/${id}`, { method: "DELETE" });
       await loadProducts();
-      setMessage("Product archived.");
+      showTemporaryMessage("Product archived.");
     } catch (error) {
       setMessage(formatAdminError(error));
     }
@@ -209,17 +222,24 @@ export function AdminProductsClient() {
   }
 
 
-  async function uploadImage(file: File) {
+
+
+  async function uploadImage(file: File, kind: "product" | "sizeGuide" = "product") {
     if (!user) {
       setMessage("Sign in with an approved admin email before uploading images.");
       return;
     }
 
-    setUploadingImage(true);
+    if (kind === "sizeGuide") {
+      setUploadingSizeGuide(true);
+    } else {
+      setUploadingImage(true);
+    }
     try {
       const token = await user.getIdToken();
       const body = new FormData();
       body.append("file", file);
+      body.append("kind", kind);
       const response = await fetch("/api/admin/uploads/image", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -237,31 +257,26 @@ export function AdminProductsClient() {
 
       const uploadedImageUrl = data.secureUrl;
       const uploadedImageId = typeof data.publicId === "string" ? data.publicId : `image-${Date.now()}`;
-      setDraft((current) => ({
+      setDraft((current) => kind === "sizeGuide" ? {
+        ...current,
+        sizeGuideEnabled: true,
+        sizeGuideImageUrl: uploadedImageUrl,
+        sizeGuideImagePublicId: uploadedImageId,
+      } : {
         ...current,
         images: [...current.images, { id: uploadedImageId, url: uploadedImageUrl }],
-      }));
+      });
       setFormErrors([]);
       setMessage("Image uploaded.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Image upload failed. Try again.");
     } finally {
-      setUploadingImage(false);
+      if (kind === "sizeGuide") {
+        setUploadingSizeGuide(false);
+      } else {
+        setUploadingImage(false);
+      }
     }
-  }
-
-  function addImageUrl() {
-    const url = draft.imageUrlDraft.trim();
-    if (!url) {
-      setMessage("Enter an image URL or path first.");
-      return;
-    }
-    setDraft((current) => ({
-      ...current,
-      imageUrlDraft: "",
-      images: [...current.images, { id: `image-${Date.now()}`, url }],
-    }));
-    setFormErrors([]);
   }
 
   function removeImage(id: string) {
@@ -318,7 +333,6 @@ export function AdminProductsClient() {
           editingId={editingId}
           errors={formErrors}
           onAddColor={addColor}
-          onAddImageUrl={addImageUrl}
           onCancelEdit={cancelEdit}
           onChange={setDraftField}
           onColorChange={updateColor}
@@ -326,8 +340,10 @@ export function AdminProductsClient() {
           onRemoveImage={removeImage}
           onSubmit={saveProduct}
           onToggleSize={toggleSize}
-          onUploadImage={uploadImage}
+          onUploadImage={(file) => uploadImage(file, "product")}
+          onUploadSizeGuide={(file) => uploadImage(file, "sizeGuide")}
           uploadingImage={uploadingImage}
+          uploadingSizeGuide={uploadingSizeGuide}
           cloudinaryConfigured={cloudinaryConfigured}
         />
         <AdminProductList products={products} nextCursor={nextCursor} onArchive={archiveProduct} onEdit={editProduct} onLoadMore={loadProducts} />
@@ -354,9 +370,8 @@ function AdminAccessState({ missingClientEnv, missingServerEnv, message }: { mis
 function validateDraft(draft: ProductDraft): string[] {
   const errors: string[] = [];
   if (!draft.name.trim()) errors.push("Product name is required.");
-  if (!draft.slug.trim()) errors.push("Slug is required.");
   if (!draft.priceDzd.trim()) errors.push("Price DZD is required.");
-  if (!draft.images.length) errors.push("Add at least one image path, for example /tshirt.png.");
+  if (!draft.images.length) errors.push("Upload at least one product image.");
   if (!draft.colors.some((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))) errors.push("Add at least one color with a name and valid #HEX value.");
   if (draft.stockMode === "limited" && !draft.stockQty.trim()) errors.push("Stock quantity is required when stock mode is limited.");
   return errors;
@@ -389,21 +404,28 @@ function formatAdminError(error: unknown): string {
 function toPayload(draft: ProductDraft) {
   return {
     name: draft.name,
-    slug: draft.slug,
+    slug: slugify(draft.name),
     description: draft.description,
     category: draft.category,
+    basePriceDzd: draft.basePriceDzd || draft.priceDzd,
     priceDzd: draft.priceDzd,
     compareAtPriceDzd: draft.compareAtPriceDzd,
+    costPriceDzd: draft.costPriceDzd,
+    discountPercent: draft.discountPercent,
     images: draft.images.map((image) => ({ url: image.url, alt: draft.name })),
     colors: draft.colors
       .filter((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
       .map((color) => ({ name: color.name.trim(), hex: color.hex.trim() })),
     sizes: draft.sizes.map((label) => ({ label })),
     status: draft.status,
-    inStock: draft.inStock,
+    inStock: draft.stockMode === "unlimited" || Number(draft.stockQty) > 0,
     stockMode: draft.stockMode,
     stockQty: draft.stockQty,
     isPromo: draft.isPromo,
+    featured: draft.featured,
+    sizeGuideEnabled: draft.sizeGuideEnabled,
+    sizeGuideImageUrl: draft.sizeGuideImageUrl,
+    sizeGuideImagePublicId: draft.sizeGuideImagePublicId,
     dropSlug: draft.dropSlug,
     sortOrder: draft.sortOrder,
     showInDrop001: draft.showInDrop001,
@@ -420,17 +442,22 @@ function fromProduct(product: Product): ProductDraft {
     slug: product.slug,
     description: product.description,
     category: product.category,
+    basePriceDzd: product.basePriceDzd ? String(product.basePriceDzd) : String(product.compareAtPriceDzd ?? product.priceDzd),
     priceDzd: String(product.priceDzd),
+    discountPercent: String(product.discountPercent ?? 0),
+    costPriceDzd: product.costPriceDzd ? String(product.costPriceDzd) : "",
     compareAtPriceDzd: product.compareAtPriceDzd ? String(product.compareAtPriceDzd) : "",
     images: product.images.map((image, index) => ({ id: `image-${index}-${image.url}`, url: image.url })),
-    imageUrlDraft: "",
     colors: product.colors.length ? product.colors.map((color, index) => ({ id: `color-${index}-${color.hex}`, name: color.name, hex: color.hex })) : [{ id: "color-1", name: "Black", hex: "#111111" }],
     sizes: product.sizes.map((size) => size.label),
-    status: product.status,
-    inStock: product.inStock,
+    status: product.status === "archived" ? "draft" : product.status,
     stockMode: product.stockMode === "limited" ? "limited" : "unlimited",
     stockQty: product.stockQty === null ? "" : String(product.stockQty),
     isPromo: product.isPromo,
+    featured: product.featured,
+    sizeGuideEnabled: product.sizeGuideEnabled ?? false,
+    sizeGuideImageUrl: product.sizeGuideImageUrl ?? "",
+    sizeGuideImagePublicId: product.sizeGuideImagePublicId ?? "",
     dropSlug: product.dropSlug ?? "",
     sortOrder: String(product.sortOrder),
     showInDrop001: product.showInDrop001,
@@ -439,4 +466,8 @@ function fromProduct(product: Product): ProductDraft {
     featuredSortOrder: product.featuredSortOrder === null ? "" : String(product.featuredSortOrder),
     lookGroupSlug: product.lookGroupSlug ?? "",
   };
+}
+
+function slugify(value: string): string {
+  return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 }

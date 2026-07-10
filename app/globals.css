@@ -2787,3 +2787,84 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   font-size: 0.78rem;
   line-height: 1.45;
 }
+
+.adminPricingStats {
+  align-items: center;
+  background: rgba(199, 244, 0, 0.10);
+  border: 1px solid rgba(199, 244, 0, 0.35);
+  border-radius: 18px;
+  color: var(--admin-text);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  text-transform: uppercase;
+}
+
+.adminPillGroup--wrap { flex-wrap: wrap; }
+
+.adminSizeGuideThumb {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.adminSizeGuideThumb img {
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  height: 80px;
+  object-fit: cover;
+  width: 80px;
+}
+
+.productSizeGuideLink {
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+
+.productSizeGuideModal {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 90;
+}
+
+.productSizeGuideModal > div {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  max-width: min(92vw, 460px);
+  padding: 1rem;
+  position: relative;
+}
+
+.productSizeGuideModal button {
+  background: var(--accent);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  height: 2rem;
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  width: 2rem;
+}
+
+.productSizeGuideModal img {
+  border-radius: 16px;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  width: 100%;
+}
