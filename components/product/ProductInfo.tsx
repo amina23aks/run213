@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
@@ -15,6 +16,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [cartMessage, setCartMessage] = useState<string | null>(null);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const maxQuantity = product.stockMode === "limited" && typeof product.stockQty === "number" ? product.stockQty : undefined;
   const isOutOfStock = !product.inStock || product.status !== "active" || (product.stockMode === "limited" && (product.stockQty ?? 0) <= 0);
   const requiresColor = product.colors.length > 0;
@@ -83,7 +85,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
         <div className="productOptionGroup">
           <div className="productOptionGroup__header">
             <span>Size</span>
-            <a href="#">Size guide</a>
+            {product.sizeGuideEnabled && product.sizeGuideImageUrl ? <button className="productSizeGuideLink" type="button" onClick={() => setIsSizeGuideOpen(true)}>Size guide</button> : null}
           </div>
           <div className="productSizeOptions" aria-label="Size options">
             {product.sizes.map((size) => (
@@ -109,6 +111,14 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
       {cartMessage ? <p className="productDeliveryNote" role="status">{cartMessage}</p> : null}
       <p className="productDeliveryNote">Cash on delivery. Delivery details are confirmed at checkout later.</p>
+      {isSizeGuideOpen && product.sizeGuideImageUrl ? (
+        <div className="productSizeGuideModal" role="dialog" aria-modal="true" aria-label="Size guide">
+          <div>
+            <button type="button" aria-label="Close size guide" onClick={() => setIsSizeGuideOpen(false)}>×</button>
+            <Image src={product.sizeGuideImageUrl} alt={`${product.name} size guide`} width={420} height={420} unoptimized />
+          </div>
+        </div>
+      ) : null}
     </aside>
   );
 }

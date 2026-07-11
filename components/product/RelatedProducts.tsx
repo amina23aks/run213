@@ -1,17 +1,18 @@
 import { ProductCard } from "@/components/home/ProductCard";
-import { relatedDropProducts, toProductCardView } from "@/constants/products";
+import { toProductCardView } from "@/constants/products";
+import type { Product } from "@/types/product";
 
-export function RelatedProducts() {
+export function RelatedProducts({ products }: { products: Product[] }) {
+  if (!products.length) return null;
+
   return (
-    <section className="relatedProducts" aria-labelledby="related-products-title">
+    <section className="relatedProducts" aria-labelledby="related-title">
       <div className="relatedProducts__header">
-        <span className="section-number">03</span>
-        <h2 id="related-products-title">MORE FROM DROP_001</h2>
+        <span>KEEP BUILDING</span>
+        <h2 id="related-title">RELATED PRODUCTS</h2>
       </div>
       <div className="relatedProducts__grid">
-        {relatedDropProducts.map((product) => (
-          <ProductCard product={toProductCardView(product)} sourceProduct={product} key={product.slug} promo={product.isPromo} />
-        ))}
+        {products.map((product) => <ProductCard product={toProductCardView(product)} sourceProduct={product} key={product.id} promo={product.isPromo} />)}
       </div>
     </section>
   );

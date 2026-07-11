@@ -4,12 +4,9 @@ import { Header } from "@/components/layout/Header";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
-import { shopProducts } from "@/constants/products";
-import { getProductBySlug } from "@/lib/firestore/products";
+import { getProductBySlug, listActiveProducts } from "@/lib/firestore/products";
 
-export function generateStaticParams() {
-  return shopProducts.map((product) => ({ slug: product.slug }));
-}
+export const dynamic = "force-dynamic";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -29,7 +26,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductGallery product={product} />
           <ProductInfo product={product} />
         </section>
-        <RelatedProducts />
+        <RelatedProducts products={(await listActiveProducts(4)).filter((relatedProduct) => relatedProduct.slug !== product.slug)} />
       </main>
       <div className="club-footer-shell">
         <Footer />

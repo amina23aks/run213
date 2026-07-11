@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const CLOUDINARY_FOLDER = "run213/products";
+const CLOUDINARY_FOLDERS = { product: "run213/products", sizeGuide: "run213/size-guides", lookCollection: "run213/look-collections", lookHero: "run213/looks" } as const;
 
 type CloudinaryUploadResponse = {
   secure_url?: unknown;
@@ -28,6 +28,9 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const file = formData.get("file");
+  const kindValue = formData.get("kind");
+  const kind = getUploadKind(kindValue);
+  const folder = CLOUDINARY_FOLDERS[kind];
 
   if (!(file instanceof File)) {
     return adminJsonError("Choose an image file to upload.", 400);
@@ -42,12 +45,12 @@ export async function POST(request: Request) {
   }
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const signature = createCloudinarySignature({ folder: CLOUDINARY_FOLDER, timestamp }, apiSecret);
+  const signature = createCloudinarySignature({ folder, timestamp }, apiSecret);
   const uploadFormData = new FormData();
   uploadFormData.append("file", file, file.name || "product-image");
   uploadFormData.append("api_key", apiKey);
   uploadFormData.append("timestamp", timestamp);
-  uploadFormData.append("folder", CLOUDINARY_FOLDER);
+  uploadFormData.append("folder", folder);
   uploadFormData.append("signature", signature);
 
   try {
@@ -87,4 +90,9 @@ function getCloudinaryErrorMessage(payload: CloudinaryUploadResponse) {
   return typeof payload.error?.message === "string" && payload.error.message.trim()
     ? payload.error.message
     : "Image upload failed. Try again.";
+}
+
+function getUploadKind(value: FormDataEntryValue | null): keyof typeof CLOUDINARY_FOLDERS {
+  if (value === "sizeGuide" || value === "lookCollection" || value === "lookHero") return value;
+  return "product";
 }

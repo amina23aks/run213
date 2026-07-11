@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
@@ -70,10 +71,11 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
 
   return (
     <article className="productCard">
+      {sourceProduct ? <Link className="productCard__mainLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`} /> : null}
       <div className="productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
-        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`}>♡</button>
-        <Image src={product.image} alt={`${product.name} placeholder`} width={420} height={520} />
+        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`} onClick={(event) => event.stopPropagation()}>♡</button>
+        <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
       </div>
 
       <div className="productInfo">
@@ -93,7 +95,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
               type="button"
               aria-label={`Select ${color.name}`}
               aria-pressed={color.name === selectedColor}
-              onClick={() => handleColorSelect(color.name)}
+              onClick={(event) => { event.stopPropagation(); handleColorSelect(color.name); }}
             />
           )) : product.colors.map((color, index) => (
             <span
@@ -108,7 +110,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
           {sourceProduct ? (
             sourceProduct.sizes.length ? (
               <div className="sizeChips" aria-label={`${product.name} sizes`}>
-                {sourceProduct.sizes.map((size) => <button className={size.label === selectedSize ? "isSelected" : undefined} type="button" key={size.label} aria-pressed={size.label === selectedSize} onClick={() => handleSizeSelect(size.label)}>{size.label}</button>)}
+                {sourceProduct.sizes.map((size) => <button className={size.label === selectedSize ? "isSelected" : undefined} type="button" key={size.label} aria-pressed={size.label === selectedSize} onClick={(event) => { event.stopPropagation(); handleSizeSelect(size.label); }}>{size.label}</button>)}
               </div>
             ) : null
           ) : product.sizes ? (
@@ -117,7 +119,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
             </div>
           ) : null}
           <div className="addButtonRow">
-            <button className="addButton" type="button" aria-label={`Add ${product.name}`} disabled={isUnavailable} onClick={handleAddToCart}>+</button>
+            <button className="addButton" type="button" aria-label={`Add ${product.name}`} disabled={isUnavailable} onClick={(event) => { event.stopPropagation(); handleAddToCart(); }}>+</button>
           </div>
           {helperMessage ? <p className="productCardHelper" role="status">{helperMessage}</p> : null}
         </div>

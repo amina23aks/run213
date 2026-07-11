@@ -1,3 +1,4 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -34,7 +35,9 @@ export async function PUT(request: Request, { params }: Params) {
   const duplicate = slugSnapshot.docs.find((doc) => doc.id !== id);
   if (duplicate) return adminJsonError("A product with this slug already exists.", 409);
 
+  const previousSlug = current.get("slug");
   await docRef.update({ ...parsed.data, updatedAt: FieldValue.serverTimestamp(), updatedBy: admin.email });
+  revalidateProductStorefront(parsed.data.slug, typeof previousSlug === "string" ? previousSlug : undefined);
   return Response.json({ id });
 }
 
@@ -43,6 +46,18 @@ export async function DELETE(request: Request, { params }: Params) {
   if (!admin) return adminJsonError("Unauthorized", 401);
 
   const { id } = await params;
-  await getAdminDb().collection(COLLECTION).doc(id).update({ status: "archived", updatedAt: FieldValue.serverTimestamp(), updatedBy: admin.email });
+  const docRef = getAdminDb().collection(COLLECTION).doc(id);
+  const current = await docRef.get();
+  await docRef.update({ status: "archived", updatedAt: FieldValue.serverTimestamp(), updatedBy: admin.email });
+  const slug = current.get("slug");
+  revalidateProductStorefront(typeof slug === "string" ? slug : undefined);
   return Response.json({ id, status: "archived" });
+}
+
+function revalidateProductStorefront(slug?: string, previousSlug?: string) {
+  revalidateTag("products", "max");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  if (slug) revalidatePath(`/product/${slug}`);
+  if (previousSlug && previousSlug !== slug) revalidatePath(`/product/${previousSlug}`);
 }

@@ -9,6 +9,8 @@ export type ProductDraftColor = {
 export type ProductDraftImage = {
   id: string;
   url: string;
+  publicId?: string;
+  alt?: string;
 };
 
 export type ProductDraft = {
@@ -16,17 +18,22 @@ export type ProductDraft = {
   slug: string;
   description: string;
   category: ProductCategory;
+  basePriceDzd: string;
   priceDzd: string;
+  discountPercent: string;
+  costPriceDzd: string;
   compareAtPriceDzd: string;
   images: ProductDraftImage[];
-  imageUrlDraft: string;
   colors: ProductDraftColor[];
   sizes: string[];
-  status: ProductStatus;
-  inStock: boolean;
+  status: Exclude<ProductStatus, "archived">;
   stockMode: Extract<ProductStockMode, "unlimited" | "limited">;
   stockQty: string;
   isPromo: boolean;
+  featured: boolean;
+  sizeGuideEnabled: boolean;
+  sizeGuideImageUrl: string;
+  sizeGuideImagePublicId: string;
   dropSlug: "drop-001" | "";
   sortOrder: string;
   showInDrop001: boolean;

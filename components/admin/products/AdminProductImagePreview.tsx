@@ -11,7 +11,7 @@ export function AdminProductImagePreview({ images, onRemove }: AdminProductImage
     return (
       <div className="adminProductImageEmpty">
         <strong>No images yet.</strong>
-        <span>Add a URL or local path. Example /tshirt.png</span>
+        <span>Upload product images from Cloudinary.</span>
       </div>
     );
   }

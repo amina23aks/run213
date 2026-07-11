@@ -1,74 +1,124 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { shopProducts, getStaticProductBySlug } from "@/constants/products";
 import { getMissingFirebaseAdminEnv } from "@/lib/env";
 import type { Product, ProductCategory, ProductColor, ProductImage, ProductSize, ProductStockMode } from "@/types/product";
 
 const PRODUCTS_COLLECTION = "products";
 const DEFAULT_PRODUCT_LIMIT = 12;
-const MAX_PRODUCT_LIMIT = 24;
+const MAX_PRODUCT_LIMIT = 60;
+const ACTIVE_PRODUCT_READ_LIMIT = 60;
 
 export async function listActiveProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
-  if (!isAdminFirestoreConfigured()) {
-    return shopProducts.slice(0, clampLimit(requestedLimit));
+  noStore();
+  const limit = clampLimit(requestedLimit);
+
+  if (shouldUseStaticFallback()) {
+    return shopProducts.slice(0, limit);
   }
 
+  if (!isAdminFirestoreConfigured()) {
+    warnProducts("Firestore admin env is not configured; returning no storefront products. Set USE_STATIC_PRODUCT_FALLBACK=true for local demo fixtures.");
+    return [];
+  }
 
   try {
-    const { getAdminDb } = await import("@/lib/firebase/admin");
-    const snapshot = await getAdminDb()
-      .collection(PRODUCTS_COLLECTION)
-      .where("status", "==", "active")
-      .orderBy("sortOrder", "asc")
-      .limit(clampLimit(requestedLimit))
-      .get();
-    const products = snapshot.docs.map((doc) => parseProduct(doc.id, doc.data())).filter((product): product is Product => product !== null);
-
-    return products.length ? products : shopProducts.slice(0, clampLimit(requestedLimit));
-  } catch {
-    console.warn("Falling back to static products because active products could not be read with the server admin API.");
-    return shopProducts.slice(0, clampLimit(requestedLimit));
+    const products = await readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT);
+    return sortByProductOrder(products).slice(0, limit);
+  } catch (error) {
+    warnProducts("Active product query failed; returning no storefront products.", error);
+    return [];
   }
 }
 
 export async function listActiveProductsByPlacement(placement: "showInDrop001" | "showInFeaturedDrop", requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
-  const fallbackProducts = shopProducts
-    .filter((product) => product[placement])
-    .sort((a, b) => getPlacementSortOrder(a, placement) - getPlacementSortOrder(b, placement))
-    .slice(0, clampLimit(requestedLimit));
+  noStore();
+  const limit = clampLimit(requestedLimit);
+
+  if (shouldUseStaticFallback()) {
+    return shopProducts
+      .filter((product) => product[placement])
+      .sort((a, b) => getPlacementSortOrder(a, placement) - getPlacementSortOrder(b, placement))
+      .slice(0, limit);
+  }
 
   if (!isAdminFirestoreConfigured()) {
-    return fallbackProducts;
+    warnProducts(`Firestore admin env is not configured; returning no ${placement} products.`);
+    return [];
+  }
+
+  try {
+    const products = await readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT);
+    return products
+      .filter((product) => product[placement] === true)
+      .sort((a, b) => getPlacementSortOrder(a, placement) - getPlacementSortOrder(b, placement))
+      .slice(0, limit);
+  } catch (error) {
+    warnProducts(`Active ${placement} product query failed; returning no storefront products.`, error);
+    return [];
+  }
+}
+
+export async function listActivePromoProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
+  noStore();
+  const limit = clampLimit(requestedLimit);
+
+  if (shouldUseStaticFallback()) {
+    return shopProducts.filter((product) => product.isPromo || product.showInFeaturedDrop).sort((a, b) => getPlacementSortOrder(a, "showInFeaturedDrop") - getPlacementSortOrder(b, "showInFeaturedDrop")).slice(0, limit);
+  }
+
+  if (!isAdminFirestoreConfigured()) {
+    warnProducts("Firestore admin env is not configured; returning no promo products.");
+    return [];
+  }
+
+  try {
+    const products = await readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT);
+    return products
+      .filter((product) => product.isPromo === true || product.showInFeaturedDrop === true || product.featured === true)
+      .sort((a, b) => getPlacementSortOrder(a, "showInFeaturedDrop") - getPlacementSortOrder(b, "showInFeaturedDrop"))
+      .slice(0, limit);
+  } catch (error) {
+    warnProducts("Active promo product query failed; returning no storefront products.", error);
+    return [];
+  }
+}
+
+export async function getActiveProductsByIds(productIds: string[]): Promise<Map<string, Product>> {
+  noStore();
+  const products = new Map<string, Product>();
+  const uniqueIds = Array.from(new Set(productIds.filter(Boolean)));
+
+  if (!uniqueIds.length || !isAdminFirestoreConfigured() || shouldUseStaticFallback()) {
+    if (shouldUseStaticFallback()) {
+      shopProducts.filter((product) => uniqueIds.includes(product.id)).forEach((product) => products.set(product.id, product));
+    }
+    return products;
   }
 
   try {
     const { getAdminDb } = await import("@/lib/firebase/admin");
-    const sortField = placement === "showInFeaturedDrop" ? "featuredSortOrder" : "sortOrder";
-    const snapshot = await getAdminDb()
-      .collection(PRODUCTS_COLLECTION)
-      .where("status", "==", "active")
-      .where(placement, "==", true)
-      .orderBy(sortField, "asc")
-      .limit(clampLimit(requestedLimit))
-      .get();
-    const products = snapshot.docs.map((doc) => parseProduct(doc.id, doc.data())).filter((product): product is Product => product !== null);
-
-    return products.length ? products : fallbackProducts;
-  } catch {
-    console.warn(`Falling back to static products because server active ${placement} products could not be read.`);
-    return fallbackProducts;
-  }
-}
-
-function getPlacementSortOrder(product: Product, placement: "showInDrop001" | "showInFeaturedDrop"): number {
-  if (placement === "showInFeaturedDrop") {
-    return product.featuredSortOrder ?? product.sortOrder;
+    await Promise.all(uniqueIds.map(async (id) => {
+      const snapshot = await getAdminDb().collection(PRODUCTS_COLLECTION).doc(id).get();
+      const product = snapshot.exists ? parseProduct(snapshot.id, snapshot.data() ?? {}) : null;
+      if (product) products.set(id, product);
+    }));
+  } catch (error) {
+    warnProducts("Connected look products could not be resolved.", error);
   }
 
-  return product.sortOrder;
+  return products;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  if (!isAdminFirestoreConfigured()) {
+  noStore();
+
+  if (shouldUseStaticFallback()) {
     return getStaticProductBySlug(slug) ?? null;
+  }
+
+  if (!isAdminFirestoreConfigured()) {
+    warnProducts(`Firestore admin env is not configured; product "${slug}" cannot be loaded.`);
+    return null;
   }
 
   try {
@@ -79,25 +129,46 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       .where("status", "==", "active")
       .limit(1)
       .get();
-    const product = snapshot.docs[0] ? parseProduct(snapshot.docs[0].id, snapshot.docs[0].data()) : null;
-
-    return product ?? getStaticProductBySlug(slug) ?? null;
-  } catch {
-    console.warn(`Falling back to static product for slug "${slug}" because server active product read failed.`);
-    return getStaticProductBySlug(slug) ?? null;
+    return snapshot.docs[0] ? parseProduct(snapshot.docs[0].id, snapshot.docs[0].data()) : null;
+  } catch (error) {
+    warnProducts(`Active product lookup failed for slug "${slug}"; returning not found.`, error);
+    return null;
   }
+}
+
+async function readActiveProducts(limit: number): Promise<Product[]> {
+  const { getAdminDb } = await import("@/lib/firebase/admin");
+  const snapshot = await getAdminDb()
+    .collection(PRODUCTS_COLLECTION)
+    .where("status", "==", "active")
+    .limit(limit)
+    .get();
+
+  return snapshot.docs
+    .map((doc) => parseProduct(doc.id, doc.data()))
+    .filter((product): product is Product => product !== null);
 }
 
 function isAdminFirestoreConfigured(): boolean {
   return getMissingFirebaseAdminEnv().length === 0;
 }
 
-function clampLimit(requestedLimit: number): number {
-  if (!Number.isFinite(requestedLimit)) {
-    return DEFAULT_PRODUCT_LIMIT;
-  }
+function shouldUseStaticFallback(): boolean {
+  return process.env.USE_STATIC_PRODUCT_FALLBACK === "true";
+}
 
+function clampLimit(requestedLimit: number): number {
+  if (!Number.isFinite(requestedLimit)) return DEFAULT_PRODUCT_LIMIT;
   return Math.min(Math.max(Math.trunc(requestedLimit), 1), MAX_PRODUCT_LIMIT);
+}
+
+function sortByProductOrder(products: Product[]): Product[] {
+  return [...products].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+}
+
+function getPlacementSortOrder(product: Product, placement: "showInDrop001" | "showInFeaturedDrop"): number {
+  if (placement === "showInFeaturedDrop") return product.featuredSortOrder ?? product.sortOrder;
+  return product.sortOrder;
 }
 
 function parseProduct(id: string, data: Record<string, unknown>): Product | null {
@@ -105,12 +176,10 @@ function parseProduct(id: string, data: Record<string, unknown>): Product | null
     return null;
   }
 
-  const images = parseImages(data.images);
+  const images = parseImages(data.images, data.name);
   const colors = parseColors(data.colors);
 
-  if (!images.length || !colors.length) {
-    return null;
-  }
+  if (!images.length || !colors.length) return null;
 
   return {
     id,
@@ -119,83 +188,69 @@ function parseProduct(id: string, data: Record<string, unknown>): Product | null
     description: isString(data.description) ? data.description : "Built for daily movement. Soft, structured, and made for the runners who show up.",
     details: parseStringArray(data.details),
     category: data.category,
-    status: data.status,
+    status: "active",
     priceDzd: data.priceDzd,
+    basePriceDzd: isNumber(data.basePriceDzd) ? data.basePriceDzd : null,
     compareAtPriceDzd: isNumber(data.compareAtPriceDzd) ? data.compareAtPriceDzd : null,
+    costPriceDzd: isNumber(data.costPriceDzd) ? data.costPriceDzd : null,
+    discountPercent: isNumber(data.discountPercent) ? data.discountPercent : 0,
     images,
     colors,
     sizes: parseSizes(data.sizes),
-    stockMode: isStockMode(data.stockMode) ? data.stockMode : "made_to_order",
+    stockMode: isStockMode(data.stockMode) ? data.stockMode : "unlimited",
     stockQty: isNumber(data.stockQty) ? data.stockQty : null,
-    inStock: typeof data.inStock === "boolean" ? data.inStock : true,
+    inStock: isInStock(data),
     featured: typeof data.featured === "boolean" ? data.featured : false,
-    showInDrop001: typeof data.showInDrop001 === "boolean" ? data.showInDrop001 : false,
-    showInFeaturedDrop: typeof data.showInFeaturedDrop === "boolean" ? data.showInFeaturedDrop : false,
-    showInShopTheLook: typeof data.showInShopTheLook === "boolean" ? data.showInShopTheLook : false,
+    sizeGuideEnabled: typeof data.sizeGuideEnabled === "boolean" ? data.sizeGuideEnabled : false,
+    sizeGuideImageUrl: isString(data.sizeGuideImageUrl) ? data.sizeGuideImageUrl : null,
+    sizeGuideImagePublicId: isString(data.sizeGuideImagePublicId) ? data.sizeGuideImagePublicId : null,
+    showInDrop001: data.showInDrop001 === true,
+    showInFeaturedDrop: data.showInFeaturedDrop === true,
+    showInShopTheLook: data.showInShopTheLook === true,
     featuredSortOrder: isNumber(data.featuredSortOrder) ? data.featuredSortOrder : null,
     lookGroupSlug: isString(data.lookGroupSlug) ? data.lookGroupSlug : null,
-    isPromo: typeof data.isPromo === "boolean" ? data.isPromo : false,
+    isPromo: data.isPromo === true,
     dropSlug: data.dropSlug === "drop-001" ? "drop-001" : null,
     sortOrder: isNumber(data.sortOrder) ? data.sortOrder : 999,
-    createdAt: isString(data.createdAt) ? data.createdAt : null,
-    updatedAt: isString(data.updatedAt) ? data.updatedAt : null,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
   };
 }
 
-function parseImages(value: unknown): ProductImage[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
+function isInStock(data: Record<string, unknown>): boolean {
+  if (data.stockMode === "limited") return isNumber(data.stockQty) && data.stockQty > 0;
+  return data.inStock !== false;
+}
 
-  return value.filter(isProductImage);
+function parseImages(value: unknown, productName: string): ProductImage[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry, index) => {
+    if (typeof entry === "string" && entry.trim()) return [{ url: entry.trim(), alt: `${productName} image ${index + 1}` }];
+    if (!isRecord(entry) || !isString(entry.url)) return [];
+    return [{ url: entry.url, alt: isString(entry.alt) ? entry.alt : `${productName} image ${index + 1}`, ...(isString(entry.publicId) ? { publicId: entry.publicId } : {}) }];
+  });
 }
 
 function parseColors(value: unknown): ProductColor[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.filter(isProductColor);
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (typeof entry === "string" && /^#[0-9a-fA-F]{6}$/.test(entry.trim())) return [{ name: entry.trim(), hex: entry.trim() }];
+    if (!isRecord(entry) || !isString(entry.hex)) return [];
+    return [{ name: isString(entry.name) ? entry.name : entry.hex, hex: entry.hex }];
+  });
 }
 
 function parseSizes(value: unknown): ProductSize[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.filter(isProductSize);
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (typeof entry === "string" && entry.trim()) return [{ label: entry.trim() }];
+    if (!isRecord(entry) || !isString(entry.label)) return [];
+    return [{ label: entry.label }];
+  });
 }
 
 function parseStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.filter(isString);
-}
-
-function isProductImage(value: unknown): value is ProductImage {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return isString(value.url) && isString(value.alt);
-}
-
-function isProductColor(value: unknown): value is ProductColor {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return isString(value.name) && isString(value.hex);
-}
-
-function isProductSize(value: unknown): value is ProductSize {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return isString(value.label);
+  return Array.isArray(value) ? value.filter(isString) : [];
 }
 
 function isCategory(value: unknown): value is ProductCategory {
@@ -204,6 +259,20 @@ function isCategory(value: unknown): value is ProductCategory {
 
 function isStockMode(value: unknown): value is ProductStockMode {
   return value === "unlimited" || value === "limited" || value === "made_to_order";
+}
+
+function toIsoString(value: unknown): string | null {
+  if (isString(value)) return value;
+  if (isRecord(value) && typeof value.toDate === "function") {
+    const dateValue = value.toDate();
+    return dateValue instanceof Date && Number.isFinite(dateValue.getTime()) ? dateValue.toISOString() : null;
+  }
+  return null;
+}
+
+function warnProducts(message: string, error?: unknown) {
+  if (error) console.warn(`[products] ${message}`, error);
+  else console.warn(`[products] ${message}`);
 }
 
 function isString(value: unknown): value is string {
