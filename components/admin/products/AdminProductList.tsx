@@ -62,7 +62,7 @@ function AdminProductListItem({ product, onArchive, onEdit }: { product: Product
 
       <div className="adminProductItem__actions">
         <button type="button" onClick={() => onEdit(product)}>Edit</button>
-        <button type="button" onClick={() => onArchive(product.id)}>Archive</button>
+        {product.status === "archived" ? <span className="adminProductArchivedNote">Archived</span> : <button type="button" onClick={() => onArchive(product.id)}>Archive</button>}
       </div>
     </article>
   );

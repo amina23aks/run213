@@ -71,14 +71,15 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
 
   return (
     <article className="productCard">
+      {sourceProduct ? <Link className="productCard__mainLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`} /> : null}
       <div className="productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
-        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`}>♡</button>
-        {sourceProduct ? <Link href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}><Image src={product.image} alt={`${product.name} product image`} width={420} height={520} /></Link> : <Image src={product.image} alt={`${product.name} placeholder`} width={420} height={520} />}
+        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`} onClick={(event) => event.stopPropagation()}>♡</button>
+        <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
       </div>
 
       <div className="productInfo">
-        <h3 className="productTitle">{sourceProduct ? <Link href={`/product/${sourceProduct.slug}`}>{product.name}</Link> : product.name}</h3>
+        <h3 className="productTitle">{product.name}</h3>
         <div className="productPriceRow">
           <span className="currentPrice">{product.price}</span>
           {product.oldPrice ? <span className="oldPrice">{product.oldPrice}</span> : null}
@@ -94,7 +95,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
               type="button"
               aria-label={`Select ${color.name}`}
               aria-pressed={color.name === selectedColor}
-              onClick={() => handleColorSelect(color.name)}
+              onClick={(event) => { event.stopPropagation(); handleColorSelect(color.name); }}
             />
           )) : product.colors.map((color, index) => (
             <span
@@ -109,7 +110,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
           {sourceProduct ? (
             sourceProduct.sizes.length ? (
               <div className="sizeChips" aria-label={`${product.name} sizes`}>
-                {sourceProduct.sizes.map((size) => <button className={size.label === selectedSize ? "isSelected" : undefined} type="button" key={size.label} aria-pressed={size.label === selectedSize} onClick={() => handleSizeSelect(size.label)}>{size.label}</button>)}
+                {sourceProduct.sizes.map((size) => <button className={size.label === selectedSize ? "isSelected" : undefined} type="button" key={size.label} aria-pressed={size.label === selectedSize} onClick={(event) => { event.stopPropagation(); handleSizeSelect(size.label); }}>{size.label}</button>)}
               </div>
             ) : null
           ) : product.sizes ? (
@@ -118,7 +119,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
             </div>
           ) : null}
           <div className="addButtonRow">
-            <button className="addButton" type="button" aria-label={`Add ${product.name}`} disabled={isUnavailable} onClick={handleAddToCart}>+</button>
+            <button className="addButton" type="button" aria-label={`Add ${product.name}`} disabled={isUnavailable} onClick={(event) => { event.stopPropagation(); handleAddToCart(); }}>+</button>
           </div>
           {helperMessage ? <p className="productCardHelper" role="status">{helperMessage}</p> : null}
         </div>

@@ -1,3 +1,4 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
   const docRef = getAdminDb().collection(COLLECTION).doc();
   const now = FieldValue.serverTimestamp();
   await docRef.set({ ...parsed.data, createdAt: now, updatedAt: now, updatedBy: admin.email });
+  revalidateProductStorefront(parsed.data.slug);
 
   return Response.json({ id: docRef.id }, { status: 201 });
 }
@@ -83,4 +85,11 @@ function parseCursor(value: string | null): AdminProductCursor | null {
   }
 
   return null;
+}
+
+function revalidateProductStorefront(slug?: string) {
+  revalidateTag("products", "max");
+  revalidatePath("/");
+  revalidatePath("/shop");
+  if (slug) revalidatePath(`/product/${slug}`);
 }

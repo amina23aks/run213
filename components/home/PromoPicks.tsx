@@ -1,9 +1,9 @@
 import { ProductCard } from "@/components/home/ProductCard";
 import { toProductCardView } from "@/constants/products";
-import { listActiveProductsByPlacement } from "@/lib/firestore/products";
+import { listActivePromoProducts } from "@/lib/firestore/products";
 
 export async function PromoPicks() {
-  const products = await listActiveProductsByPlacement("showInFeaturedDrop", 6);
+  const products = await listActivePromoProducts(6);
 
   return (
     <section className="home-section product-strip" id="promo-picks" aria-labelledby="promo-title">
