@@ -264,7 +264,7 @@ export function AdminProductsClient() {
         sizeGuideImagePublicId: uploadedImageId,
       } : {
         ...current,
-        images: [...current.images, { id: uploadedImageId, url: uploadedImageUrl }],
+        images: [...current.images, { id: uploadedImageId, url: uploadedImageUrl, publicId: uploadedImageId, alt: current.name || "Product image" }],
       });
       setFormErrors([]);
       setMessage("Image uploaded.");
@@ -412,7 +412,7 @@ function toPayload(draft: ProductDraft) {
     compareAtPriceDzd: draft.compareAtPriceDzd,
     costPriceDzd: draft.costPriceDzd,
     discountPercent: draft.discountPercent,
-    images: draft.images.map((image) => ({ url: image.url, alt: draft.name })),
+    images: draft.images.map((image) => ({ url: image.url, alt: image.alt || draft.name || "Product image", publicId: image.publicId })),
     colors: draft.colors
       .filter((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
       .map((color) => ({ name: color.name.trim(), hex: color.hex.trim() })),
@@ -447,7 +447,7 @@ function fromProduct(product: Product): ProductDraft {
     discountPercent: String(product.discountPercent ?? 0),
     costPriceDzd: product.costPriceDzd ? String(product.costPriceDzd) : "",
     compareAtPriceDzd: product.compareAtPriceDzd ? String(product.compareAtPriceDzd) : "",
-    images: product.images.map((image, index) => ({ id: `image-${index}-${image.url}`, url: image.url })),
+    images: product.images.map((image, index) => ({ id: image.publicId ?? `image-${index}-${image.url}`, url: image.url, publicId: image.publicId, alt: image.alt })),
     colors: product.colors.length ? product.colors.map((color, index) => ({ id: `color-${index}-${color.hex}`, name: color.name, hex: color.hex })) : [{ id: "color-1", name: "Black", hex: "#111111" }],
     sizes: product.sizes.map((size) => size.label),
     status: product.status === "archived" ? "draft" : product.status,

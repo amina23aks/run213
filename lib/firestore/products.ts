@@ -227,7 +227,7 @@ function parseImages(value: unknown, productName: string): ProductImage[] {
   return value.flatMap((entry, index) => {
     if (typeof entry === "string" && entry.trim()) return [{ url: entry.trim(), alt: `${productName} image ${index + 1}` }];
     if (!isRecord(entry) || !isString(entry.url)) return [];
-    return [{ url: entry.url, alt: isString(entry.alt) ? entry.alt : `${productName} image ${index + 1}` }];
+    return [{ url: entry.url, alt: isString(entry.alt) ? entry.alt : `${productName} image ${index + 1}`, ...(isString(entry.publicId) ? { publicId: entry.publicId } : {}) }];
   });
 }
 

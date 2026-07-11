@@ -21,7 +21,7 @@ export const adminProductInputSchema = z.object({
   compareAtPriceDzd: optionalNumber.pipe(z.number().int().positive().max(1_000_000).nullable()),
   costPriceDzd: optionalNumber.pipe(z.number().int().positive().max(1_000_000).nullable()),
   discountPercent: z.union([z.number(), z.string(), z.null(), z.undefined()]).transform((value) => value === null || value === undefined || value === "" ? 0 : Number(value)).pipe(z.number().int().min(0).max(90)),
-  images: z.array(z.object({ url: trimmedString.min(1).max(500), alt: trimmedString.max(160).default("") })).min(1).max(8),
+  images: z.array(z.object({ url: trimmedString.min(1).max(500), alt: trimmedString.max(160).default(""), publicId: trimmedString.max(240).optional() })).min(1).max(8),
   colors: z.array(z.object({ name: trimmedString.min(1).max(60), hex: trimmedString.regex(/^#[0-9a-fA-F]{6}$/) })).min(1).max(12),
   sizes: z.array(z.object({ label: trimmedString.min(1).max(20) })).max(12).default([]),
   status: z.enum(["draft", "active"]),

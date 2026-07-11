@@ -3259,3 +3259,212 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
     grid-template-columns: 1fr;
   }
 }
+
+.section-lime-line {
+  background: var(--accent);
+  display: block;
+  height: 3px;
+  margin: 0.7rem 0 1rem;
+  width: 54px;
+}
+
+.look-card {
+  aspect-ratio: 16 / 9;
+  min-height: 220px;
+  position: relative;
+}
+
+.look-card > img,
+.look-card__placeholder {
+  inset: 0;
+  object-fit: cover;
+  position: absolute;
+}
+
+.look-card__placeholder,
+.figure-placeholder-surface {
+  background: linear-gradient(135deg, var(--surface-soft), var(--surface));
+}
+
+.look-card--disabled {
+  pointer-events: none;
+}
+
+.look-card--disabled em {
+  color: var(--accent);
+  display: block;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 950;
+  margin-top: 0.3rem;
+  text-transform: uppercase;
+}
+
+.figure-card--placeholder {
+  cursor: default;
+}
+
+.figure-placeholder-surface {
+  border-radius: 20px;
+  height: 260px;
+  width: min(180px, 100%);
+}
+
+.looksCollectionHero--compact {
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.75fr);
+  max-height: 560px;
+}
+
+.looksCollectionHero--compact::after {
+  display: none;
+}
+
+.looksCollectionHero--compact img,
+.looksCollectionHero--compact > div {
+  grid-area: auto;
+}
+
+.looksCollectionHero--compact > div {
+  align-self: stretch;
+  background: var(--surface);
+  color: var(--text);
+  display: grid;
+  place-content: center;
+}
+
+.looksCollectionHero--compact strong {
+  color: var(--muted);
+}
+
+.looksEditorialList {
+  display: grid;
+  gap: clamp(1.2rem, 4vw, 2.2rem);
+  margin-top: clamp(1.2rem, 4vw, 2.5rem);
+}
+
+.lookEditorialModule {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+}
+
+.lookEditorialImage {
+  border-radius: 20px;
+  min-height: clamp(320px, 44vw, 520px);
+  overflow: hidden;
+  position: relative;
+}
+
+.lookEditorialImage img {
+  object-fit: cover;
+}
+
+.lookEditorialContent {
+  align-content: center;
+  display: grid;
+  gap: 1rem;
+}
+
+.lookEditorialTopline {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.lookEditorialTopline span {
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.lookEditorialTopline a {
+  color: var(--accent);
+  font-size: 1.5rem;
+  margin-left: 1.2rem;
+  text-decoration: none;
+}
+
+.lookEditorialContent h2 {
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  line-height: 0.9;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.lookMiniProducts {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.lookMiniProduct {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.65rem;
+  text-decoration: none;
+}
+
+.lookMiniProduct img {
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: contain;
+  width: 100%;
+}
+
+.lookMiniProduct strong,
+.lookMiniProduct em {
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.lookMiniProduct span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.lookViewButton {
+  align-items: center;
+  background: #050505;
+  border-radius: 4px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 950;
+  gap: 1.8rem;
+  justify-content: center;
+  padding: 0.9rem 1.2rem;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.lookViewButton span {
+  color: var(--accent);
+}
+
+.looksSmallEmpty {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  margin: 0;
+  padding: 1rem;
+}
+
+@media (max-width: 900px) {
+  .looksCollectionHero--compact,
+  .lookEditorialModule {
+    grid-template-columns: 1fr;
+  }
+
+  .lookMiniProducts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

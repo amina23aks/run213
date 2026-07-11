@@ -7,6 +7,7 @@ export type ProductStockMode = "unlimited" | "limited" | "made_to_order";
 export type ProductImage = {
   url: string;
   alt: string;
+  publicId?: string;
 };
 
 export type ProductColor = {

@@ -9,6 +9,8 @@ export type ProductDraftColor = {
 export type ProductDraftImage = {
   id: string;
   url: string;
+  publicId?: string;
+  alt?: string;
 };
 
 export type ProductDraft = {

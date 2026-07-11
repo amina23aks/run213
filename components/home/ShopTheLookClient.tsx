@@ -7,6 +7,12 @@ import type { Look, LookCollection } from "@/types/look";
 
 const AUTO_SLIDE_MS = 4500;
 const USER_PAUSE_MS = 7000;
+const COLLECTION_SLOTS = [
+  { number: "01", slug: "summer-road", name: "SUMMER ROAD", subtitle: "Light. Fast. Unstoppable." },
+  { number: "02", slug: "city-everyday", name: "CITY EVERYDAY", subtitle: "Movement in every moment." },
+  { number: "03", slug: "evening-layer", name: "EVENING LAYER", subtitle: "Adapt. Reflect. Keep going." },
+  { number: "04", slug: "essential-layers", name: "ESSENTIAL LAYERS", subtitle: "Built for every condition." },
+] as const;
 
 type ShopTheLookClientProps = {
   figures: Look[];
@@ -17,6 +23,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   const [activeFigure, setActiveFigure] = useState(0);
   const pauseUntilRef = useRef(0);
   const isHoveringRef = useRef(false);
+  const figureSlots = Array.from({ length: 4 }, (_, index) => figures[index] ?? null);
   const hasFigures = figures.length > 0;
   const activeLook = hasFigures ? figures[activeFigure % figures.length] : null;
 
@@ -40,42 +47,51 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
       <aside className="section-intro shopLookIntro">
         <span className="section-number">03</span>
         <h2 id="look-title">SHOP THE LOOK</h2>
+        <i className="section-lime-line" aria-hidden="true" />
         <p>Looks made to<br />move with you.</p>
       </aside>
 
-      {hasFigures ? (
-        <div className="shopLookFigures">
-          <div className="figure-showcase" onMouseEnter={() => { isHoveringRef.current = true; }} onMouseLeave={() => { isHoveringRef.current = false; }}>
-            <button className="figure-nav figure-nav--prev" type="button" aria-label="Previous look" onClick={() => activateFigure(activeFigure - 1)}>←</button>
-            <div className="figure-row" aria-label="Shop the look figures">
-              {figures.map((figure, index) => (
-                <Link className={index === activeFigure ? "figure-card is-active" : "figure-card"} href={`/look/${figure.slug}`} key={figure.id} onFocus={() => activateFigure(index)} onMouseEnter={() => activateFigure(index)}>
-                  <span>{figure.numberLabel ?? String(index + 1).padStart(2, "0")}</span>
-                  <strong>{figure.name}</strong>
-                  <Image src={figure.heroImage.url} alt={figure.heroImage.alt} width={260} height={360} unoptimized />
-                </Link>
-              ))}
-            </div>
-            <button className="figure-nav figure-nav--next" type="button" aria-label="Next look" onClick={() => activateFigure(activeFigure + 1)}>→</button>
+      <div className="shopLookFigures">
+        <div className="figure-showcase" onMouseEnter={() => { isHoveringRef.current = true; }} onMouseLeave={() => { isHoveringRef.current = false; }}>
+          <button className="figure-nav figure-nav--prev" type="button" aria-label="Previous look" onClick={() => activateFigure(activeFigure - 1)}>←</button>
+          <div className="figure-row" aria-label="Shop the look figures">
+            {figureSlots.map((figure, index) => figure ? (
+              <Link className={index === activeFigure ? "figure-card is-active" : "figure-card"} href={`/look/${figure.slug}`} key={figure.id} onFocus={() => activateFigure(index)} onMouseEnter={() => activateFigure(index)}>
+                <span>{figure.numberLabel ?? String(index + 1).padStart(2, "0")}</span>
+                <strong>{figure.name}</strong>
+                <Image src={figure.heroImage.url} alt={figure.heroImage.alt} width={260} height={360} unoptimized />
+              </Link>
+            ) : (
+              <div className="figure-card figure-card--placeholder" key={`figure-placeholder-${index}`}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>COMING SOON</strong>
+                <div className="figure-placeholder-surface" />
+              </div>
+            ))}
           </div>
-          {activeLook ? <Link className="shopLookActiveLink" href={`/look/${activeLook.slug}`}>VIEW {activeLook.numberLabel ?? "LOOK"} →</Link> : null}
+          <button className="figure-nav figure-nav--next" type="button" aria-label="Next look" onClick={() => activateFigure(activeFigure + 1)}>→</button>
         </div>
-      ) : (
-        <div className="shopLookEmpty"><strong>No looks configured yet.</strong><span>Create active Looks and enable homepage figure display.</span></div>
-      )}
+        {activeLook ? <Link className="shopLookActiveLink" href={`/look/${activeLook.slug}`}>VIEW {activeLook.numberLabel ?? "LOOK"} →</Link> : null}
+      </div>
 
       <div className="shopLookCards">
-        {collections.length ? collections.map((collection, index) => (
-          <Link className="look-card" href={`/looks/${collection.slug}`} key={collection.id}>
-            <Image src={collection.cardImage.url} alt={collection.cardImage.alt} width={680} height={383} unoptimized />
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <div>
-              <h3>{collection.name}</h3>
-              <p>{collection.subtitle}</p>
-            </div>
-            <small aria-hidden="true">→</small>
-          </Link>
-        )) : <div className="shopLookEmpty shopLookEmpty--cards"><strong>No look collections yet.</strong><span>Active collections will appear here.</span></div>}
+        {COLLECTION_SLOTS.map((slot, index) => {
+          const collection = collections[index] ?? collections.find((item) => item.slug === slot.slug) ?? null;
+          const content = (
+            <>
+              {collection ? <Image src={collection.cardImage.url} alt={collection.cardImage.alt} fill sizes="(max-width: 900px) 80vw, 25vw" unoptimized /> : <div className="look-card__placeholder" />}
+              <span>{slot.number}</span>
+              <div>
+                <h3>{collection?.name ?? slot.name}</h3>
+                <p>{collection?.subtitle || slot.subtitle}</p>
+                {!collection ? <em>Coming soon</em> : null}
+              </div>
+              <small aria-hidden="true">→</small>
+            </>
+          );
+
+          return collection ? <Link className="look-card" href={`/looks/${collection.slug}`} key={slot.slug}>{content}</Link> : <article className="look-card look-card--disabled" key={slot.slug}>{content}</article>;
+        })}
       </div>
     </section>
   );
