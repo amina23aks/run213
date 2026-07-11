@@ -83,6 +83,32 @@ export async function listActivePromoProducts(requestedLimit = DEFAULT_PRODUCT_L
   }
 }
 
+export async function getActiveProductsByIds(productIds: string[]): Promise<Map<string, Product>> {
+  noStore();
+  const products = new Map<string, Product>();
+  const uniqueIds = Array.from(new Set(productIds.filter(Boolean)));
+
+  if (!uniqueIds.length || !isAdminFirestoreConfigured() || shouldUseStaticFallback()) {
+    if (shouldUseStaticFallback()) {
+      shopProducts.filter((product) => uniqueIds.includes(product.id)).forEach((product) => products.set(product.id, product));
+    }
+    return products;
+  }
+
+  try {
+    const { getAdminDb } = await import("@/lib/firebase/admin");
+    await Promise.all(uniqueIds.map(async (id) => {
+      const snapshot = await getAdminDb().collection(PRODUCTS_COLLECTION).doc(id).get();
+      const product = snapshot.exists ? parseProduct(snapshot.id, snapshot.data() ?? {}) : null;
+      if (product) products.set(id, product);
+    }));
+  } catch (error) {
+    warnProducts("Connected look products could not be resolved.", error);
+  }
+
+  return products;
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   noStore();
 

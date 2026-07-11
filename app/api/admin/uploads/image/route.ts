@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const CLOUDINARY_FOLDERS = { product: "run213/products", sizeGuide: "run213/size-guides" } as const;
+const CLOUDINARY_FOLDERS = { product: "run213/products", sizeGuide: "run213/size-guides", lookCollection: "run213/look-collections", lookHero: "run213/looks" } as const;
 
 type CloudinaryUploadResponse = {
   secure_url?: unknown;
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file");
   const kindValue = formData.get("kind");
-  const kind = kindValue === "sizeGuide" ? "sizeGuide" : "product";
+  const kind = getUploadKind(kindValue);
   const folder = CLOUDINARY_FOLDERS[kind];
 
   if (!(file instanceof File)) {
@@ -90,4 +90,9 @@ function getCloudinaryErrorMessage(payload: CloudinaryUploadResponse) {
   return typeof payload.error?.message === "string" && payload.error.message.trim()
     ? payload.error.message
     : "Image upload failed. Try again.";
+}
+
+function getUploadKind(value: FormDataEntryValue | null): keyof typeof CLOUDINARY_FOLDERS {
+  if (value === "sizeGuide" || value === "lookCollection" || value === "lookHero") return value;
+  return "product";
 }

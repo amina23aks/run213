@@ -8,6 +8,8 @@ import { memo, startTransition, useCallback, useEffect, useMemo, useState } from
 const adminNavItems = [
   { label: "Overview", href: "/admin" },
   { label: "Products", href: "/admin/products" },
+  { label: "Look Collections", href: "/admin/look-collections" },
+  { label: "Looks", href: "/admin/looks" },
   { label: "Orders", href: "/admin/orders" },
   { label: "Favorites", href: "/admin/favorites" },
   { label: "Wishlist", href: "/admin/wishlist" },

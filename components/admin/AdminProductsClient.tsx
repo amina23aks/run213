@@ -430,9 +430,9 @@ function toPayload(draft: ProductDraft) {
     sortOrder: draft.sortOrder,
     showInDrop001: draft.showInDrop001,
     showInFeaturedDrop: draft.showInFeaturedDrop,
-    showInShopTheLook: draft.showInShopTheLook,
+    showInShopTheLook: false,
     featuredSortOrder: draft.featuredSortOrder,
-    lookGroupSlug: draft.lookGroupSlug,
+    lookGroupSlug: "",
   };
 }
 

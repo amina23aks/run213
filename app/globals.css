@@ -2929,3 +2929,333 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   font-weight: 850;
   text-transform: uppercase;
 }
+
+.shopLookEmpty {
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--muted);
+  display: grid;
+  gap: 0.35rem;
+  min-height: 180px;
+  padding: 1.5rem;
+  text-transform: uppercase;
+}
+
+.shopLookActiveLink {
+  color: var(--text);
+  display: inline-flex;
+  font-weight: 900;
+  margin-top: 0.75rem;
+  text-decoration: none;
+}
+
+.looksCollectionPage,
+.lookDetailPage {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: clamp(5.5rem, 9vw, 8rem) var(--page-x) clamp(3rem, 8vw, 6rem);
+}
+
+.looksCollectionHero {
+  border-radius: 32px;
+  display: grid;
+  min-height: 420px;
+  overflow: hidden;
+  position: relative;
+}
+
+.looksCollectionHero img {
+  grid-area: 1 / 1;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.looksCollectionHero::after {
+  background: linear-gradient(90deg, rgba(0,0,0,.68), rgba(0,0,0,.12));
+  content: "";
+  grid-area: 1 / 1;
+  z-index: 1;
+}
+
+.looksCollectionHero > div {
+  align-self: end;
+  color: #fff;
+  grid-area: 1 / 1;
+  max-width: 640px;
+  padding: clamp(1.4rem, 5vw, 3rem);
+  z-index: 2;
+}
+
+.looksCollectionHero span,
+.lookDetailPanel > span {
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.looksCollectionHero h1,
+.lookDetailPanel h1 {
+  font-size: clamp(3rem, 9vw, 7rem);
+  line-height: .82;
+  margin: .5rem 0 1rem;
+  text-transform: uppercase;
+}
+
+.looksCollectionGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 1.5rem;
+}
+
+.lookSummaryCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--text);
+  display: grid;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.lookSummaryCard > img {
+  aspect-ratio: 4 / 5;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.lookSummaryCard > div {
+  display: grid;
+  gap: .55rem;
+  padding: 1rem;
+}
+
+.lookSummaryCard span,
+.lookSummaryCard em {
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.lookProductThumbs {
+  display: flex;
+  gap: .4rem;
+}
+
+.lookProductThumbs img {
+  background: var(--surface-soft);
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.lookDetailSection {
+  display: grid;
+  gap: clamp(1.4rem, 4vw, 3rem);
+  grid-template-columns: minmax(0, .9fr) minmax(320px, 1fr);
+}
+
+.lookDetailHero img {
+  border-radius: 32px;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.lookDetailPanel {
+  align-content: start;
+  display: grid;
+  gap: 1rem;
+}
+
+.lookBundleBar {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: .85rem;
+}
+
+.lookBundleBar button {
+  background: var(--accent);
+  border: 0;
+  border-radius: 999px;
+  color: #050505;
+  cursor: pointer;
+  font-weight: 950;
+  padding: .85rem 1rem;
+}
+
+.lookItemsList {
+  display: grid;
+  gap: .8rem;
+}
+
+.lookItem {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  display: grid;
+  gap: .85rem;
+  grid-template-columns: 92px minmax(0, 1fr);
+  padding: .75rem;
+}
+
+.lookItem.is-muted {
+  opacity: .62;
+}
+
+.lookItem > img,
+.lookMissingProduct {
+  background: var(--surface-soft);
+  border-radius: 14px;
+  height: 112px;
+  object-fit: cover;
+  width: 92px;
+}
+
+.lookItemHeader {
+  align-items: start;
+  display: flex;
+  gap: .7rem;
+  justify-content: space-between;
+}
+
+.lookItemHeader a,
+.lookItemHeader strong {
+  color: var(--text);
+  font-weight: 950;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.lookItemHeader span {
+  color: var(--muted);
+  display: block;
+  font-size: .85rem;
+}
+
+.lookItemHeader button {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 850;
+  padding: .45rem .7rem;
+}
+
+.lookItemOptions {
+  display: grid;
+  gap: .55rem;
+  margin-top: .7rem;
+}
+
+.lookItemOptions div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+
+.lookItemOptions button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 1.9rem;
+  min-width: 1.9rem;
+}
+
+.lookItemOptions button.isSelected {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+.lookUnavailable,
+.lookCartMessage {
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 750;
+}
+
+.adminLookEditor {
+  display: grid;
+  gap: 1rem;
+}
+
+.adminLookEditor input,
+.adminLookEditor textarea,
+.adminLookEditor select {
+  background: #fffdf7;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 14px;
+  padding: .85rem;
+}
+
+.adminLookThumb {
+  border-radius: 14px;
+  height: 90px;
+  object-fit: cover;
+  width: 120px;
+}
+
+.adminLookList,
+.adminLookProductPicker {
+  display: grid;
+  gap: .65rem;
+}
+
+.adminLookRow,
+.adminLookProductPicker button {
+  align-items: center;
+  background: #fffdf7;
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 16px;
+  display: flex;
+  gap: .7rem;
+  padding: .6rem;
+}
+
+.adminLookRow img,
+.adminLookProductPicker img {
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.adminLookRow div {
+  flex: 1;
+}
+
+.adminLookRow span {
+  color: #5f5f5f;
+  display: block;
+  font-size: .78rem;
+}
+
+.adminLookProductPicker {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.adminLookProductPicker button {
+  cursor: pointer;
+  text-align: left;
+}
+
+.adminLookProductPicker button.isSelected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(199,244,0,.45);
+}
+
+@media (max-width: 860px) {
+  .lookDetailSection {
+    grid-template-columns: 1fr;
+  }
+}

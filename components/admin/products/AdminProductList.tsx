@@ -72,6 +72,5 @@ function getPlacements(product: Product) {
   const placements: string[] = [];
   if (product.showInDrop001) placements.push("DROP_001");
   if (product.showInFeaturedDrop) placements.push("Featured");
-  if (product.showInShopTheLook) placements.push("Look");
   return placements;
 }
