@@ -46,16 +46,16 @@ export async function getActiveLookCollectionBySlug(slug: string): Promise<LookC
   }
 }
 
-export async function listActiveLooksByCollection(collectionSlug: string): Promise<LookWithProducts[]> {
+export async function listActiveLooksByCollection(collection: Pick<LookCollection, "id" | "slug">): Promise<LookWithProducts[]> {
   noStore();
   if (!isConfigured()) return [];
   try {
     const { getAdminDb } = await import("@/lib/firebase/admin");
-    const snapshot = await getAdminDb().collection(LOOKS).where("collectionSlug", "==", collectionSlug).where("status", "==", "active").limit(READ_LIMIT).get();
+    const snapshot = await getAdminDb().collection(LOOKS).where("collectionId", "==", collection.id).where("status", "==", "active").limit(READ_LIMIT).get();
     const looks = snapshot.docs.map((doc) => parseLook(doc.id, doc.data())).filter((item): item is Look => item !== null).sort((a, b) => a.sortOrder - b.sortOrder);
     return resolveLookProducts(looks);
   } catch (error) {
-    warnLooks(`Looks query failed for collection ${collectionSlug}.`, error);
+    warnLooks(`Looks query failed for collection ${collection.slug}.`, error);
     return [];
   }
 }

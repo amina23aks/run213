@@ -40,6 +40,8 @@ function revalidateLooks(slug?: unknown, previousSlug?: unknown) {
   revalidateTag("looks", "max");
   revalidatePath("/");
   revalidatePath("/looks/[collectionSlug]", "page");
+  revalidatePath("/admin/look-collections");
+  revalidatePath("/admin/looks");
   if (typeof slug === "string") revalidatePath(`/looks/${slug}`);
   if (typeof previousSlug === "string" && previousSlug !== slug) revalidatePath(`/looks/${previousSlug}`);
 }

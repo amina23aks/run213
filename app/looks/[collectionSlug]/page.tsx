@@ -12,12 +12,11 @@ type LooksCollectionPageProps = { params: Promise<{ collectionSlug: string }> };
 
 export default async function LooksCollectionPage({ params }: LooksCollectionPageProps) {
   const { collectionSlug } = await params;
-  const [collection, looks] = await Promise.all([
-    getActiveLookCollectionBySlug(collectionSlug),
-    listActiveLooksByCollection(collectionSlug),
-  ]);
+  const collection = await getActiveLookCollectionBySlug(collectionSlug);
 
   if (!collection) notFound();
+
+  const looks = await listActiveLooksByCollection(collection);
 
   return (
     <>
@@ -51,7 +50,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                 </div>
               </article>
             );
-          }) : <p className="looksSmallEmpty">No active looks yet. Add Looks in the admin dashboard to fill this collection.</p>}
+          }) : <p className="looksSmallEmpty">This collection is being built.</p>}
         </section>
       </main>
       <div className="club-footer-shell"><Footer /></div>

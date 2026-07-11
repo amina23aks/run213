@@ -4,7 +4,7 @@ const trimmedString = z.string().trim();
 const optionalNumber = z.union([z.number(), z.string(), z.null(), z.undefined()]).transform((value) => {
   if (value === null || value === undefined || value === "") return null;
   const numberValue = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(numberValue) ? numberValue : Number.NaN;
+  return Number.isFinite(numberValue) ? numberValue : null;
 });
 
 export const lookImageSchema = z.object({

@@ -3468,3 +3468,137 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.adminLookWorkspace {
+  display: grid;
+  gap: 1.1rem;
+  margin-inline: auto;
+  max-width: 1120px;
+  width: 100%;
+}
+
+.adminLookSection {
+  border-top: 1px solid rgba(0,0,0,.10);
+  display: grid;
+  gap: .85rem;
+  padding-top: 1rem;
+}
+
+.adminLookSection header {
+  align-items: baseline;
+  display: flex;
+  gap: .7rem;
+}
+
+.adminLookSection header span {
+  color: #9cc200;
+  font-size: .78rem;
+  font-weight: 950;
+}
+
+.adminLookSection h3 {
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.adminLookField {
+  display: grid;
+  gap: .35rem;
+}
+
+.adminLookField > span {
+  color: #050505;
+  font-size: .8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.adminLookField small {
+  color: #5f5f5f;
+  font-size: .76rem;
+}
+
+.adminInlineError,
+.adminFormAlert {
+  color: #9f1d1d !important;
+  font-size: .78rem;
+  font-weight: 850;
+}
+
+.adminFormAlert {
+  background: #fff1ef;
+  border: 1px solid rgba(159,29,29,.22);
+  border-radius: 14px;
+  margin: 0;
+  padding: .8rem;
+}
+
+.adminLookPreview {
+  align-items: center;
+  display: flex;
+  gap: .8rem;
+  margin: 0;
+}
+
+.adminLookPreview img {
+  background: #eee8dc;
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.adminLookPreview--landscape img {
+  height: 130px;
+  width: 220px;
+}
+
+.adminLookPreview--portrait img {
+  height: 210px;
+  width: 160px;
+}
+
+.adminSelectedProducts {
+  display: grid;
+  gap: .55rem;
+}
+
+.adminSelectedProducts article {
+  align-items: center;
+  background: #fffdf7;
+  border: 1px solid rgba(0,0,0,.1);
+  border-radius: 14px;
+  display: grid;
+  gap: .6rem;
+  grid-template-columns: 1.6rem 56px minmax(0, 1fr) auto auto auto;
+  padding: .55rem;
+}
+
+.adminSelectedProducts img {
+  border-radius: 10px;
+  height: 64px;
+  object-fit: cover;
+  width: 56px;
+}
+
+.adminLookProductPicker button span {
+  display: grid;
+  gap: .15rem;
+}
+
+.adminLookProductPicker button small {
+  color: #5f5f5f;
+  font-size: .72rem;
+}
+
+.adminLookProductPicker button em {
+  font-style: normal;
+  font-weight: 950;
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .adminSelectedProducts article {
+    grid-template-columns: 1.4rem 48px minmax(0, 1fr);
+  }
+}

@@ -41,6 +41,8 @@ function revalidateLooks(slug?: unknown, previousSlug?: unknown, collectionSlug?
   revalidatePath("/");
   revalidatePath("/look/[lookSlug]", "page");
   revalidatePath("/looks/[collectionSlug]", "page");
+  revalidatePath("/admin/look-collections");
+  revalidatePath("/admin/looks");
   if (typeof slug === "string") revalidatePath(`/look/${slug}`);
   if (typeof previousSlug === "string" && previousSlug !== slug) revalidatePath(`/look/${previousSlug}`);
   if (typeof collectionSlug === "string") revalidatePath(`/looks/${collectionSlug}`);

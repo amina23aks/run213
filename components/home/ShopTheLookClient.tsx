@@ -64,7 +64,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
             ) : (
               <div className="figure-card figure-card--placeholder" key={`figure-placeholder-${index}`}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>COMING SOON</strong>
+                <strong>{COLLECTION_SLOTS[index]?.name ?? "LOOK"}</strong>
                 <div className="figure-placeholder-surface" />
               </div>
             ))}
@@ -84,7 +84,6 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
               <div>
                 <h3>{collection?.name ?? slot.name}</h3>
                 <p>{collection?.subtitle || slot.subtitle}</p>
-                {!collection ? <em>Coming soon</em> : null}
               </div>
               <small aria-hidden="true">→</small>
             </>

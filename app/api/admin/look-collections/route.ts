@@ -51,4 +51,4 @@ function parseCursor(value: string | null): Cursor | null {
   } catch (error) { console.warn("[admin-looks] Invalid cursor", error); }
   return null;
 }
-function revalidateLooks() { revalidateTag("looks", "max"); revalidatePath("/"); revalidatePath("/looks/[collectionSlug]", "page"); revalidatePath("/look/[lookSlug]", "page"); }
+function revalidateLooks() { revalidateTag("looks", "max"); revalidatePath("/"); revalidatePath("/looks/[collectionSlug]", "page"); revalidatePath("/look/[lookSlug]", "page"); revalidatePath("/admin/look-collections"); revalidatePath("/admin/looks"); }
