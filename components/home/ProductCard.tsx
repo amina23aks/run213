@@ -74,7 +74,9 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       {sourceProduct ? <Link className="productCard__mainLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`} /> : null}
       <div className="productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
-        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`} onClick={(event) => event.stopPropagation()}>♡</button>
+        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`} aria-pressed="false" onClick={(event) => event.stopPropagation()}>
+          <span aria-hidden="true">♡</span>
+        </button>
         <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
       </div>
 
@@ -89,20 +91,23 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
         <div className="swatchesRow" aria-label={`${product.name} colors`}>
           {sourceProduct ? sourceProduct.colors.map((color) => (
             <button
-              className={color.name === selectedColor ? "isSelected" : undefined}
+              className={color.name === selectedColor ? "productSwatch productSwatch--selected" : "productSwatch"}
               key={color.name}
-              style={{ backgroundColor: color.hex }}
               type="button"
               aria-label={`Select ${color.name}`}
               aria-pressed={color.name === selectedColor}
               onClick={(event) => { event.stopPropagation(); handleColorSelect(color.name); }}
-            />
+            >
+              <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
+            </button>
           )) : product.colors.map((color, index) => (
             <span
-              className={index === 0 ? "isSelected" : undefined}
+              className={index === 0 ? "productSwatch productSwatch--selected" : "productSwatch"}
               key={color}
-              style={{ backgroundColor: color }}
-            />
+              aria-hidden="true"
+            >
+              <span className="productSwatch__color" style={{ backgroundColor: color }} />
+            </span>
           ))}
         </div>
 

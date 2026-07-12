@@ -56,7 +56,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   return (
     <section className="lookDetailSection">
       <div className="lookDetailHero">
-        <Image src={look.heroImage.url} alt={look.heroImage.alt} width={1100} height={1320} unoptimized />
+        <Image src={look.heroImage.url} alt={look.heroImage.alt} width={920} height={1040} priority unoptimized />
       </div>
       <div className="lookDetailPanel">
         <span>{look.numberLabel ?? "LOOK"}</span>
@@ -70,7 +70,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
             const unavailable = isUnavailable(product);
             return (
               <article className={unavailable || !state.enabled ? "lookItem is-muted" : "lookItem"} key={productId}>
-                {product ? <Image src={product.images[0]?.url ?? "/placeholders/product-placeholder.webp"} alt={product.name} width={140} height={170} unoptimized /> : <div className="lookMissingProduct">Unavailable</div>}
+                {product ? <Image src={product.images[0]?.url ?? "/placeholders/product-placeholder.webp"} alt={product.images[0]?.alt || product.name} width={110} height={110} unoptimized /> : <div className="lookMissingProduct">Unavailable</div>}
                 <div>
                   <div className="lookItemHeader">
                     <div>{product ? <Link href={`/product/${product.slug}`}>{product.name}</Link> : <strong>Unavailable product</strong>}{product ? <span>{formatDzd(product.priceDzd)}</span> : null}</div>
@@ -78,7 +78,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
                   </div>
                   {unavailable ? <p className="lookUnavailable">Unavailable or out of stock.</p> : null}
                   {product && !unavailable && state.enabled ? <div className="lookItemOptions">
-                    {product.colors.length ? <div>{product.colors.map((color) => <button className={state.color === color.name ? "isSelected" : undefined} style={{ backgroundColor: color.hex }} type="button" key={color.name} aria-label={color.name} onClick={() => patchItem(productId, { color: color.name })} />)}</div> : null}
+                    {product.colors.length ? <div>{product.colors.map((color) => <button className={state.color === color.name ? "productSwatch productSwatch--selected" : "productSwatch"} type="button" key={color.name} aria-label={`Select ${color.name}`} aria-pressed={state.color === color.name} onClick={() => patchItem(productId, { color: color.name })}><span className="productSwatch__color" style={{ backgroundColor: color.hex }} /></button>)}</div> : null}
                     {product.sizes.length ? <div>{product.sizes.map((size) => <button className={state.size === size.label ? "isSelected" : undefined} type="button" key={size.label} onClick={() => patchItem(productId, { size: size.label })}>{size.label}</button>)}</div> : null}
                   </div> : null}
                 </div>
