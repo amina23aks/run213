@@ -22,7 +22,7 @@ export const adminProductInputSchema = z.object({
   costPriceDzd: optionalNumber.pipe(z.number().int().positive().max(1_000_000).nullable()),
   discountPercent: z.union([z.number(), z.string(), z.null(), z.undefined()]).transform((value) => value === null || value === undefined || value === "" ? 0 : Number(value)).pipe(z.number().int().min(0).max(90)),
   images: z.array(z.object({ id: trimmedString.max(120).optional(), url: trimmedString.min(1).max(500), alt: trimmedString.max(160).default(""), publicId: trimmedString.max(240).optional(), sortOrder: z.union([z.number(), z.string(), z.undefined()]).transform((value) => value === undefined ? 0 : Number(value)).pipe(z.number().int().min(0).max(100_000)), isPrimary: z.boolean().default(false), colorId: trimmedString.max(120).nullable().optional() })).min(1).max(8),
-  colors: z.array(z.object({ id: trimmedString.max(120).optional(), name: trimmedString.min(1).max(60), hex: trimmedString.regex(/^#[0-9a-fA-F]{6}$/) })).min(1).max(12),
+  colors: z.array(z.object({ id: trimmedString.max(120).optional(), name: trimmedString.max(60).optional().transform((value) => value || "Color"), hex: trimmedString.regex(/^#[0-9a-fA-F]{6}$/).transform((value) => value.toUpperCase()) })).min(1).max(12),
   sizes: z.array(z.object({ label: trimmedString.min(1).max(20) })).max(12).default([]),
   status: z.enum(["draft", "active"]),
   inStock: z.boolean(),

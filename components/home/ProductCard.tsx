@@ -22,8 +22,13 @@ type ProductCardProps = {
   sourceProduct?: Product;
 };
 
-function getInitialColor(product?: Product): string | null {
-  return product?.colors.length === 1 ? product.colors[0]?.name ?? null : null;
+function getInitialColorId(product?: Product): string | null {
+  return product?.colors.length === 1 ? product.colors[0]?.id ?? null : null;
+}
+
+function getColorName(product: Product | undefined, colorId: string | null): string | null {
+  if (!product || !colorId) return null;
+  return product.colors.find((color) => color.id === colorId)?.name ?? null;
 }
 
 function getInitialSize(product?: Product): string | null {
@@ -32,7 +37,7 @@ function getInitialSize(product?: Product): string | null {
 
 export function ProductCard({ product, promo = false, sourceProduct }: ProductCardProps) {
   const { addItem } = useCart();
-  const [selectedColor, setSelectedColor] = useState<string | null>(() => getInitialColor(sourceProduct));
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(() => getInitialColorId(sourceProduct));
   const [selectedSize, setSelectedSize] = useState<string | null>(() => getInitialSize(sourceProduct));
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -56,8 +61,8 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
     return () => { cancelled = true; unsubscribeAuth?.(); };
   }, [sourceProduct]);
 
-  function handleColorSelect(colorName: string) {
-    setSelectedColor(colorName);
+  function handleColorSelect(colorId: string) {
+    setSelectedColorId(colorId);
     setHelperMessage(null);
   }
 
@@ -99,7 +104,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       return;
     }
 
-    if (requiresColorSelection && !selectedColor) {
+    if (requiresColorSelection && !selectedColorId) {
       setHelperMessage("Choose a color.");
       return;
     }
@@ -109,7 +114,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       return;
     }
 
-    const wasAdded = addItem({ product: sourceProduct, selectedColor, selectedSize, quantity: 1 });
+    const wasAdded = addItem({ product: sourceProduct, selectedColor: getColorName(sourceProduct, selectedColorId), selectedSize, quantity: 1 });
     setHelperMessage(wasAdded ? "Added to cart." : "This product is unavailable.");
   }
 
@@ -138,12 +143,12 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
         <div className="swatchesRow" aria-label={`${product.name} colors`}>
           {sourceProduct ? sourceProduct.colors.map((color) => (
             <button
-              className={color.name === selectedColor ? "productSwatch productSwatch--selected" : "productSwatch"}
+              className={color.id === selectedColorId ? "productSwatch productSwatch--selected" : "productSwatch"}
               key={color.id ?? color.name}
               type="button"
               aria-label={`Select ${color.name}`}
-              aria-pressed={color.name === selectedColor}
-              onClick={(event) => { event.stopPropagation(); handleColorSelect(color.name); }}
+              aria-pressed={color.id === selectedColorId}
+              onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleColorSelect(color.id); }}
             >
               <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
             </button>

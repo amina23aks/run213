@@ -1,11 +1,12 @@
 import "server-only";
 
-import type { Product, ProductCategory, ProductColor, ProductImage, ProductSize, ProductStockMode } from "@/types/product";
+import type { Product, ProductCategory, ProductImage, ProductSize, ProductStockMode } from "@/types/product";
 import type { CreateOrderRequest, CreateOrderResponse, DeliveryInfo, OrderItem, OrderRecord } from "@/types/order";
 import { createOrderNumber } from "@/lib/orders/orderNumber";
 import { shippingCalculator } from "@/lib/orders/shipping";
 import { prepareStockReservation } from "@/lib/orders/stock";
 import { calculateLookGroupPrice } from "@/lib/lookPricing";
+import { normalizeProductColors } from "@/lib/productColors";
 import { normalizeEmail, normalizePhone } from "@/lib/orders/validation";
 
 const ORDERS_COLLECTION = "orders";
@@ -238,7 +239,7 @@ function parseActiveProduct(id: string, data: FirebaseFirestore.DocumentData): P
   }
 
   const images = parseProductImages(data.images, data.name);
-  const colors = parseProductColors(data.colors);
+  const colors = normalizeProductColors(data.colors);
   const sizes = parseArray(data.sizes, isProductSize);
 
   return {
@@ -282,15 +283,6 @@ function parseProductImages(value: unknown, productName: string): ProductImage[]
     if (!isRecord(entry) || !isString(entry.url)) return [];
     return [{ id: isString(entry.id) ? entry.id : (isString(entry.publicId) ? entry.publicId : `image-${index}`), url: entry.url, alt: isString(entry.alt) ? entry.alt : `${productName} image ${index + 1}`, ...(isString(entry.publicId) ? { publicId: entry.publicId } : {}), sortOrder: isNumber(entry.sortOrder) ? entry.sortOrder : index, isPrimary: typeof entry.isPrimary === "boolean" ? entry.isPrimary : index === 0, colorId: isString(entry.colorId) ? entry.colorId : null }];
   }).sort((a, b) => a.sortOrder - b.sortOrder);
-}
-
-function parseProductColors(value: unknown): ProductColor[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((entry): ProductColor[] => {
-    if (typeof entry === "string" && /^#[0-9a-fA-F]{6}$/.test(entry.trim())) return [{ id: entry.trim(), name: entry.trim(), hex: entry.trim() }];
-    if (!isRecord(entry) || !isString(entry.hex)) return [];
-    return [{ id: isString(entry.id) ? entry.id : `${entry.hex}-${isString(entry.name) ? entry.name : "color"}`, name: isString(entry.name) ? entry.name : entry.hex, hex: entry.hex }];
-  });
 }
 
 function isProductSize(value: unknown): value is ProductSize {

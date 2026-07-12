@@ -443,8 +443,8 @@ function toPayload(draft: ProductDraft) {
     discountPercent: draft.discountPercent,
     images: draft.images.map((image, index) => ({ id: image.id, url: image.url, alt: image.alt || draft.name || "Product image", publicId: image.publicId, sortOrder: image.sortOrder ?? index, isPrimary: image.isPrimary, colorId: image.colorId ?? null })),
     colors: draft.colors
-      .filter((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
-      .map((color) => ({ id: color.id, name: color.name.trim(), hex: color.hex.trim() })),
+      .filter((color) => /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
+      .map((color, index) => ({ id: color.id || `color-${index}`, name: color.name.trim() || `Color ${index + 1}`, hex: color.hex.trim().toUpperCase() })),
     sizes: draft.sizes.map((label) => ({ label })),
     status: draft.status,
     inStock: draft.stockMode === "unlimited" || Number(draft.stockQty) > 0,
