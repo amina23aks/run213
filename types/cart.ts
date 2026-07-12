@@ -8,6 +8,12 @@ export type CartItem = {
   selectedColor: string | null;
   quantity: number;
   maxQuantity?: number;
+  lookGroupId?: string;
+  lookId?: string;
+  lookSlug?: string;
+  lookName?: string;
+  lookImage?: string;
+  lookDescription?: string;
 };
 
 export type Cart = {

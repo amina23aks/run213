@@ -25,7 +25,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
         <section className="collectionHeader">
           <span>LOOK COLLECTION</span>
           <h1>{collection.name}</h1>
-          <p>{collection.description || collection.subtitle}</p>
+          <p>{collection.subtitle}</p>
         </section>
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
           {looks.length ? looks.map((look, index) => {
@@ -36,7 +36,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                   <Image src={look.heroImage.url} alt={look.heroImage.alt} fill sizes="(max-width: 900px) 100vw, 52vw" unoptimized />
                 </Link>
                 <div className="lookEditorialContent">
-                  <div className="lookEditorialTopline"><span>{look.numberLabel ?? `LOOK ${String(index + 1).padStart(2, "0")}`}</span><div><Link href={index > 0 ? `/look/${looks[index - 1]?.slug}` : `/look/${look.slug}`}>←</Link><Link href={index < looks.length - 1 ? `/look/${looks[index + 1]?.slug}` : `/look/${look.slug}`}>→</Link></div></div>
+                  <div className="lookEditorialTopline"><span>{look.numberLabel ?? `LOOK ${String(index + 1).padStart(2, "0")}`}</span></div>
                   <h2>{look.name}</h2>
                   <p>{look.description}</p>
                   <div className="lookMiniProducts">

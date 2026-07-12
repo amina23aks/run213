@@ -68,14 +68,15 @@ export function ProductInfo({ product }: ProductInfoProps) {
           <div className="productColorDots" aria-label="Color options">
             {product.colors.map((color) => (
               <button
-                className={color.name === selectedColor ? "is-active" : undefined}
-                style={{ backgroundColor: color.hex }}
+                className={color.name === selectedColor ? "productSwatch productSwatch--selected" : "productSwatch"}
                 type="button"
                 key={color.name}
-                aria-label={color.name}
+                aria-label={`Select ${color.name}`}
                 aria-pressed={color.name === selectedColor}
                 onClick={() => handleColorSelect(color.name)}
-              />
+              >
+                <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
+              </button>
             ))}
           </div>
         </div>

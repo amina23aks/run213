@@ -31,6 +31,7 @@ export const lookInputSchema = z.object({
   numberLabel: trimmedString.max(40).optional().transform((value) => value || null),
   description: trimmedString.max(1200).default(""),
   heroImage: lookImageSchema,
+  figureImage: lookImageSchema.nullable().optional(),
   productIds: z.array(trimmedString.min(1).max(140)).min(1).max(12),
   status: z.enum(["draft", "active"]),
   sortOrder: z.union([z.number(), z.string()]).transform(Number).pipe(z.number().int().min(0).max(100_000)),

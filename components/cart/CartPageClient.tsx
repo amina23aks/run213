@@ -2,18 +2,23 @@
 
 import Link from "next/link";
 import { CartItem } from "@/components/cart/CartItem";
+import { CartLookGroup } from "@/components/cart/CartLookGroup";
+import { groupCartItems } from "@/components/cart/cartGrouping";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { useCart } from "@/context/cart";
 
 export function CartPageClient() {
-  const { items, isHydrated, getLineKey, removeItem, updateQuantity, subtotalDzd, itemCount } = useCart();
+  const { items, isHydrated, getLineKey, removeItem, removeLookGroup, updateQuantity, subtotalDzd, itemCount } = useCart();
   const hasItems = isHydrated && items.length > 0;
 
   return (
     <section className="cartPage__layout" aria-label="Cart contents">
       <div className="cartPage__items">
         {hasItems ? (
-          items.map((item) => {
+          groupCartItems(items).map((group) => {
+            if (group.isLookGroup) return <CartLookGroup items={group.items} onRemoveGroup={removeLookGroup} key={group.id} />;
+            const item = group.items[0];
+            if (!item) return null;
             const lineKey = getLineKey(item);
             return <CartItem item={item} lineKey={lineKey} onRemove={removeItem} onUpdateQuantity={updateQuantity} key={lineKey} />;
           })

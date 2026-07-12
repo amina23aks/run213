@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { CartItem } from "@/components/cart/CartItem";
+import { CartLookGroup } from "@/components/cart/CartLookGroup";
+import { groupCartItems } from "@/components/cart/cartGrouping";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
@@ -18,7 +20,7 @@ type CartDrawerProps = {
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const router = useRouter();
-  const { items, isHydrated, getLineKey, removeItem, updateQuantity, subtotalDzd, clearCart } = useCart();
+  const { items, isHydrated, getLineKey, removeItem, removeLookGroup, updateQuantity, subtotalDzd, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const hasItems = isHydrated && items.length > 0;
@@ -70,7 +72,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         {hasItems ? (
           <div className="cartDrawer__content">
             <div className="cartDrawer__items">
-              {items.map((item) => {
+              {groupCartItems(items).map((group) => {
+                if (group.isLookGroup) return <CartLookGroup items={group.items} onRemoveGroup={removeLookGroup} key={group.id} />;
+                const item = group.items[0];
+                if (!item) return null;
                 const lineKey = getLineKey(item);
                 return <CartItem item={item} lineKey={lineKey} onRemove={removeItem} onUpdateQuantity={updateQuantity} key={lineKey} />;
               })}

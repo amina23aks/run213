@@ -30,6 +30,7 @@ export type Look = {
   numberLabel: string | null;
   description: string;
   heroImage: LookImage;
+  figureImage?: LookImage | null;
   productIds: string[];
   status: LookStatus;
   sortOrder: number;

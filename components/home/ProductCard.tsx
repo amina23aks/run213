@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
 
@@ -15,6 +15,8 @@ type ProductCardItem = {
   oldPrice?: string;
   discount?: string;
 };
+
+const PRODUCT_FAVORITES_KEY = "213run-product-favorites";
 
 type ProductCardProps = {
   product: ProductCardItem;
@@ -35,9 +37,20 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const [selectedColor, setSelectedColor] = useState<string | null>(() => getInitialColor(sourceProduct));
   const [selectedSize, setSelectedSize] = useState<string | null>(() => getInitialSize(sourceProduct));
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
   const isUnavailable = Boolean(sourceProduct && (!sourceProduct.inStock || sourceProduct.status !== "active" || (sourceProduct.stockMode === "limited" && (sourceProduct.stockQty ?? 0) <= 0)));
+
+  useEffect(() => {
+    if (!sourceProduct) return undefined;
+    const timer = window.setTimeout(() => {
+      const stored = window.localStorage.getItem(PRODUCT_FAVORITES_KEY);
+      const ids = stored ? safeParseFavorites(stored) : [];
+      setIsFavorite(ids.includes(sourceProduct.id));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [sourceProduct]);
 
   function handleColorSelect(colorName: string) {
     setSelectedColor(colorName);
@@ -47,6 +60,17 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   function handleSizeSelect(sizeLabel: string) {
     setSelectedSize(sizeLabel);
     setHelperMessage(null);
+  }
+
+  function handleFavoriteToggle() {
+    if (!sourceProduct) return;
+    setIsFavorite((current) => {
+      const stored = window.localStorage.getItem(PRODUCT_FAVORITES_KEY);
+      const ids = stored ? safeParseFavorites(stored) : [];
+      const next = current ? ids.filter((id) => id !== sourceProduct.id) : [...new Set([...ids, sourceProduct.id])];
+      window.localStorage.setItem(PRODUCT_FAVORITES_KEY, JSON.stringify(next));
+      return !current;
+    });
   }
 
   function handleAddToCart() {
@@ -71,17 +95,20 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
 
   return (
     <article className="productCard">
-      {sourceProduct ? <Link className="productCard__mainLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`} /> : null}
-      <div className="productImageWrap">
+      <div className="productCard__media productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
-        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`} aria-pressed="false" onClick={(event) => event.stopPropagation()}>
-          <span aria-hidden="true">♡</span>
+        {sourceProduct ? (
+          <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
+            <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
+          </Link>
+        ) : <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />}
+        <button className="productCard__favorite favoriteButton" type="button" aria-label={`${isFavorite ? "Remove" : "Save"} ${product.name}`} aria-pressed={isFavorite} onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleFavoriteToggle(); }}>
+          <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
         </button>
-        <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
       </div>
 
-      <div className="productInfo">
-        <h3 className="productTitle">{product.name}</h3>
+      <div className="productCard__content productInfo">
+        <h3 className="productTitle">{sourceProduct ? <Link href={`/product/${sourceProduct.slug}`}>{product.name}</Link> : product.name}</h3>
         <div className="productPriceRow">
           <span className="currentPrice">{product.price}</span>
           {product.oldPrice ? <span className="oldPrice">{product.oldPrice}</span> : null}
@@ -131,4 +158,14 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       </div>
     </article>
   );
+}
+
+
+function safeParseFavorites(value: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
 }

@@ -146,6 +146,11 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById): Orde
       unitPriceDzd: product.priceDzd,
       lineTotalDzd: product.priceDzd * item.quantity,
       stockMode: product.stockMode,
+      lookGroupId: item.lookGroupId ?? null,
+      lookId: item.lookId ?? null,
+      lookSlug: item.lookSlug ?? null,
+      lookName: item.lookName ?? null,
+      lookImage: item.lookImage ?? null,
     };
   });
 }
