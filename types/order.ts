@@ -115,6 +115,7 @@ export type CreateOrderRequest = {
     lookSlug?: string | null;
     lookName?: string | null;
     lookImage?: string | null;
+    lookOriginalProductIds?: string[] | null;
   }>;
   idempotencyKey?: string | null;
 };

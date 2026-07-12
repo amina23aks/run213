@@ -84,7 +84,8 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       const ref = firestore.doc(db, "users", user.uid, "productFavorites", sourceProduct.id);
       if (previous) await firestore.deleteDoc(ref);
       else await firestore.setDoc(ref, { productId: sourceProduct.id, createdAt: firestore.serverTimestamp() });
-    } catch {
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") console.error("[favorites] update failed", error);
       setIsFavorite(previous);
       setHelperMessage("Could not update favorite. Please try again.");
     } finally {
@@ -138,7 +139,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
           {sourceProduct ? sourceProduct.colors.map((color) => (
             <button
               className={color.name === selectedColor ? "productSwatch productSwatch--selected" : "productSwatch"}
-              key={color.name}
+              key={color.id ?? color.name}
               type="button"
               aria-label={`Select ${color.name}`}
               aria-pressed={color.name === selectedColor}

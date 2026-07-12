@@ -20,6 +20,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+
+    match /users/{userId}/productFavorites/{productId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.productId == productId;
+    }
+
+    match /users/{userId}/lookFavorites/{lookId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.lookId == lookId;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -30,7 +30,7 @@ export const lookInputSchema = z.object({
   name: trimmedString.min(2).max(120),
   numberLabel: trimmedString.max(40).optional().transform((value) => value || null),
   description: trimmedString.max(1200).default(""),
-  priceDzd: z.union([z.number(), z.string()]).transform(Number).pipe(z.number().int().nonnegative().max(1_000_000)),
+  priceDzd: z.union([z.number(), z.string()]).transform(Number).pipe(z.number().int().positive().max(1_000_000)),
   compareAtPriceDzd: optionalNumber.pipe(z.number().int().positive().max(1_000_000).nullable()),
   heroImage: lookImageSchema,
   figureImage: lookImageSchema.nullable().optional(),

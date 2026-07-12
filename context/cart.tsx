@@ -26,6 +26,7 @@ type LookGroupInput = {
     image: string;
     description: string;
     priceDzd: number;
+    originalProductIds: string[];
   };
   items: AddToCartInput[];
 };
@@ -118,6 +119,7 @@ function normalizeStoredItems(value: string | null): CartItem[] {
         ...(typeof candidate.lookImage === "string" ? { lookImage: candidate.lookImage } : {}),
         ...(typeof candidate.lookDescription === "string" ? { lookDescription: candidate.lookDescription } : {}),
         ...(typeof candidate.lookPriceDzd === "number" ? { lookPriceDzd: candidate.lookPriceDzd } : {}),
+        ...(Array.isArray(candidate.lookOriginalProductIds) ? { lookOriginalProductIds: candidate.lookOriginalProductIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0) } : {}),
       }];
     });
   } catch {
@@ -210,6 +212,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         lookImage: input.group.image,
         lookDescription: input.group.description,
         lookPriceDzd: input.group.priceDzd,
+        lookOriginalProductIds: input.group.originalProductIds,
       });
     }
 

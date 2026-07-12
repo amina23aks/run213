@@ -27,7 +27,7 @@ export const createOrderRequestSchema = z.object({
     lookSlug: z.string().trim().min(1).max(160).nullable().optional(),
     lookName: z.string().trim().min(1).max(120).nullable().optional(),
     lookImage: z.string().trim().min(1).max(500).nullable().optional(),
-    lookPriceDzd: z.number().int().min(0).max(1_000_000).nullable().optional(),
+    lookOriginalProductIds: z.array(z.string().trim().min(1).max(140)).max(20).nullable().optional(),
   })).min(1).max(20),
   idempotencyKey: z.string().trim().min(8).max(120).nullable().optional(),
 }) satisfies z.ZodType<CreateOrderRequest>;

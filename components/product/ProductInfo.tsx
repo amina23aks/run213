@@ -72,7 +72,7 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
               <button
                 className={color.name === selectedColor ? "productSwatch productSwatch--selected" : "productSwatch"}
                 type="button"
-                key={color.name}
+                key={color.id ?? color.name}
                 aria-label={`Select ${color.name}`}
                 aria-pressed={color.name === selectedColor}
                 onClick={() => handleColorSelect(color.name, color.id)}

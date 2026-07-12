@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { CartItem } from "@/components/cart/CartItem";
 import { CartLookGroup } from "@/components/cart/CartLookGroup";
 import { groupCartItems } from "@/components/cart/cartGrouping";
@@ -11,6 +11,7 @@ import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
+import { getShippingQuote } from "@/lib/orders/shipping";
 import type { DeliveryMode } from "@/types/order";
 
 type CartDrawerProps = {
@@ -20,10 +21,20 @@ type CartDrawerProps = {
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const router = useRouter();
-  const { items, isHydrated, getLineKey, removeItem, removeLookGroup, updateQuantity, subtotalDzd, clearCart } = useCart();
+  const { items, isHydrated, getLineKey, removeItem, removeLookGroup, updateQuantity, subtotalDzd, itemCount, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [quickDeliveryDzd, setQuickDeliveryDzd] = useState<number | null>(null);
   const hasItems = isHydrated && items.length > 0;
+
+  function updateQuickDelivery(event: ChangeEvent<HTMLFormElement>) {
+    const formData = new FormData(event.currentTarget);
+    const wilaya = String(formData.get("drawerWilaya") ?? "");
+    const deliveryMode = String(formData.get("drawerDeliveryMode") ?? "home") as DeliveryMode;
+    if (!wilaya) { setQuickDeliveryDzd(null); return; }
+    try { setQuickDeliveryDzd(getShippingQuote({ wilaya, deliveryMode }).amountDzd); }
+    catch { setQuickDeliveryDzd(null); }
+  }
 
   async function handleQuickCheckoutSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,7 +84,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="cartDrawer__content">
             <div className="cartDrawer__items">
               {groupCartItems(items).map((group) => {
-                if (group.isLookGroup) return <CartLookGroup items={group.items} onRemoveGroup={removeLookGroup} key={group.id} />;
+                if (group.isLookGroup) return <CartLookGroup items={group.items} subtotalDzd={group.customerSubtotalDzd} onRemoveGroup={removeLookGroup} key={group.id} />;
                 const item = group.items[0];
                 if (!item) return null;
                 const lineKey = getLineKey(item);
@@ -82,11 +93,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
             <footer className="cartDrawer__footer">
               <div className="cartDrawerSubtotalBox">
+                <p className="cartDrawer__summaryTitle"><span>{itemCount} ITEM{itemCount === 1 ? "" : "S"}</span><strong>TOTAL</strong></p>
                 <p className="cartDrawer__subtotal"><span>Subtotal</span><strong>{formatDzd(subtotalDzd)}</strong></p>
-                <p className="cartDrawer__note">Delivery calculated at checkout.</p>
+                <p className="cartDrawer__subtotal"><span>Shipping</span><strong>Choose delivery method</strong></p>
+                <p className="cartDrawer__subtotal"><span>Payment</span><strong>Cash on delivery</strong></p>
               </div>
+              <Link className="cartDrawer__checkout" href="/checkout" onClick={onClose}>GO TO CHECKOUT PAGE</Link>
 
-              <form className="drawerCheckoutForm" action="#" onSubmit={handleQuickCheckoutSubmit}>
+              <form className="drawerCheckoutForm" action="#" onSubmit={handleQuickCheckoutSubmit} onChange={updateQuickDelivery}>
                 <div className="drawerCheckoutForm__header">
                   <strong>Quick checkout</strong>
                   <span>COD only</span>
@@ -122,9 +136,13 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <textarea name="drawerNotes" placeholder="Optional delivery note" rows={2} />
                 </label>
                 {message ? <p className="checkoutFormMessage" role="status">{message}</p> : null}
+                <div className="cartDrawerSubtotalBox cartDrawerSubtotalBox--quick">
+                  <p className="cartDrawer__subtotal"><span>Subtotal</span><strong>{formatDzd(subtotalDzd)}</strong></p>
+                  <p className="cartDrawer__subtotal"><span>Shipping</span><strong>{quickDeliveryDzd === null ? "Select wilaya" : formatDzd(quickDeliveryDzd)}</strong></p>
+                  <p className="cartDrawer__subtotal cartDrawer__total"><span>Total</span><strong>{formatDzd(subtotalDzd + (quickDeliveryDzd ?? 0))}</strong></p>
+                </div>
                 <button className="cartDrawer__checkout" type="submit" disabled={isSubmitting}>{isSubmitting ? "CREATING ORDER..." : "CONFIRM ORDER"}</button>
               </form>
-              <Link className="cartDrawer__secondary" href="/checkout" onClick={onClose}>FULL CHECKOUT PAGE</Link>
               <Link className="cartDrawer__secondary" href="/shop" onClick={onClose}>CONTINUE SHOPPING</Link>
             </footer>
           </div>

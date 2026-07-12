@@ -22,10 +22,15 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
     <>
       <Header />
       <main className="looksCollectionPage">
-        <section className="collectionHeader">
-          <span>LOOK COLLECTION</span>
-          <h1>{collection.name}</h1>
-          <p>{collection.subtitle}</p>
+        <section className="collectionHeader collectionHeader--withImage">
+          <div className="collectionHeader__media">
+            <Image src={collection.cardImage.url} alt={collection.cardImage.alt || collection.name} fill sizes="(max-width: 900px) 100vw, 42vw" unoptimized />
+          </div>
+          <div className="collectionHeader__copy">
+            <span>LOOK COLLECTION</span>
+            <h1>{collection.name}</h1>
+            <p>{collection.subtitle}</p>
+          </div>
         </section>
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
           {looks.length ? looks.map((look, index) => {
@@ -42,7 +47,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                   <div className="lookMiniProducts">
                     {activeProducts.slice(0, 4).map((product) => {
                       const image = product.images[0];
-                      return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={image.url} alt={image.alt || product.name} width={170} height={150} unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "Color"}</span></Link>;
+                      return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={image.url} alt={image.alt || product.name} width={150} height={130} unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "No color"}</span><small>{product.sizes.length ? product.sizes.map((size) => size.label).join(" · ") : "One size"}</small><em>{formatDzd(product.priceDzd)}</em></Link>;
                     })}
                   </div>
                   <Link className="lookViewButton" href={`/look/${look.slug}`}>VIEW LOOK <span>→</span></Link>

@@ -2,17 +2,17 @@ import Image from "next/image";
 import { CartVariantDisplay } from "@/components/cart/CartVariantDisplay";
 import { formatDzd } from "@/constants/products";
 import type { CartItem } from "@/types/cart";
-import { getGroupSubtotal } from "@/components/cart/cartGrouping";
 
 type CartLookGroupProps = {
   items: CartItem[];
   onRemoveGroup: (lookGroupId: string) => void;
+  subtotalDzd?: number;
 };
 
-export function CartLookGroup({ items, onRemoveGroup }: CartLookGroupProps) {
+export function CartLookGroup({ items, onRemoveGroup, subtotalDzd }: CartLookGroupProps) {
   const firstItem = items[0];
   if (!firstItem?.lookGroupId) return null;
-  const subtotal = getGroupSubtotal(items);
+  const subtotal = subtotalDzd ?? items.reduce((sum, item) => sum + item.priceDzd * item.quantity, 0);
 
   return (
     <article className="cartLookGroup">

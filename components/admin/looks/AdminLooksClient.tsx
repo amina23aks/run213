@@ -125,7 +125,7 @@ function validateDraft(draft: LookDraft): { ok: boolean; errors: FieldErrors; ho
   let homepageFigureOrder: number | null = null;
   if (!draft.collectionId) errors.collectionId = "Choose a collection.";
   if (!draft.name.trim()) errors.name = "Enter a Look name.";
-  if (toInteger(draft.priceDzd) === null) errors.priceDzd = "Enter a valid Look price.";
+  if (toInteger(draft.priceDzd) === null || (toInteger(draft.priceDzd) ?? 0) <= 0) errors.priceDzd = "Enter a Look price greater than 0 DZD.";
   if (draft.status === "active" && !draft.heroImageUrl) errors.heroImageUrl = "Upload a hero image before activating this Look.";
   if (draft.status === "active" && !draft.productIds.length) errors.productIds = "Select at least one active product.";
   if (sortOrder === null) errors.sortOrder = "Enter a valid number.";

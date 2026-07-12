@@ -16,7 +16,7 @@ export function CartPageClient() {
       <div className="cartPage__items">
         {hasItems ? (
           groupCartItems(items).map((group) => {
-            if (group.isLookGroup) return <CartLookGroup items={group.items} onRemoveGroup={removeLookGroup} key={group.id} />;
+            if (group.isLookGroup) return <CartLookGroup items={group.items} subtotalDzd={group.customerSubtotalDzd} onRemoveGroup={removeLookGroup} key={group.id} />;
             const item = group.items[0];
             if (!item) return null;
             const lineKey = getLineKey(item);

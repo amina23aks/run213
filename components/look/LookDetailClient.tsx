@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { formatDzd } from "@/constants/products";
+import { calculateLookGroupPrice, isValidLookPrice } from "@/lib/lookPricing";
 import { useCart } from "@/context/cart";
 import type { LookWithProducts } from "@/types/look";
 import type { Product } from "@/types/product";
@@ -39,7 +40,13 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
     size: product?.sizes.length === 1 ? product.sizes[0]?.label ?? null : null,
   }])));
 
-  const total = look.priceDzd;
+  const selectedProductLines = look.products.flatMap(({ productId, product }) => {
+    const state = selected[productId];
+    return state?.enabled && product ? [{ productId, priceDzd: product.priceDzd, quantity: 1 }] : [];
+  });
+  const priceResult = calculateLookGroupPrice({ canonicalLookPriceDzd: look.priceDzd, originalProductIds: look.productIds, selectedProductLines });
+  const total = priceResult.subtotalDzd;
+  const hasValidLookPrice = isValidLookPrice(look.priceDzd);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +113,12 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
       preparedItems.push({ product, selectedColor: state.color, selectedSize: state.size, quantity: 1 });
     }
 
+    if (!hasValidLookPrice) {
+      setInvalidIds(new Set());
+      setMessage("This Look is unavailable until a valid selling price is added.");
+      return;
+    }
+
     if (!preparedItems.length || invalid.size > 0) {
       setInvalidIds(invalid);
       setMessage(LOOK_VALIDATION_MESSAGE);
@@ -124,6 +137,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         image: look.heroImage.url,
         description: look.description,
         priceDzd: look.priceDzd,
+        originalProductIds: look.productIds,
       },
       items: preparedItems,
     });
@@ -141,7 +155,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         <span>{look.numberLabel ?? "LOOK"}</span>
         <h1>{look.name}</h1>
         <p>{look.description}</p>
-        <div className="lookTotalBar"><span>Look total</span><strong>{formatDzd(total)}</strong></div>
+        <div className="lookTotalBar"><span>{priceResult.pricingMode === "look-price" ? "Look total" : "Selected items total"}</span><strong>{hasValidLookPrice || total > 0 ? formatDzd(total) : "Unavailable"}</strong></div>
         <div className="lookItemsList">
           {look.products.map(({ productId, product }) => {
             const state = selected[productId] ?? { enabled: false, color: null, size: null };
@@ -158,7 +172,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
                   {unavailable ? <p className="lookUnavailable">Unavailable or out of stock.</p> : null}
                   {isInvalid ? <p className="lookItemError">Choose required size and color.</p> : null}
                   {product && !unavailable && state.enabled ? <div className="lookItemOptions">
-                    {product.colors.length ? <div>{product.colors.map((color) => <button className={state.color === color.name ? "productSwatch productSwatch--selected" : "productSwatch"} type="button" key={color.name} aria-label={`Select ${color.name}`} aria-pressed={state.color === color.name} onClick={() => patchItem(productId, { color: color.name })}><span className="productSwatch__color" style={{ backgroundColor: color.hex }} /></button>)}</div> : null}
+                    {product.colors.length ? <div>{product.colors.map((color) => <button className={state.color === color.name ? "productSwatch productSwatch--selected" : "productSwatch"} type="button" key={color.id ?? color.name} aria-label={`Select ${color.name}`} aria-pressed={state.color === color.name} onClick={() => patchItem(productId, { color: color.name })}><span className="productSwatch__color" style={{ backgroundColor: color.hex }} /></button>)}</div> : null}
                     {product.sizes.length ? <div>{product.sizes.map((size) => <button className={state.size === size.label ? "isSelected" : undefined} type="button" key={size.label} onClick={() => patchItem(productId, { size: size.label })}>{size.label}</button>)}</div> : null}
                   </div> : null}
                 </div>
@@ -168,7 +182,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         </div>
         {message ? <p className={message === LOOK_VALIDATION_MESSAGE ? "lookCartMessage lookCartMessage--error" : "lookCartMessage"} role="status">{message}</p> : null}
         <div className="lookActions">
-          <button className="lookActions__cart" type="button" onClick={addSelectedLook}>ADD LOOK TO CART</button>
+          <button className="lookActions__cart" type="button" disabled={!hasValidLookPrice || priceResult.selectedItemCount === 0} onClick={addSelectedLook}>ADD LOOK TO CART</button>
           <button className="lookActions__favorite" type="button" aria-label={`${isLookFavorite ? "Remove" : "Add"} Look favorite`} aria-pressed={isLookFavorite} disabled={favoriteBusy} onClick={handleLookFavoriteToggle}>{isLookFavorite ? "♥" : "♡"}</button>
         </div>
       </div>

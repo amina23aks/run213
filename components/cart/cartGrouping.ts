@@ -1,3 +1,4 @@
+import { calculateLookGroupPrice, parseLookOriginalProductIds } from "@/lib/lookPricing";
 import type { CartItem } from "@/types/cart";
 
 export type CartGroup = {
@@ -5,7 +6,26 @@ export type CartGroup = {
   isLookGroup: boolean;
   items: CartItem[];
   customerSubtotalDzd: number;
+  pricingMode?: "look-price" | "remaining-products";
+  originalItemCount?: number;
+  selectedItemCount?: number;
 };
+
+function priceLookGroup(items: CartItem[]): Pick<CartGroup, "customerSubtotalDzd" | "pricingMode" | "originalItemCount" | "selectedItemCount"> {
+  const firstItem = items[0];
+  const result = calculateLookGroupPrice({
+    canonicalLookPriceDzd: firstItem?.lookPriceDzd,
+    originalProductIds: parseLookOriginalProductIds(firstItem?.lookOriginalProductIds, items),
+    selectedProductLines: items.map((item) => ({ productId: item.productId, priceDzd: item.priceDzd, quantity: item.quantity })),
+  });
+
+  return {
+    customerSubtotalDzd: result.subtotalDzd,
+    pricingMode: result.pricingMode,
+    originalItemCount: result.originalItemCount,
+    selectedItemCount: result.selectedItemCount,
+  };
+}
 
 export function groupCartItems(items: CartItem[]): CartGroup[] {
   const groups: CartGroup[] = [];
@@ -24,10 +44,10 @@ export function groupCartItems(items: CartItem[]): CartGroup[] {
     }
 
     lookGroupIndexes.set(item.lookGroupId, groups.length);
-    groups.push({ id: item.lookGroupId, isLookGroup: true, items: [item], customerSubtotalDzd: item.lookPriceDzd ?? 0 });
+    groups.push({ id: item.lookGroupId, isLookGroup: true, items: [item], customerSubtotalDzd: 0 });
   });
 
-  return groups.map((group) => group.isLookGroup ? { ...group, customerSubtotalDzd: group.items[0]?.lookPriceDzd ?? 0 } : group);
+  return groups.map((group) => group.isLookGroup ? { ...group, ...priceLookGroup(group.items) } : group);
 }
 
 export function groupCartItemsForPricing(items: CartItem[]): CartGroup[] {
@@ -39,5 +59,5 @@ export function calculateCustomerSubtotal(groups: CartGroup[]): number {
 }
 
 export function getGroupSubtotal(items: CartItem[]): number {
-  return items[0]?.lookPriceDzd ?? items.reduce((total, item) => total + item.priceDzd * item.quantity, 0);
+  return priceLookGroup(items).customerSubtotalDzd;
 }

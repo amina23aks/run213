@@ -100,6 +100,8 @@ function parseCollection(id: string, data: Record<string, unknown>): LookCollect
 
 function parseLook(id: string, data: Record<string, unknown>): Look | null {
   if (!isString(data.collectionId) || !isString(data.collectionSlug) || !isString(data.slug) || !isString(data.name) || !isImage(data.heroImage) || !isStatus(data.status)) return null;
+  const priceDzd = isNumber(data.priceDzd) && Number.isInteger(data.priceDzd) && data.priceDzd > 0 ? data.priceDzd : 0;
+  if (data.status === "active" && priceDzd <= 0) return null;
   return {
     id,
     collectionId: data.collectionId,
@@ -108,7 +110,7 @@ function parseLook(id: string, data: Record<string, unknown>): Look | null {
     name: data.name,
     numberLabel: isString(data.numberLabel) ? data.numberLabel : null,
     description: isString(data.description) ? data.description : "",
-    priceDzd: isNumber(data.priceDzd) ? data.priceDzd : 0,
+    priceDzd,
     compareAtPriceDzd: isNumber(data.compareAtPriceDzd) ? data.compareAtPriceDzd : null,
     heroImage: data.heroImage,
     figureImage: isImage(data.figureImage) ? data.figureImage : null,
