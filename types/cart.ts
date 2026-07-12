@@ -14,6 +14,7 @@ export type CartItem = {
   lookName?: string;
   lookImage?: string;
   lookDescription?: string;
+  lookPriceDzd?: number;
 };
 
 export type Cart = {

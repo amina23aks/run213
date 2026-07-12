@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from "react";
 import type { CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
+import { calculateCustomerSubtotal, groupCartItemsForPricing } from "@/components/cart/cartGrouping";
 
 export const CART_STORAGE_KEY = "213run-cart";
 
@@ -24,6 +25,7 @@ type LookGroupInput = {
     name: string;
     image: string;
     description: string;
+    priceDzd: number;
   };
   items: AddToCartInput[];
 };
@@ -115,6 +117,7 @@ function normalizeStoredItems(value: string | null): CartItem[] {
         ...(typeof candidate.lookName === "string" ? { lookName: candidate.lookName } : {}),
         ...(typeof candidate.lookImage === "string" ? { lookImage: candidate.lookImage } : {}),
         ...(typeof candidate.lookDescription === "string" ? { lookDescription: candidate.lookDescription } : {}),
+        ...(typeof candidate.lookPriceDzd === "number" ? { lookPriceDzd: candidate.lookPriceDzd } : {}),
       }];
     });
   } catch {
@@ -206,6 +209,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         lookName: input.group.name,
         lookImage: input.group.image,
         lookDescription: input.group.description,
+        lookPriceDzd: input.group.priceDzd,
       });
     }
 
@@ -230,7 +234,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  const subtotalDzd = useMemo(() => items.reduce((total, item) => total + item.priceDzd * item.quantity, 0), [items]);
+  const subtotalDzd = useMemo(() => calculateCustomerSubtotal(groupCartItemsForPricing(items)), [items]);
   const itemCount = useMemo(() => items.reduce((total, item) => total + item.quantity, 0), [items]);
 
   const value = useMemo<CartContextValue>(() => ({

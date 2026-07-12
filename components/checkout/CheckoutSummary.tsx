@@ -1,14 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CartVariantDisplay } from "@/components/cart/CartVariantDisplay";
 import { groupCartItems, getGroupSubtotal } from "@/components/cart/cartGrouping";
 import { formatDzd } from "@/constants/products";
+import { getShippingQuote } from "@/lib/orders/shipping";
 import { useCart } from "@/context/cart";
 
 export function CheckoutSummary() {
   const { items, isHydrated, subtotalDzd } = useCart();
+  const [deliveryDzd, setDeliveryDzd] = useState<number | null>(null);
+
+  useEffect(() => {
+    function handleDeliveryChange(event: Event) {
+      const detail = (event as CustomEvent<{ wilaya?: string; deliveryMode?: "home" | "desk" }>).detail;
+      if (!detail?.wilaya || !detail.deliveryMode) { setDeliveryDzd(null); return; }
+      try { setDeliveryDzd(getShippingQuote({ wilaya: detail.wilaya, deliveryMode: detail.deliveryMode }).amountDzd); }
+      catch { setDeliveryDzd(null); }
+    }
+    window.addEventListener("run213:delivery-change", handleDeliveryChange);
+    return () => window.removeEventListener("run213:delivery-change", handleDeliveryChange);
+  }, []);
+
+  const totalDzd = subtotalDzd + (deliveryDzd ?? 0);
 
   return (
     <aside className="checkoutSummary" aria-label="Checkout order summary">
@@ -25,7 +41,7 @@ export function CheckoutSummary() {
                   <div><span>LOOK</span><h3>{firstItem.lookName ?? "Selected Look"}</h3><strong>{formatDzd(getGroupSubtotal(group.items))}</strong></div>
                 </header>
                 <div>
-                  {group.items.map((item) => <p key={`${item.productId}-${item.selectedSize ?? "no-size"}-${item.selectedColor ?? "no-color"}`}><span>{item.name} · {item.selectedColor ?? "Color"} / {item.selectedSize ?? "Size"} · Qty {item.quantity}</span><strong>{formatDzd(item.priceDzd * item.quantity)}</strong></p>)}
+                  {group.items.map((item) => <p key={`${item.productId}-${item.selectedSize ?? "no-size"}-${item.selectedColor ?? "no-color"}`}><span>{item.name} · {item.selectedColor ?? "Color"} / {item.selectedSize ?? "Size"} · Qty {item.quantity}</span></p>)}
                 </div>
               </article>
             );
@@ -55,10 +71,10 @@ export function CheckoutSummary() {
       )}
       <div className="checkoutSummaryRows">
         <p><span>Subtotal</span><strong>{formatDzd(subtotalDzd)}</strong></p>
-        <p><span>Delivery</span><strong>Calculated in Sprint D</strong></p>
-        <p className="checkoutSummaryTotal"><span>Total</span><strong>{formatDzd(subtotalDzd)}</strong></p>
+        <p><span>Delivery</span><strong>{deliveryDzd === null ? "Choose Wilaya" : formatDzd(deliveryDzd)}</strong></p>
+        <p className="checkoutSummaryTotal"><span>Total</span><strong>{formatDzd(totalDzd)}</strong></p>
       </div>
-      <p className="checkoutSummaryNote">Cash on delivery. Cart totals are client-side only; the server will recompute product and delivery totals in Sprint D.</p>
+      <p className="checkoutSummaryNote">Cash on delivery. The server verifies product, Look, and delivery totals when the order is created.</p>
     </aside>
   );
 }

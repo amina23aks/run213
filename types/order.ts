@@ -49,6 +49,9 @@ export type OrderItem = {
   lookSlug?: string | null;
   lookName?: string | null;
   lookImage?: string | null;
+  lookPriceDzd?: number | null;
+  displayPriceDzd?: number | null;
+  allocatedRevenueDzd?: number | null;
 };
 
 export type OrderTotals = {

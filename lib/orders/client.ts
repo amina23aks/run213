@@ -44,6 +44,7 @@ export function buildCreateOrderRequest(values: OrderFormValues, cartItems: Cart
       lookSlug: item.lookSlug ?? null,
       lookName: item.lookName ?? null,
       lookImage: item.lookImage ?? null,
+      lookPriceDzd: item.lookPriceDzd ?? null,
     })),
     idempotencyKey: crypto.randomUUID(),
   };

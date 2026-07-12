@@ -9,6 +9,7 @@ import { normalizeEmail, normalizePhone } from "@/lib/orders/validation";
 
 const ORDERS_COLLECTION = "orders";
 const PRODUCTS_COLLECTION = "products";
+const LOOKS_COLLECTION = "looks";
 
 export async function createOrder(input: CreateOrderRequest): Promise<CreateOrderResponse> {
   const [{ getAdminDb }, { Timestamp }] = await Promise.all([
@@ -24,8 +25,9 @@ export async function createOrder(input: CreateOrderRequest): Promise<CreateOrde
 
   const record = await adminDb.runTransaction(async (transaction) => {
     const products = await readProductsForOrder(input, transaction, adminDb.collection(PRODUCTS_COLLECTION));
+    const looks = await readLooksForOrder(input, transaction, adminDb.collection(LOOKS_COLLECTION));
     const delivery = normalizeDelivery(input.delivery);
-    const items = buildOrderItems(input, products);
+    const items = buildOrderItems(input, products, looks);
     const shippingQuote = await shippingCalculator.quote(delivery);
     const itemsSubtotalDzd = items.reduce((total, item) => total + item.lineTotalDzd, 0);
     const shippingDzd = shippingQuote.amountDzd;
@@ -94,6 +96,7 @@ function normalizeDelivery(delivery: CreateOrderRequest["delivery"]): DeliveryIn
 }
 
 type ProductById = Map<string, Product>;
+type LookPriceById = Map<string, { id: string; slug: string; name: string; priceDzd: number }>;
 
 type TransactionLike = {
   get: (ref: FirebaseFirestore.DocumentReference) => Promise<FirebaseFirestore.DocumentSnapshot>;
@@ -122,18 +125,33 @@ async function readProductsForOrder(
   return new Map(entries);
 }
 
-function buildOrderItems(input: CreateOrderRequest, products: ProductById): OrderItem[] {
-  return input.items.map((item) => {
-    const product = products.get(item.productId);
-    if (!product) {
-      throw new Error(`Product not available: ${item.productId}`);
-    }
 
+async function readLooksForOrder(
+  input: CreateOrderRequest,
+  transaction: TransactionLike,
+  looksCollection: FirebaseFirestore.CollectionReference,
+): Promise<LookPriceById> {
+  const lookIds = [...new Set(input.items.map((item) => item.lookId).filter((value): value is string => typeof value === "string" && value.trim().length > 0))];
+  const entries = await Promise.all(lookIds.map(async (lookId) => {
+    const snapshot = await transaction.get(looksCollection.doc(lookId));
+    if (!snapshot.exists) throw new Error(`Look not found: ${lookId}`);
+    const data = snapshot.data() ?? {};
+    if (data.status !== "active" || !isString(data.slug) || !isString(data.name) || !isNumber(data.priceDzd)) throw new Error(`Look is not active or invalid: ${lookId}`);
+    return [lookId, { id: lookId, slug: data.slug, name: data.name, priceDzd: data.priceDzd }] as const;
+  }));
+  return new Map(entries);
+}
+
+function buildOrderItems(input: CreateOrderRequest, products: ProductById, looks: LookPriceById): OrderItem[] {
+  const baseItems = input.items.map((item) => {
+    const product = products.get(item.productId);
+    if (!product) throw new Error(`Product not available: ${item.productId}`);
     const selectedColor = item.selectedColor ?? null;
     const selectedSize = item.selectedSize ?? null;
     validateVariant(product, selectedColor, selectedSize);
     validateQuantity(product, item.quantity);
-
+    const canonicalLook = item.lookId ? looks.get(item.lookId) : null;
+    if (item.lookGroupId && !canonicalLook) throw new Error(`Look not available: ${item.lookId ?? item.lookGroupId}`);
     return {
       productId: product.id,
       slug: product.slug,
@@ -144,15 +162,33 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById): Orde
       selectedColor,
       quantity: item.quantity,
       unitPriceDzd: product.priceDzd,
-      lineTotalDzd: product.priceDzd * item.quantity,
+      lineTotalDzd: item.lookGroupId ? 0 : product.priceDzd * item.quantity,
       stockMode: product.stockMode,
       lookGroupId: item.lookGroupId ?? null,
       lookId: item.lookId ?? null,
-      lookSlug: item.lookSlug ?? null,
-      lookName: item.lookName ?? null,
+      lookSlug: canonicalLook?.slug ?? item.lookSlug ?? null,
+      lookName: canonicalLook?.name ?? item.lookName ?? null,
       lookImage: item.lookImage ?? null,
-    };
+      lookPriceDzd: canonicalLook?.priceDzd ?? null,
+      displayPriceDzd: item.lookGroupId ? null : product.priceDzd * item.quantity,
+      allocatedRevenueDzd: item.lookGroupId ? 0 : product.priceDzd * item.quantity,
+    } satisfies OrderItem;
   });
+
+  const groups = new Map<string, OrderItem[]>();
+  baseItems.forEach((item) => { if (item.lookGroupId) groups.set(item.lookGroupId, [...(groups.get(item.lookGroupId) ?? []), item]); });
+  groups.forEach((groupItems) => {
+    const lookPrice = groupItems[0]?.lookPriceDzd ?? 0;
+    const normalTotal = groupItems.reduce((sum, item) => sum + item.unitPriceDzd * item.quantity, 0);
+    let allocated = 0;
+    groupItems.forEach((item, index) => {
+      const value = index === groupItems.length - 1 ? lookPrice - allocated : Math.round(lookPrice * ((item.unitPriceDzd * item.quantity) / Math.max(1, normalTotal)));
+      item.allocatedRevenueDzd = value;
+      item.lineTotalDzd = index === 0 ? lookPrice : 0;
+      allocated += value;
+    });
+  });
+  return baseItems;
 }
 
 function validateVariant(product: Product, selectedColor: string | null, selectedSize: string | null): void {

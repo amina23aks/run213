@@ -108,6 +108,8 @@ function parseLook(id: string, data: Record<string, unknown>): Look | null {
     name: data.name,
     numberLabel: isString(data.numberLabel) ? data.numberLabel : null,
     description: isString(data.description) ? data.description : "",
+    priceDzd: isNumber(data.priceDzd) ? data.priceDzd : 0,
+    compareAtPriceDzd: isNumber(data.compareAtPriceDzd) ? data.compareAtPriceDzd : null,
     heroImage: data.heroImage,
     figureImage: isImage(data.figureImage) ? data.figureImage : null,
     productIds: Array.isArray(data.productIds) ? data.productIds.filter(isString) : [],

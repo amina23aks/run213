@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminProductForm } from "@/components/admin/products/AdminProductForm";
 import { AdminProductList } from "@/components/admin/products/AdminProductList";
-import type { ProductDraft, ProductDraftColor } from "@/components/admin/products/types";
+import type { ProductDraft, ProductDraftColor, ProductDraftImage } from "@/components/admin/products/types";
 import { extractFirebaseAuthCode, getAuthErrorMessage } from "@/lib/auth-errors";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Product } from "@/types/product";
@@ -264,7 +264,7 @@ export function AdminProductsClient() {
         sizeGuideImagePublicId: uploadedImageId,
       } : {
         ...current,
-        images: [...current.images, { id: uploadedImageId, url: uploadedImageUrl, publicId: uploadedImageId, alt: current.name || "Product image" }],
+        images: [...current.images, { id: uploadedImageId, url: uploadedImageUrl, publicId: uploadedImageId, alt: current.name || "Product image", sortOrder: current.images.length, isPrimary: current.images.length === 0, colorId: null }],
       });
       setFormErrors([]);
       setMessage("Image uploaded.");
@@ -280,8 +280,34 @@ export function AdminProductsClient() {
   }
 
   function removeImage(id: string) {
-    setDraft((current) => ({ ...current, images: current.images.filter((image) => image.id !== id) }));
+    setDraft((current) => {
+      const images = current.images.filter((image) => image.id !== id).map((image, index) => ({ ...image, sortOrder: index }));
+      return { ...current, images: images.some((image) => image.isPrimary) ? images : images.map((image, index) => ({ ...image, isPrimary: index === 0 })) };
+    });
     setFormErrors([]);
+  }
+
+  function updateImage(id: string, patch: Partial<ProductDraftImage>) {
+    setDraft((current) => ({
+      ...current,
+      images: current.images.map((image) => image.id === id ? { ...image, ...patch } : image),
+    }));
+    setFormErrors([]);
+  }
+
+  function setPrimaryImage(id: string) {
+    setDraft((current) => ({ ...current, images: current.images.map((image) => ({ ...image, isPrimary: image.id === id })) }));
+  }
+
+  function moveImage(id: string, direction: -1 | 1) {
+    setDraft((current) => {
+      const images = [...current.images].sort((a, b) => a.sortOrder - b.sortOrder);
+      const index = images.findIndex((image) => image.id === id);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= images.length) return current;
+      [images[index], images[nextIndex]] = [images[nextIndex], images[index]];
+      return { ...current, images: images.map((image, sortOrder) => ({ ...image, sortOrder })) };
+    });
   }
 
   function addColor() {
@@ -338,6 +364,9 @@ export function AdminProductsClient() {
           onColorChange={updateColor}
           onRemoveColor={removeColor}
           onRemoveImage={removeImage}
+          onUpdateImage={updateImage}
+          onSetPrimaryImage={setPrimaryImage}
+          onMoveImage={moveImage}
           onSubmit={saveProduct}
           onToggleSize={toggleSize}
           onUploadImage={(file) => uploadImage(file, "product")}
@@ -412,10 +441,10 @@ function toPayload(draft: ProductDraft) {
     compareAtPriceDzd: draft.compareAtPriceDzd,
     costPriceDzd: draft.costPriceDzd,
     discountPercent: draft.discountPercent,
-    images: draft.images.map((image) => ({ url: image.url, alt: image.alt || draft.name || "Product image", publicId: image.publicId })),
+    images: draft.images.map((image, index) => ({ id: image.id, url: image.url, alt: image.alt || draft.name || "Product image", publicId: image.publicId, sortOrder: image.sortOrder ?? index, isPrimary: image.isPrimary, colorId: image.colorId ?? null })),
     colors: draft.colors
       .filter((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
-      .map((color) => ({ name: color.name.trim(), hex: color.hex.trim() })),
+      .map((color) => ({ id: color.id, name: color.name.trim(), hex: color.hex.trim() })),
     sizes: draft.sizes.map((label) => ({ label })),
     status: draft.status,
     inStock: draft.stockMode === "unlimited" || Number(draft.stockQty) > 0,
@@ -447,8 +476,8 @@ function fromProduct(product: Product): ProductDraft {
     discountPercent: String(product.discountPercent ?? 0),
     costPriceDzd: product.costPriceDzd ? String(product.costPriceDzd) : "",
     compareAtPriceDzd: product.compareAtPriceDzd ? String(product.compareAtPriceDzd) : "",
-    images: product.images.map((image, index) => ({ id: image.publicId ?? `image-${index}-${image.url}`, url: image.url, publicId: image.publicId, alt: image.alt })),
-    colors: product.colors.length ? product.colors.map((color, index) => ({ id: `color-${index}-${color.hex}`, name: color.name, hex: color.hex })) : [{ id: "color-1", name: "Black", hex: "#111111" }],
+    images: product.images.map((image, index) => ({ id: image.id ?? image.publicId ?? `image-${index}-${image.url}`, url: image.url, publicId: image.publicId, alt: image.alt, sortOrder: image.sortOrder ?? index, isPrimary: image.isPrimary ?? index === 0, colorId: image.colorId ?? null })),
+    colors: product.colors.length ? product.colors.map((color, index) => ({ id: color.id ?? `color-${index}-${color.hex}`, name: color.name, hex: color.hex })) : [{ id: "color-1", name: "Black", hex: "#111111" }],
     sizes: product.sizes.map((size) => size.label),
     status: product.status === "archived" ? "draft" : product.status,
     stockMode: product.stockMode === "limited" ? "limited" : "unlimited",

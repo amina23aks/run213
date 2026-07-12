@@ -2,13 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import { useCart } from "@/context/cart";
 import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
 import type { DeliveryMode } from "@/types/order";
 
 export function CheckoutForm() {
+  function notifyDeliveryChange(event: ChangeEvent<HTMLFormElement>) {
+    const formData = new FormData(event.currentTarget);
+    window.dispatchEvent(new CustomEvent("run213:delivery-change", { detail: { wilaya: String(formData.get("wilaya") ?? ""), deliveryMode: String(formData.get("deliveryType") ?? "home") } }));
+  }
   const router = useRouter();
   const { items, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,11 +53,11 @@ export function CheckoutForm() {
   }
 
   return (
-    <form className="checkoutForm checkoutForm--compact" action="#" onSubmit={handleSubmit}>
+    <form className="checkoutForm checkoutForm--compact" action="#" onSubmit={handleSubmit} onChange={notifyDeliveryChange}>
       <section className="checkoutCard checkoutCard--compact" aria-labelledby="checkout-details-title">
         <div className="checkoutCard__heading">
           <h2 id="checkout-details-title">Delivery details</h2>
-          <p>Cash on delivery. Final totals are confirmed by the server.</p>
+          <p>Cash on delivery. Delivery is calculated from your Wilaya and verified by the server.</p>
         </div>
 
         <div className="checkoutFields checkoutFields--two">

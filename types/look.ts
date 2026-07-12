@@ -29,6 +29,8 @@ export type Look = {
   name: string;
   numberLabel: string | null;
   description: string;
+  priceDzd: number;
+  compareAtPriceDzd: number | null;
   heroImage: LookImage;
   figureImage?: LookImage | null;
   productIds: string[];

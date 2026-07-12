@@ -83,7 +83,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <footer className="cartDrawer__footer">
               <div className="cartDrawerSubtotalBox">
                 <p className="cartDrawer__subtotal"><span>Subtotal</span><strong>{formatDzd(subtotalDzd)}</strong></p>
-                <p className="cartDrawer__note">Delivery and final totals are recalculated by the server in Sprint D.</p>
+                <p className="cartDrawer__note">Delivery calculated at checkout.</p>
               </div>
 
               <form className="drawerCheckoutForm" action="#" onSubmit={handleQuickCheckoutSubmit}>

@@ -48,6 +48,12 @@ export function AccountMenu() {
   }, []);
 
   useEffect(() => {
+    function openRequestedAuth() { openAuth(); }
+    window.addEventListener("run213:open-auth", openRequestedAuth);
+    return () => window.removeEventListener("run213:open-auth", openRequestedAuth);
+  }, []);
+
+  useEffect(() => {
     if (!isMenuOpen && !isAuthOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {

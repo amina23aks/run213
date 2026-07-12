@@ -8,9 +8,10 @@ import type { Product } from "@/types/product";
 
 type ProductInfoProps = {
   product: Product;
+  onColorIdChange?: (colorId: string | null) => void;
 };
 
-export function ProductInfo({ product }: ProductInfoProps) {
+export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
   const { addItem } = useCart();
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -27,8 +28,9 @@ export function ProductInfo({ product }: ProductInfoProps) {
     setQuantity(typeof maxQuantity === "number" ? Math.min(minClamped, maxQuantity) : minClamped);
   }
 
-  function handleColorSelect(colorName: string) {
+  function handleColorSelect(colorName: string, colorId?: string) {
     setSelectedColor(colorName);
+    onColorIdChange?.(colorId ?? null);
     setCartMessage(null);
   }
 
@@ -73,7 +75,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
                 key={color.name}
                 aria-label={`Select ${color.name}`}
                 aria-pressed={color.name === selectedColor}
-                onClick={() => handleColorSelect(color.name)}
+                onClick={() => handleColorSelect(color.name, color.id)}
               >
                 <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
               </button>

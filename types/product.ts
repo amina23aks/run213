@@ -5,12 +5,17 @@ export type ProductStatus = "draft" | "active" | "archived";
 export type ProductStockMode = "unlimited" | "limited" | "made_to_order";
 
 export type ProductImage = {
+  id: string;
   url: string;
   alt: string;
   publicId?: string;
+  sortOrder: number;
+  isPrimary: boolean;
+  colorId?: string | null;
 };
 
 export type ProductColor = {
+  id: string;
   name: string;
   hex: string;
 };

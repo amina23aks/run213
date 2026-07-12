@@ -38,11 +38,11 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                 <div className="lookEditorialContent">
                   <div className="lookEditorialTopline"><span>{look.numberLabel ?? `LOOK ${String(index + 1).padStart(2, "0")}`}</span></div>
                   <h2>{look.name}</h2>
-                  <p>{look.description}</p>
+                  <p>{look.description}</p><strong className="lookEditorialPrice">{formatDzd(look.priceDzd)}</strong>
                   <div className="lookMiniProducts">
                     {activeProducts.slice(0, 4).map((product) => {
                       const image = product.images[0];
-                      return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={image.url} alt={image.alt || product.name} width={170} height={150} unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "Color"}</span><em>{formatDzd(product.priceDzd)}</em></Link>;
+                      return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={image.url} alt={image.alt || product.name} width={170} height={150} unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "Color"}</span></Link>;
                     })}
                   </div>
                   <Link className="lookViewButton" href={`/look/${look.slug}`}>VIEW LOOK <span>→</span></Link>

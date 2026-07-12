@@ -17,7 +17,7 @@ export function CartSummary({ subtotalDzd, itemCount }: CartSummaryProps) {
         <p className="cartSummary__total"><span>Total</span><strong>{formatDzd(subtotalDzd)}</strong></p>
       </div>
       <Link className="cartSummary__checkout" href="/checkout">CHECKOUT</Link>
-      <p>Cash on delivery available. Server totals will be recomputed during order creation in Sprint D.</p>
+      <p>Cash on delivery available. Delivery is calculated at checkout and verified by the server.</p>
     </aside>
   );
 }

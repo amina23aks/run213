@@ -37,7 +37,7 @@ export function CartLookGroup({ items, onRemoveGroup }: CartLookGroupProps) {
               <CartVariantDisplay item={item} />
               <span>Qty {item.quantity}</span>
             </div>
-            <em>{formatDzd(item.priceDzd * item.quantity)}</em>
+            <em>Included</em>
           </div>
         ))}
       </div>

@@ -16,8 +16,6 @@ type ProductCardItem = {
   discount?: string;
 };
 
-const PRODUCT_FAVORITES_KEY = "213run-product-favorites";
-
 type ProductCardProps = {
   product: ProductCardItem;
   promo?: boolean;
@@ -38,18 +36,24 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const [selectedSize, setSelectedSize] = useState<string | null>(() => getInitialSize(sourceProduct));
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
   const isUnavailable = Boolean(sourceProduct && (!sourceProduct.inStock || sourceProduct.status !== "active" || (sourceProduct.stockMode === "limited" && (sourceProduct.stockQty ?? 0) <= 0)));
 
   useEffect(() => {
     if (!sourceProduct) return undefined;
-    const timer = window.setTimeout(() => {
-      const stored = window.localStorage.getItem(PRODUCT_FAVORITES_KEY);
-      const ids = stored ? safeParseFavorites(stored) : [];
-      setIsFavorite(ids.includes(sourceProduct.id));
-    }, 0);
-    return () => window.clearTimeout(timer);
+    let cancelled = false;
+    let unsubscribeAuth: (() => void) | undefined;
+    Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]).then(([client, authModule, firestore]) => {
+      unsubscribeAuth = authModule.onAuthStateChanged(client.auth, (user) => {
+        if (!user) { if (!cancelled) setIsFavorite(false); return; }
+        firestore.getDoc(firestore.doc(client.db, "users", user.uid, "productFavorites", sourceProduct.id)).then((snapshot) => {
+          if (!cancelled) setIsFavorite(snapshot.exists());
+        }).catch(() => { if (!cancelled) setIsFavorite(false); });
+      });
+    }).catch(() => { if (!cancelled) setIsFavorite(false); });
+    return () => { cancelled = true; unsubscribeAuth?.(); };
   }, [sourceProduct]);
 
   function handleColorSelect(colorName: string) {
@@ -62,15 +66,30 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
     setHelperMessage(null);
   }
 
-  function handleFavoriteToggle() {
-    if (!sourceProduct) return;
-    setIsFavorite((current) => {
-      const stored = window.localStorage.getItem(PRODUCT_FAVORITES_KEY);
-      const ids = stored ? safeParseFavorites(stored) : [];
-      const next = current ? ids.filter((id) => id !== sourceProduct.id) : [...new Set([...ids, sourceProduct.id])];
-      window.localStorage.setItem(PRODUCT_FAVORITES_KEY, JSON.stringify(next));
-      return !current;
-    });
+  async function handleFavoriteToggle() {
+    if (!sourceProduct || favoriteBusy) return;
+    setFavoriteBusy(true);
+    const previous = isFavorite;
+    setIsFavorite(!previous);
+    try {
+      const [{ auth, db }, authModule, firestore] = await Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]);
+      const user = auth.currentUser ?? await new Promise<import("firebase/auth").User | null>((resolve) => {
+        const unsubscribe = authModule.onAuthStateChanged(auth, (nextUser) => { unsubscribe(); resolve(nextUser); });
+      });
+      if (!user) {
+        setIsFavorite(previous);
+        window.dispatchEvent(new CustomEvent("run213:open-auth"));
+        return;
+      }
+      const ref = firestore.doc(db, "users", user.uid, "productFavorites", sourceProduct.id);
+      if (previous) await firestore.deleteDoc(ref);
+      else await firestore.setDoc(ref, { productId: sourceProduct.id, createdAt: firestore.serverTimestamp() });
+    } catch {
+      setIsFavorite(previous);
+      setHelperMessage("Could not update favorite. Please try again.");
+    } finally {
+      setFavoriteBusy(false);
+    }
   }
 
   function handleAddToCart() {
@@ -102,7 +121,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
             <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
           </Link>
         ) : <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />}
-        <button className="productCard__favorite favoriteButton" type="button" aria-label={`${isFavorite ? "Remove" : "Save"} ${product.name}`} aria-pressed={isFavorite} onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleFavoriteToggle(); }}>
+        <button className="productCard__favorite favoriteButton" type="button" aria-label={`${isFavorite ? "Remove" : "Save"} ${product.name}`} aria-pressed={isFavorite} disabled={favoriteBusy} onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleFavoriteToggle(); }}>
           <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
         </button>
       </div>
@@ -158,14 +177,4 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       </div>
     </article>
   );
-}
-
-
-function safeParseFavorites(value: string): string[] {
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    return [];
-  }
 }
