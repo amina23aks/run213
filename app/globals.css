@@ -4728,9 +4728,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 }
 
 .productSizeOptions button,
-.lookItemOptions button:not(.productSwatch),
-.sizeChips button,
-.sizeChips span {
+.lookItemOptions button:not(.productSwatch) {
   min-width: 34px !important;
   height: 34px !important;
   padding: 0 0.7rem !important;
@@ -4773,63 +4771,6 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   }
 }
 
-/* Product card-only compact controls and final favorite/swatch positioning polish. */
-.productCard .sizeChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  overflow: visible;
-}
-
-.productCard .sizeChips button,
-.productCard .sizeChips span {
-  min-width: 2rem !important;
-  width: auto !important;
-  height: 1.75rem !important;
-  padding: 0 0.5rem !important;
-  border-radius: 0.4rem !important;
-  font-size: 0.72rem !important;
-  line-height: 1 !important;
-}
-
-.productCard__favorite.favoriteButton,
-.productCard__favorite {
-  position: absolute !important;
-  top: 10px !important;
-  right: 10px !important;
-  z-index: 6 !important;
-}
-
-.productCard .swatchesRow {
-  gap: 0.35rem;
-}
-
-.productCard .swatchesRow .productSwatch,
-.productCard .swatchesRow button.productSwatch,
-.productCard .swatchesRow span.productSwatch {
-  width: 0.95rem !important;
-  height: 0.95rem !important;
-  min-width: 0.95rem !important;
-  border: 0 !important;
-  outline: 0 !important;
-}
-
-.productCard .swatchesRow .productSwatch__color {
-  width: 0.85rem !important;
-  height: 0.85rem !important;
-}
-
-.productCard .swatchesRow .productSwatch--selected {
-  border: 0 !important;
-  outline: 1.5px solid #111 !important;
-  outline-offset: 2px !important;
-}
-
-.productCard .swatchesRow .productSwatch--selected .productSwatch__color {
-  width: 0.85rem !important;
-  height: 0.85rem !important;
-}
-
 .collectionHeader--withImage {
   grid-template-columns: minmax(0, 0.43fr) minmax(0, 0.57fr);
   gap: clamp(1rem, 2.5vw, 1.75rem);
@@ -4849,52 +4790,6 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .collectionHeader h1 {
   font-size: clamp(2.25rem, 4.4vw, 4rem) !important;
   overflow-wrap: anywhere;
-}
-
-/* Final Product Card swatch/chip scale and full-width Collection hero. */
-.productCard .sizeChips {
-  gap: 0.3rem !important;
-}
-
-.productCard .sizeChips button,
-.productCard .sizeChips span {
-  min-width: 1.8rem !important;
-  height: 1.55rem !important;
-  padding: 0 0.38rem !important;
-  border-radius: 0.35rem !important;
-  font-size: 0.68rem !important;
-}
-
-.productCard .swatchesRow .productSwatch,
-.productCard .swatchesRow button.productSwatch,
-.productCard .swatchesRow span.productSwatch {
-  width: 0.8rem !important;
-  height: 0.8rem !important;
-  min-width: 0.8rem !important;
-  border: 1px solid rgba(0, 0, 0, 0.12) !important;
-  border-radius: 999px !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.productCard .swatchesRow .productSwatch__color {
-  width: 100% !important;
-  height: 100% !important;
-  border: 0 !important;
-  border-radius: inherit !important;
-}
-
-.productCard .swatchesRow .productSwatch[aria-pressed="true"],
-.productCard .swatchesRow .productSwatch--selected {
-  outline: 1.5px solid #111 !important;
-  outline-offset: 2px !important;
-  border-color: rgba(0, 0, 0, 0.12) !important;
-}
-
-.productCard .swatchesRow .productSwatch[aria-pressed="true"] .productSwatch__color,
-.productCard .swatchesRow .productSwatch--selected .productSwatch__color {
-  width: 100% !important;
-  height: 100% !important;
 }
 
 .lookCollectionHero {
@@ -4965,4 +4860,82 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
     max-width: 12ch;
     font-size: clamp(2rem, 12vw, 3.4rem);
   }
+}
+
+
+/* Product Card compact controls: final scoped source-of-truth. */
+.productCard .swatchesRow {
+  display: flex;
+  min-height: 1.35rem;
+  align-items: center;
+  gap: 0.38rem;
+  overflow: visible;
+}
+
+.productCard .swatchesRow .productSwatch,
+.productCard .swatchesRow button.productSwatch,
+.productCard .swatchesRow span.productSwatch {
+  position: relative;
+  display: inline-grid;
+  width: 1.05rem !important;
+  min-width: 1.05rem !important;
+  height: 1.05rem !important;
+  min-height: 1.05rem !important;
+  flex: 0 0 auto;
+  place-items: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  appearance: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+  outline: 0;
+}
+
+.productCard .swatchesRow .productSwatch__color {
+  display: block;
+  width: 0.78rem !important;
+  height: 0.78rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+.productCard .swatchesRow .productSwatch[aria-pressed="true"],
+.productCard .swatchesRow .productSwatch--selected {
+  outline: 1.5px solid #111 !important;
+  outline-offset: 2px !important;
+}
+
+.productCard .swatchesRow .productSwatch[aria-pressed="true"] .productSwatch__color,
+.productCard .swatchesRow .productSwatch--selected .productSwatch__color {
+  width: 0.78rem !important;
+  height: 0.78rem !important;
+}
+
+.productCard .sizeChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  overflow: visible;
+}
+
+.productCard .sizeChips button,
+.productCard .sizeChips span {
+  display: inline-grid;
+  min-width: 1.65rem !important;
+  width: auto !important;
+  height: 1.45rem !important;
+  min-height: 1.45rem !important;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0 0.34rem !important;
+  border-radius: 0.3rem !important;
+  font-size: 0.66rem !important;
+  font-weight: 700;
+  line-height: 1 !important;
 }
