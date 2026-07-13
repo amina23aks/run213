@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
 
@@ -22,8 +22,13 @@ type ProductCardProps = {
   sourceProduct?: Product;
 };
 
-function getInitialColor(product?: Product): string | null {
-  return product?.colors.length === 1 ? product.colors[0]?.name ?? null : null;
+function getInitialColorId(product?: Product): string | null {
+  return product?.colors.length === 1 ? product.colors[0]?.id ?? null : null;
+}
+
+function getColorName(product: Product | undefined, colorId: string | null): string | null {
+  if (!product || !colorId) return null;
+  return product.colors.find((color) => color.id === colorId)?.name ?? null;
 }
 
 function getInitialSize(product?: Product): string | null {
@@ -32,15 +37,32 @@ function getInitialSize(product?: Product): string | null {
 
 export function ProductCard({ product, promo = false, sourceProduct }: ProductCardProps) {
   const { addItem } = useCart();
-  const [selectedColor, setSelectedColor] = useState<string | null>(() => getInitialColor(sourceProduct));
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(() => getInitialColorId(sourceProduct));
   const [selectedSize, setSelectedSize] = useState<string | null>(() => getInitialSize(sourceProduct));
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
   const isUnavailable = Boolean(sourceProduct && (!sourceProduct.inStock || sourceProduct.status !== "active" || (sourceProduct.stockMode === "limited" && (sourceProduct.stockQty ?? 0) <= 0)));
 
-  function handleColorSelect(colorName: string) {
-    setSelectedColor(colorName);
+  useEffect(() => {
+    if (!sourceProduct) return undefined;
+    let cancelled = false;
+    let unsubscribeAuth: (() => void) | undefined;
+    Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]).then(([client, authModule, firestore]) => {
+      unsubscribeAuth = authModule.onAuthStateChanged(client.auth, (user) => {
+        if (!user) { if (!cancelled) setIsFavorite(false); return; }
+        firestore.getDoc(firestore.doc(client.db, "users", user.uid, "productFavorites", sourceProduct.id)).then((snapshot) => {
+          if (!cancelled) setIsFavorite(snapshot.exists());
+        }).catch(() => { if (!cancelled) setIsFavorite(false); });
+      });
+    }).catch(() => { if (!cancelled) setIsFavorite(false); });
+    return () => { cancelled = true; unsubscribeAuth?.(); };
+  }, [sourceProduct]);
+
+  function handleColorSelect(colorId: string) {
+    setSelectedColorId(colorId);
     setHelperMessage(null);
   }
 
@@ -49,13 +71,40 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
     setHelperMessage(null);
   }
 
+  async function handleFavoriteToggle() {
+    if (!sourceProduct || favoriteBusy) return;
+    setFavoriteBusy(true);
+    const previous = isFavorite;
+    setIsFavorite(!previous);
+    try {
+      const [{ auth, db }, authModule, firestore] = await Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]);
+      const user = auth.currentUser ?? await new Promise<import("firebase/auth").User | null>((resolve) => {
+        const unsubscribe = authModule.onAuthStateChanged(auth, (nextUser) => { unsubscribe(); resolve(nextUser); });
+      });
+      if (!user) {
+        setIsFavorite(previous);
+        window.dispatchEvent(new CustomEvent("run213:open-auth"));
+        return;
+      }
+      const ref = firestore.doc(db, "users", user.uid, "productFavorites", sourceProduct.id);
+      if (previous) await firestore.deleteDoc(ref);
+      else await firestore.setDoc(ref, { productId: sourceProduct.id, createdAt: firestore.serverTimestamp() });
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") console.error("[favorites] update failed", error);
+      setIsFavorite(previous);
+      setHelperMessage("Could not update favorite. Please try again.");
+    } finally {
+      setFavoriteBusy(false);
+    }
+  }
+
   function handleAddToCart() {
     if (!sourceProduct) {
       setHelperMessage("Open the shop to choose this product.");
       return;
     }
 
-    if (requiresColorSelection && !selectedColor) {
+    if (requiresColorSelection && !selectedColorId) {
       setHelperMessage("Choose a color.");
       return;
     }
@@ -65,21 +114,26 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       return;
     }
 
-    const wasAdded = addItem({ product: sourceProduct, selectedColor, selectedSize, quantity: 1 });
+    const wasAdded = addItem({ product: sourceProduct, selectedColor: getColorName(sourceProduct, selectedColorId), selectedSize, quantity: 1 });
     setHelperMessage(wasAdded ? "Added to cart." : "This product is unavailable.");
   }
 
   return (
     <article className="productCard">
-      {sourceProduct ? <Link className="productCard__mainLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`} /> : null}
-      <div className="productImageWrap">
+      <div className="productCard__media productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
-        <button className="favoriteButton" type="button" aria-label={`Save ${product.name}`} onClick={(event) => event.stopPropagation()}>♡</button>
-        <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
+        {sourceProduct ? (
+          <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
+            <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
+          </Link>
+        ) : <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />}
+        <button className="productCard__favorite favoriteButton" type="button" aria-label={`${isFavorite ? "Remove" : "Save"} ${product.name}`} aria-pressed={isFavorite} disabled={favoriteBusy} onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleFavoriteToggle(); }}>
+          <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
+        </button>
       </div>
 
-      <div className="productInfo">
-        <h3 className="productTitle">{product.name}</h3>
+      <div className="productCard__content productInfo">
+        <h3 className="productTitle">{sourceProduct ? <Link href={`/product/${sourceProduct.slug}`}>{product.name}</Link> : product.name}</h3>
         <div className="productPriceRow">
           <span className="currentPrice">{product.price}</span>
           {product.oldPrice ? <span className="oldPrice">{product.oldPrice}</span> : null}
@@ -89,20 +143,23 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
         <div className="swatchesRow" aria-label={`${product.name} colors`}>
           {sourceProduct ? sourceProduct.colors.map((color) => (
             <button
-              className={color.name === selectedColor ? "isSelected" : undefined}
-              key={color.name}
-              style={{ backgroundColor: color.hex }}
+              className={color.id === selectedColorId ? "productSwatch productSwatch--selected" : "productSwatch"}
+              key={color.id ?? color.name}
               type="button"
               aria-label={`Select ${color.name}`}
-              aria-pressed={color.name === selectedColor}
-              onClick={(event) => { event.stopPropagation(); handleColorSelect(color.name); }}
-            />
+              aria-pressed={color.id === selectedColorId}
+              onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleColorSelect(color.id); }}
+            >
+              <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
+            </button>
           )) : product.colors.map((color, index) => (
             <span
-              className={index === 0 ? "isSelected" : undefined}
+              className={index === 0 ? "productSwatch productSwatch--selected" : "productSwatch"}
               key={color}
-              style={{ backgroundColor: color }}
-            />
+              aria-hidden="true"
+            >
+              <span className="productSwatch__color" style={{ backgroundColor: color }} />
+            </span>
           ))}
         </div>
 

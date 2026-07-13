@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from "react";
 import type { CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
+import { calculateCustomerSubtotal, groupCartItemsForPricing } from "@/components/cart/cartGrouping";
 
 export const CART_STORAGE_KEY = "213run-cart";
 
@@ -16,22 +17,40 @@ type AddToCartInput = {
   quantity?: number;
 };
 
+type LookGroupInput = {
+  group: {
+    id: string;
+    lookId: string;
+    slug: string;
+    name: string;
+    image: string;
+    description: string;
+    priceDzd: number;
+    originalProductIds: string[];
+  };
+  items: AddToCartInput[];
+};
+
+type LineKeyInput = Pick<CartItem, "productId" | "selectedSize" | "selectedColor"> & Partial<Pick<CartItem, "lookGroupId">>;
+
 type CartContextValue = {
   items: CartItem[];
   isHydrated: boolean;
   addItem: (input: AddToCartInput) => boolean;
+  addLookGroup: (input: LookGroupInput) => boolean;
   removeItem: (lineKey: string) => void;
+  removeLookGroup: (lookGroupId: string) => void;
   updateQuantity: (lineKey: string, quantity: number) => void;
   clearCart: () => void;
   subtotalDzd: number;
   itemCount: number;
-  getLineKey: (item: Pick<CartItem, "productId" | "selectedSize" | "selectedColor">) => string;
+  getLineKey: (item: LineKeyInput) => string;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function getLineKey(item: Pick<CartItem, "productId" | "selectedSize" | "selectedColor">): string {
-  return [item.productId, item.selectedSize ?? "no-size", item.selectedColor ?? "no-color"].join("::");
+function getLineKey(item: LineKeyInput): string {
+  return [item.lookGroupId ?? "single", item.productId, item.selectedSize ?? "no-size", item.selectedColor ?? "no-color"].join("::");
 }
 
 function clampQuantity(quantity: number, maxQuantity?: number): number {
@@ -93,6 +112,14 @@ function normalizeStoredItems(value: string | null): CartItem[] {
         selectedColor: typeof candidate.selectedColor === "string" ? candidate.selectedColor : null,
         quantity: clampQuantity(candidate.quantity, maxQuantity),
         ...(typeof maxQuantity === "number" ? { maxQuantity } : {}),
+        ...(typeof candidate.lookGroupId === "string" ? { lookGroupId: candidate.lookGroupId } : {}),
+        ...(typeof candidate.lookId === "string" ? { lookId: candidate.lookId } : {}),
+        ...(typeof candidate.lookSlug === "string" ? { lookSlug: candidate.lookSlug } : {}),
+        ...(typeof candidate.lookName === "string" ? { lookName: candidate.lookName } : {}),
+        ...(typeof candidate.lookImage === "string" ? { lookImage: candidate.lookImage } : {}),
+        ...(typeof candidate.lookDescription === "string" ? { lookDescription: candidate.lookDescription } : {}),
+        ...(typeof candidate.lookPriceDzd === "number" ? { lookPriceDzd: candidate.lookPriceDzd } : {}),
+        ...(Array.isArray(candidate.lookOriginalProductIds) ? { lookOriginalProductIds: candidate.lookOriginalProductIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0) } : {}),
       }];
     });
   } catch {
@@ -158,8 +185,48 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const addLookGroup = useCallback((input: LookGroupInput) => {
+    const preparedItems: CartItem[] = [];
+
+    for (const entry of input.items) {
+      if (!isProductAvailable(entry.product)) return false;
+      const maxQuantity = getMaxQuantity(entry.product);
+      if (maxQuantity === 0) return false;
+      const selectedSize = entry.selectedSize ?? null;
+      const selectedColor = entry.selectedColor ?? null;
+      if (!hasRequiredSelections(entry.product, selectedSize, selectedColor)) return false;
+      preparedItems.push({
+        productId: entry.product.id,
+        slug: entry.product.slug,
+        name: entry.product.name,
+        priceDzd: entry.product.priceDzd,
+        image: entry.product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
+        selectedSize,
+        selectedColor,
+        quantity: clampQuantity(entry.quantity ?? MIN_QUANTITY, maxQuantity),
+        ...(typeof maxQuantity === "number" ? { maxQuantity } : {}),
+        lookGroupId: input.group.id,
+        lookId: input.group.lookId,
+        lookSlug: input.group.slug,
+        lookName: input.group.name,
+        lookImage: input.group.image,
+        lookDescription: input.group.description,
+        lookPriceDzd: input.group.priceDzd,
+        lookOriginalProductIds: input.group.originalProductIds,
+      });
+    }
+
+    if (!preparedItems.length) return false;
+    setItems((currentItems) => [...currentItems, ...preparedItems]);
+    return true;
+  }, []);
+
   const removeItem = useCallback((lineKey: string) => {
     setItems((currentItems) => currentItems.filter((item) => getLineKey(item) !== lineKey));
+  }, []);
+
+  const removeLookGroup = useCallback((lookGroupId: string) => {
+    setItems((currentItems) => currentItems.filter((item) => item.lookGroupId !== lookGroupId));
   }, []);
 
   const updateQuantity = useCallback((lineKey: string, quantity: number) => {
@@ -170,20 +237,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  const subtotalDzd = useMemo(() => items.reduce((total, item) => total + item.priceDzd * item.quantity, 0), [items]);
+  const subtotalDzd = useMemo(() => calculateCustomerSubtotal(groupCartItemsForPricing(items)), [items]);
   const itemCount = useMemo(() => items.reduce((total, item) => total + item.quantity, 0), [items]);
 
   const value = useMemo<CartContextValue>(() => ({
     items,
     isHydrated,
     addItem,
+    addLookGroup,
     removeItem,
+    removeLookGroup,
     updateQuantity,
     clearCart,
     subtotalDzd,
     itemCount,
     getLineKey,
-  }), [addItem, clearCart, isHydrated, itemCount, items, removeItem, subtotalDzd, updateQuantity]);
+  }), [addItem, addLookGroup, clearCart, isHydrated, itemCount, items, removeItem, removeLookGroup, subtotalDzd, updateQuantity]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

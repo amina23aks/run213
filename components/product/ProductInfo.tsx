@@ -8,11 +8,12 @@ import type { Product } from "@/types/product";
 
 type ProductInfoProps = {
   product: Product;
+  onColorIdChange?: (colorId: string | null) => void;
 };
 
-export function ProductInfo({ product }: ProductInfoProps) {
+export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
   const { addItem } = useCart();
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [cartMessage, setCartMessage] = useState<string | null>(null);
@@ -27,8 +28,9 @@ export function ProductInfo({ product }: ProductInfoProps) {
     setQuantity(typeof maxQuantity === "number" ? Math.min(minClamped, maxQuantity) : minClamped);
   }
 
-  function handleColorSelect(colorName: string) {
-    setSelectedColor(colorName);
+  function handleColorSelect(colorId: string) {
+    setSelectedColorId(colorId);
+    onColorIdChange?.(colorId);
     setCartMessage(null);
   }
 
@@ -38,7 +40,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
   }
 
   function handleAddToCart() {
-    if (requiresColor && !selectedColor) {
+    if (requiresColor && !selectedColorId) {
       setCartMessage("Choose a color before adding to cart.");
       return;
     }
@@ -48,6 +50,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
       return;
     }
 
+    const selectedColor = product.colors.find((color) => color.id === selectedColorId)?.name ?? null;
     const wasAdded = addItem({ product, selectedColor, selectedSize, quantity });
     setCartMessage(wasAdded ? "Added to cart." : "This product is currently unavailable.");
   }
@@ -63,19 +66,20 @@ export function ProductInfo({ product }: ProductInfoProps) {
         <div className="productOptionGroup">
           <div className="productOptionGroup__header">
             <span>Color</span>
-            <strong>{selectedColor ?? "Choose color"}</strong>
+            <strong>{product.colors.find((color) => color.id === selectedColorId)?.name ?? "Choose color"}</strong>
           </div>
           <div className="productColorDots" aria-label="Color options">
             {product.colors.map((color) => (
               <button
-                className={color.name === selectedColor ? "is-active" : undefined}
-                style={{ backgroundColor: color.hex }}
+                className={color.id === selectedColorId ? "productSwatch productSwatch--selected" : "productSwatch"}
                 type="button"
-                key={color.name}
-                aria-label={color.name}
-                aria-pressed={color.name === selectedColor}
-                onClick={() => handleColorSelect(color.name)}
-              />
+                key={color.id ?? color.name}
+                aria-label={`Select ${color.name}`}
+                aria-pressed={color.id === selectedColorId}
+                onClick={() => handleColorSelect(color.id)}
+              >
+                <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
+              </button>
             ))}
           </div>
         </div>

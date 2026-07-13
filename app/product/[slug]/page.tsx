@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { ProductGallery } from "@/components/product/ProductGallery";
-import { ProductInfo } from "@/components/product/ProductInfo";
+import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { RelatedProducts } from "@/components/product/RelatedProducts";
 import { getProductBySlug, listActiveProducts } from "@/lib/firestore/products";
 
@@ -23,8 +22,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <Header />
       <main className="productPage">
         <section className="productDetail" aria-label={`${product.name} product detail`}>
-          <ProductGallery product={product} />
-          <ProductInfo product={product} />
+          <ProductDetailClient product={product} />
         </section>
         <RelatedProducts products={(await listActiveProducts(4)).filter((relatedProduct) => relatedProduct.slug !== product.slug)} />
       </main>

@@ -1,7 +1,8 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { shopProducts, getStaticProductBySlug } from "@/constants/products";
 import { getMissingFirebaseAdminEnv } from "@/lib/env";
-import type { Product, ProductCategory, ProductColor, ProductImage, ProductSize, ProductStockMode } from "@/types/product";
+import { normalizeProductColors } from "@/lib/productColors";
+import type { Product, ProductCategory, ProductImage, ProductSize, ProductStockMode } from "@/types/product";
 
 const PRODUCTS_COLLECTION = "products";
 const DEFAULT_PRODUCT_LIMIT = 12;
@@ -177,7 +178,7 @@ function parseProduct(id: string, data: Record<string, unknown>): Product | null
   }
 
   const images = parseImages(data.images, data.name);
-  const colors = parseColors(data.colors);
+  const colors = normalizeProductColors(data.colors);
 
   if (!images.length || !colors.length) return null;
 
@@ -225,19 +226,10 @@ function isInStock(data: Record<string, unknown>): boolean {
 function parseImages(value: unknown, productName: string): ProductImage[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((entry, index) => {
-    if (typeof entry === "string" && entry.trim()) return [{ url: entry.trim(), alt: `${productName} image ${index + 1}` }];
+    if (typeof entry === "string" && entry.trim()) return [{ id: `image-${index}`, url: entry.trim(), alt: `${productName} image ${index + 1}`, sortOrder: index, isPrimary: index === 0, colorId: null }];
     if (!isRecord(entry) || !isString(entry.url)) return [];
-    return [{ url: entry.url, alt: isString(entry.alt) ? entry.alt : `${productName} image ${index + 1}`, ...(isString(entry.publicId) ? { publicId: entry.publicId } : {}) }];
-  });
-}
-
-function parseColors(value: unknown): ProductColor[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((entry) => {
-    if (typeof entry === "string" && /^#[0-9a-fA-F]{6}$/.test(entry.trim())) return [{ name: entry.trim(), hex: entry.trim() }];
-    if (!isRecord(entry) || !isString(entry.hex)) return [];
-    return [{ name: isString(entry.name) ? entry.name : entry.hex, hex: entry.hex }];
-  });
+    return [{ id: isString(entry.id) ? entry.id : (isString(entry.publicId) ? entry.publicId : `image-${index}`), url: entry.url, alt: isString(entry.alt) ? entry.alt : `${productName} image ${index + 1}`, ...(isString(entry.publicId) ? { publicId: entry.publicId } : {}), sortOrder: isNumber(entry.sortOrder) ? entry.sortOrder : index, isPrimary: typeof entry.isPrimary === "boolean" ? entry.isPrimary : index === 0, colorId: isString(entry.colorId) ? entry.colorId : null }];
+  }).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 function parseSizes(value: unknown): ProductSize[] {

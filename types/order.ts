@@ -44,6 +44,14 @@ export type OrderItem = {
   unitPriceDzd: number;
   lineTotalDzd: number;
   stockMode: ProductStockMode;
+  lookGroupId?: string | null;
+  lookId?: string | null;
+  lookSlug?: string | null;
+  lookName?: string | null;
+  lookImage?: string | null;
+  lookPriceDzd?: number | null;
+  displayPriceDzd?: number | null;
+  allocatedRevenueDzd?: number | null;
 };
 
 export type OrderTotals = {
@@ -102,6 +110,12 @@ export type CreateOrderRequest = {
     selectedSize?: string | null;
     selectedColor?: string | null;
     quantity: number;
+    lookGroupId?: string | null;
+    lookId?: string | null;
+    lookSlug?: string | null;
+    lookName?: string | null;
+    lookImage?: string | null;
+    lookOriginalProductIds?: string[] | null;
   }>;
   idempotencyKey?: string | null;
 };

@@ -22,6 +22,12 @@ export const createOrderRequestSchema = z.object({
     selectedSize: z.string().trim().min(1).max(24).nullable().optional(),
     selectedColor: z.string().trim().min(1).max(40).nullable().optional(),
     quantity: z.number().int().min(1).max(20),
+    lookGroupId: z.string().trim().min(1).max(160).nullable().optional(),
+    lookId: z.string().trim().min(1).max(140).nullable().optional(),
+    lookSlug: z.string().trim().min(1).max(160).nullable().optional(),
+    lookName: z.string().trim().min(1).max(120).nullable().optional(),
+    lookImage: z.string().trim().min(1).max(500).nullable().optional(),
+    lookOriginalProductIds: z.array(z.string().trim().min(1).max(140)).max(20).nullable().optional(),
   })).min(1).max(20),
   idempotencyKey: z.string().trim().min(8).max(120).nullable().optional(),
 }) satisfies z.ZodType<CreateOrderRequest>;

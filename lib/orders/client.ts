@@ -39,6 +39,12 @@ export function buildCreateOrderRequest(values: OrderFormValues, cartItems: Cart
       selectedSize: item.selectedSize,
       selectedColor: item.selectedColor,
       quantity: item.quantity,
+      lookGroupId: item.lookGroupId ?? null,
+      lookId: item.lookId ?? null,
+      lookSlug: item.lookSlug ?? null,
+      lookName: item.lookName ?? null,
+      lookImage: item.lookImage ?? null,
+      lookOriginalProductIds: item.lookOriginalProductIds ?? null,
     })),
     idempotencyKey: crypto.randomUUID(),
   };

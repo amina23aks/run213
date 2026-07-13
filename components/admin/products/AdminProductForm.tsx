@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import type { ProductCategory } from "@/types/product";
 import { AdminProductField, AdminProductSection } from "@/components/admin/products/AdminProductFields";
 import { AdminProductImagePreview } from "@/components/admin/products/AdminProductImagePreview";
-import type { ProductDraft, ProductDraftColor } from "@/components/admin/products/types";
+import type { ProductDraft, ProductDraftColor, ProductDraftImage } from "@/components/admin/products/types";
 
 const sizeOptions = ["S", "M", "L", "XL", "XXL"] as const;
 const categories: { value: ProductCategory; label: string }[] = [
@@ -23,6 +23,9 @@ type AdminProductFormProps = {
   onColorChange: (id: string, patch: Partial<Omit<ProductDraftColor, "id">>) => void;
   onRemoveColor: (id: string) => void;
   onRemoveImage: (id: string) => void;
+  onUpdateImage: (id: string, patch: Partial<ProductDraftImage>) => void;
+  onSetPrimaryImage: (id: string) => void;
+  onMoveImage: (id: string, direction: -1 | 1) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onToggleSize: (size: string) => void;
   onUploadImage: (file: File) => void;
@@ -32,7 +35,7 @@ type AdminProductFormProps = {
   cloudinaryConfigured: boolean;
 };
 
-export function AdminProductForm({ draft, editingId, errors, onAddColor, onCancelEdit, onChange, onColorChange, onRemoveColor, onRemoveImage, onSubmit, onToggleSize, onUploadImage, onUploadSizeGuide, uploadingImage, uploadingSizeGuide, cloudinaryConfigured }: AdminProductFormProps) {
+export function AdminProductForm({ draft, editingId, errors, onAddColor, onCancelEdit, onChange, onColorChange, onRemoveColor, onRemoveImage, onUpdateImage, onSetPrimaryImage, onMoveImage, onSubmit, onToggleSize, onUploadImage, onUploadSizeGuide, uploadingImage, uploadingSizeGuide, cloudinaryConfigured }: AdminProductFormProps) {
   const slugPreview = slugify(draft.name);
   const basePrice = Number(draft.basePriceDzd || draft.priceDzd || 0);
   const sellingPrice = Number(draft.priceDzd || 0);
@@ -83,7 +86,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
 
       <AdminProductSection eyebrow="05" title="Images">
         <UploadButton label="Upload product image" busy={uploadingImage} disabled={!cloudinaryConfigured} onUpload={onUploadImage} />
-        <AdminProductImagePreview images={draft.images} onRemove={onRemoveImage} />
+        <AdminProductImagePreview images={draft.images} colors={draft.colors} onRemove={onRemoveImage} onUpdate={onUpdateImage} onSetPrimary={onSetPrimaryImage} onMove={onMoveImage} />
         <ToggleCard label="Enable size guide" checked={draft.sizeGuideEnabled} onChange={(checked) => onChange("sizeGuideEnabled", checked)} />
         {draft.sizeGuideEnabled ? <><UploadButton label="Upload size guide" busy={uploadingSizeGuide} disabled={!cloudinaryConfigured} onUpload={onUploadSizeGuide} />{draft.sizeGuideImageUrl ? <figure className="adminSizeGuideThumb"><Image src={draft.sizeGuideImageUrl} alt="Size guide preview" width={120} height={120} unoptimized /><button type="button" onClick={() => { onChange("sizeGuideImageUrl", ""); onChange("sizeGuideImagePublicId", ""); }}>Remove</button></figure> : null}</> : null}
       </AdminProductSection>

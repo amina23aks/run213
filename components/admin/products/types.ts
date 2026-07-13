@@ -11,6 +11,9 @@ export type ProductDraftImage = {
   url: string;
   publicId?: string;
   alt?: string;
+  sortOrder: number;
+  isPrimary: boolean;
+  colorId?: string | null;
 };
 
 export type ProductDraft = {

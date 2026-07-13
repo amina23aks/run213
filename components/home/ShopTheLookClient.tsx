@@ -25,7 +25,6 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   const isHoveringRef = useRef(false);
   const figureSlots = Array.from({ length: 4 }, (_, index) => figures[index] ?? null);
   const hasFigures = figures.length > 0;
-  const activeLook = hasFigures ? figures[activeFigure % figures.length] : null;
 
   const activateFigure = (index: number) => {
     if (!hasFigures) return;
@@ -59,7 +58,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
               <Link className={index === activeFigure ? "figure-card is-active" : "figure-card"} href={`/look/${figure.slug}`} key={figure.id} onFocus={() => activateFigure(index)} onMouseEnter={() => activateFigure(index)}>
                 <span>{figure.numberLabel ?? String(index + 1).padStart(2, "0")}</span>
                 <strong>{figure.name}</strong>
-                <Image src={figure.heroImage.url} alt={figure.heroImage.alt} width={260} height={360} unoptimized />
+                <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt} width={260} height={360} unoptimized />
               </Link>
             ) : (
               <div className="figure-card figure-card--placeholder" key={`figure-placeholder-${index}`}>
@@ -71,7 +70,6 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
           </div>
           <button className="figure-nav figure-nav--next" type="button" aria-label="Next look" onClick={() => activateFigure(activeFigure + 1)}>→</button>
         </div>
-        {activeLook ? <Link className="shopLookActiveLink" href={`/look/${activeLook.slug}`}>VIEW {activeLook.numberLabel ?? "LOOK"} →</Link> : null}
       </div>
 
       <div className="shopLookCards">
@@ -85,7 +83,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
                 <h3>{collection?.name ?? slot.name}</h3>
                 <p>{collection?.subtitle || slot.subtitle}</p>
               </div>
-              <small aria-hidden="true">→</small>
+              <small className="look-card__arrow" aria-hidden="true">→</small>
             </>
           );
 

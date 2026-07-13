@@ -13,11 +13,11 @@ export function CartSummary({ subtotalDzd, itemCount }: CartSummaryProps) {
       <div className="cartSummary__rows">
         <p><span>Items</span><strong>{itemCount}</strong></p>
         <p><span>Subtotal</span><strong>{formatDzd(subtotalDzd)}</strong></p>
-        <p><span>Delivery</span><strong>Calculated later</strong></p>
+        <p><span>Delivery</span><strong>Choose delivery method</strong></p>
         <p className="cartSummary__total"><span>Total</span><strong>{formatDzd(subtotalDzd)}</strong></p>
       </div>
       <Link className="cartSummary__checkout" href="/checkout">CHECKOUT</Link>
-      <p>Cash on delivery available. Server totals will be recomputed during order creation in Sprint D.</p>
+      <p>Cash on delivery available. Delivery is calculated at checkout and verified by the server.</p>
     </aside>
   );
 }

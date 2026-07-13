@@ -91,6 +91,7 @@ function parseCollection(id: string, data: Record<string, unknown>): LookCollect
     subtitle: isString(data.subtitle) ? data.subtitle : "",
     description: isString(data.description) ? data.description : "",
     cardImage: data.cardImage,
+    imagePosition: isString(data.imagePosition) ? data.imagePosition : isString(data.cardImagePosition) ? data.cardImagePosition : null,
     status: data.status,
     sortOrder: isNumber(data.sortOrder) ? data.sortOrder : 999,
     createdAt: toIsoString(data.createdAt),
@@ -100,6 +101,8 @@ function parseCollection(id: string, data: Record<string, unknown>): LookCollect
 
 function parseLook(id: string, data: Record<string, unknown>): Look | null {
   if (!isString(data.collectionId) || !isString(data.collectionSlug) || !isString(data.slug) || !isString(data.name) || !isImage(data.heroImage) || !isStatus(data.status)) return null;
+  const priceDzd = isNumber(data.priceDzd) && Number.isInteger(data.priceDzd) && data.priceDzd > 0 ? data.priceDzd : 0;
+  if (data.status === "active" && priceDzd <= 0) return null;
   return {
     id,
     collectionId: data.collectionId,
@@ -108,7 +111,10 @@ function parseLook(id: string, data: Record<string, unknown>): Look | null {
     name: data.name,
     numberLabel: isString(data.numberLabel) ? data.numberLabel : null,
     description: isString(data.description) ? data.description : "",
+    priceDzd,
+    compareAtPriceDzd: isNumber(data.compareAtPriceDzd) ? data.compareAtPriceDzd : null,
     heroImage: data.heroImage,
+    figureImage: isImage(data.figureImage) ? data.figureImage : null,
     productIds: Array.isArray(data.productIds) ? data.productIds.filter(isString) : [],
     status: data.status,
     sortOrder: isNumber(data.sortOrder) ? data.sortOrder : 999,
