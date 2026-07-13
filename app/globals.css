@@ -4850,3 +4850,119 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   font-size: clamp(2.25rem, 4.4vw, 4rem) !important;
   overflow-wrap: anywhere;
 }
+
+/* Final Product Card swatch/chip scale and full-width Collection hero. */
+.productCard .sizeChips {
+  gap: 0.3rem !important;
+}
+
+.productCard .sizeChips button,
+.productCard .sizeChips span {
+  min-width: 1.8rem !important;
+  height: 1.55rem !important;
+  padding: 0 0.38rem !important;
+  border-radius: 0.35rem !important;
+  font-size: 0.68rem !important;
+}
+
+.productCard .swatchesRow .productSwatch,
+.productCard .swatchesRow button.productSwatch,
+.productCard .swatchesRow span.productSwatch {
+  width: 0.8rem !important;
+  height: 0.8rem !important;
+  min-width: 0.8rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.productCard .swatchesRow .productSwatch__color {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+}
+
+.productCard .swatchesRow .productSwatch[aria-pressed="true"],
+.productCard .swatchesRow .productSwatch--selected {
+  outline: 1.5px solid #111 !important;
+  outline-offset: 2px !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.productCard .swatchesRow .productSwatch[aria-pressed="true"] .productSwatch__color,
+.productCard .swatchesRow .productSwatch--selected .productSwatch__color {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.lookCollectionHero {
+  position: relative;
+  width: min(100% - clamp(1rem, 4vw, 3rem), 1440px);
+  min-height: clamp(18rem, 42vw, 34rem);
+  margin: clamp(1.2rem, 3vw, 2.2rem) auto clamp(1.25rem, 3vw, 2rem);
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: var(--surface-soft);
+}
+
+.lookCollectionHero::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.1) 58%, transparent);
+  content: "";
+}
+
+.lookCollectionHero__image {
+  object-fit: cover;
+}
+
+.lookCollectionHero__overlay {
+  position: absolute;
+  left: clamp(1.25rem, 4vw, 4rem);
+  bottom: clamp(1.25rem, 4vw, 3.5rem);
+  z-index: 2;
+  max-width: min(34rem, 72vw);
+  color: #fff;
+}
+
+.lookCollectionHero__overlay h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  font-size: clamp(2rem, 5vw, 4.8rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+  overflow-wrap: normal;
+}
+
+.lookCollectionHero__overlay p {
+  max-width: 34rem;
+  margin: 0.75rem 0 0;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.looksEditorialList {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 700px) {
+  .lookCollectionHero {
+    width: min(100% - 1rem, 100%);
+    min-height: clamp(16rem, 72vw, 24rem);
+    border-radius: 1rem;
+  }
+
+  .lookCollectionHero__overlay {
+    max-width: calc(100% - 2rem);
+  }
+
+  .lookCollectionHero__overlay h1 {
+    max-width: 12ch;
+    font-size: clamp(2rem, 12vw, 3.4rem);
+  }
+}

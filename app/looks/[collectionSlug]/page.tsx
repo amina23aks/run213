@@ -22,16 +22,22 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
     <>
       <Header />
       <main className="looksCollectionPage">
-        <section className="collectionHeader collectionHeader--withImage">
-          <div className="collectionHeader__media">
-            <Image src={collection.cardImage.url} alt={collection.cardImage.alt || collection.name} fill sizes="(max-width: 900px) 100vw, 42vw" unoptimized />
-          </div>
-          <div className="collectionHeader__copy">
-            <span>LOOK COLLECTION</span>
+        <header className="lookCollectionHero">
+          <Image
+            className="lookCollectionHero__image"
+            src={collection.cardImage.url}
+            alt={collection.cardImage.alt || collection.name}
+            fill
+            sizes="100vw"
+            style={{ objectPosition: collection.imagePosition ?? "center" }}
+            priority
+            unoptimized
+          />
+          <div className="lookCollectionHero__overlay">
             <h1>{collection.name}</h1>
             <p>{collection.subtitle}</p>
           </div>
-        </section>
+        </header>
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
           {looks.length ? looks.map((look, index) => {
             const activeProducts = look.products.flatMap((entry) => entry.product ? [entry.product] : []);

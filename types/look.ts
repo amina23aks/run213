@@ -15,6 +15,7 @@ export type LookCollection = {
   subtitle: string;
   description: string;
   cardImage: LookImage;
+  imagePosition?: string | null;
   status: LookStatus;
   sortOrder: number;
   createdAt: string | null;

@@ -91,6 +91,7 @@ function parseCollection(id: string, data: Record<string, unknown>): LookCollect
     subtitle: isString(data.subtitle) ? data.subtitle : "",
     description: isString(data.description) ? data.description : "",
     cardImage: data.cardImage,
+    imagePosition: isString(data.imagePosition) ? data.imagePosition : isString(data.cardImagePosition) ? data.cardImagePosition : null,
     status: data.status,
     sortOrder: isNumber(data.sortOrder) ? data.sortOrder : 999,
     createdAt: toIsoString(data.createdAt),
