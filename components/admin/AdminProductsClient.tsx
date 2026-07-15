@@ -399,7 +399,10 @@ function AdminAccessState({ missingClientEnv, missingServerEnv, message }: { mis
 function validateDraft(draft: ProductDraft): string[] {
   const errors: string[] = [];
   if (!draft.name.trim()) errors.push("Product name is required.");
-  if (!draft.priceDzd.trim()) errors.push("Price DZD is required.");
+  if (!draft.priceDzd.trim()) errors.push("Selling Price is required.");
+  if (Number(draft.priceDzd) < 0 || Number(draft.basePriceDzd) < 0 || Number(draft.costPriceDzd) < 0 || Number(draft.compareAtPriceDzd) < 0) errors.push("Prices cannot be negative.");
+  const discount = Number(draft.discountPercent || 0);
+  if (!Number.isFinite(discount) || discount < 0 || discount > 100) errors.push("Discount must be between 0 and 100.");
   if (!draft.images.length) errors.push("Upload at least one product image.");
   if (!draft.colors.some((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))) errors.push("Add at least one color with a name and valid #HEX value.");
   if (draft.stockMode === "limited" && !draft.stockQty.trim()) errors.push("Stock quantity is required when stock mode is limited.");

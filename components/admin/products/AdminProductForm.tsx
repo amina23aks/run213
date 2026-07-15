@@ -37,11 +37,49 @@ type AdminProductFormProps = {
 
 export function AdminProductForm({ draft, editingId, errors, onAddColor, onCancelEdit, onChange, onColorChange, onRemoveColor, onRemoveImage, onUpdateImage, onSetPrimaryImage, onMoveImage, onSubmit, onToggleSize, onUploadImage, onUploadSizeGuide, uploadingImage, uploadingSizeGuide, cloudinaryConfigured }: AdminProductFormProps) {
   const slugPreview = slugify(draft.name);
-  const basePrice = Number(draft.basePriceDzd || draft.priceDzd || 0);
-  const sellingPrice = Number(draft.priceDzd || 0);
-  const costPrice = Number(draft.costPriceDzd || 0);
-  const estimatedProfit = sellingPrice > 0 && costPrice > 0 ? sellingPrice - costPrice : 0;
-  const estimatedMargin = sellingPrice > 0 && estimatedProfit > 0 ? Math.round((estimatedProfit / sellingPrice) * 100) : 0;
+  const discountPercent = clampNumber(Number(draft.discountPercent || 0), 0, 100);
+  const isOnSale = discountPercent > 0 || Number(draft.compareAtPriceDzd || 0) > Number(draft.priceDzd || 0);
+  const originalPrice = Math.max(0, Number(draft.basePriceDzd || draft.compareAtPriceDzd || draft.priceDzd || 0));
+  const sellingPrice = Math.max(0, Number(draft.priceDzd || 0));
+  const finalSellingPrice = isOnSale ? Math.max(0, Math.round(originalPrice * (1 - discountPercent / 100))) : sellingPrice;
+  const costPrice = Math.max(0, Number(draft.costPriceDzd || 0));
+  const estimatedProfit = finalSellingPrice - costPrice;
+  const estimatedMargin = finalSellingPrice > 0 ? Math.round((estimatedProfit / finalSellingPrice) * 100) : 0;
+  const customerSaving = isOnSale ? Math.max(0, originalPrice - finalSellingPrice) : 0;
+
+  function setPricingMode(nextMode: "regular" | "sale") {
+    if (nextMode === "regular") {
+      onChange("discountPercent", "0");
+      onChange("compareAtPriceDzd", "");
+      onChange("basePriceDzd", draft.priceDzd);
+      return;
+    }
+    const nextOriginal = String(originalPrice || sellingPrice || "");
+    onChange("basePriceDzd", nextOriginal);
+    onChange("compareAtPriceDzd", nextOriginal);
+    onChange("discountPercent", draft.discountPercent === "0" ? "10" : draft.discountPercent);
+  }
+
+  function setRegularPrice(value: string) {
+    const normalized = normalizeNonNegativeInput(value);
+    onChange("priceDzd", normalized);
+    onChange("basePriceDzd", normalized);
+    onChange("compareAtPriceDzd", "");
+    onChange("discountPercent", "0");
+  }
+
+  function setSaleOriginalPrice(value: string) {
+    const normalized = normalizeNonNegativeInput(value);
+    onChange("basePriceDzd", normalized);
+    onChange("compareAtPriceDzd", normalized);
+    onChange("priceDzd", calculateSalePrice(normalized, draft.discountPercent));
+  }
+
+  function setSaleDiscount(value: string) {
+    const normalized = normalizeDiscountInput(value);
+    onChange("discountPercent", normalized);
+    onChange("priceDzd", calculateSalePrice(draft.basePriceDzd || draft.compareAtPriceDzd || draft.priceDzd, normalized));
+  }
 
   return (
     <form className="adminProductForm adminCard" onSubmit={onSubmit}>
@@ -66,13 +104,11 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
       </AdminProductSection>
 
       <AdminProductSection eyebrow="03" title="Pricing">
+        <AdminProductField label="Pricing mode"><div className="adminPillGroup">{(["regular", "sale"] as const).map((mode) => <button className={(mode === "sale") === isOnSale ? "isSelected" : undefined} key={mode} type="button" onClick={() => setPricingMode(mode)}>{mode === "sale" ? "On sale" : "Regular"}</button>)}</div></AdminProductField>
         <div className="adminProductGrid adminProductGrid--three">
-          <AdminProductField label="Base price"><input inputMode="numeric" placeholder="3500" value={draft.basePriceDzd} onChange={(event) => onChange("basePriceDzd", event.target.value)} /></AdminProductField>
-          <AdminProductField label="Selling price"><input inputMode="numeric" placeholder="2900" value={draft.priceDzd} onChange={(event) => onChange("priceDzd", event.target.value)} /></AdminProductField>
-          <AdminProductField label="Discount %"><input inputMode="numeric" placeholder="0" value={draft.discountPercent} onChange={(event) => onChange("discountPercent", event.target.value)} /></AdminProductField>
-          <AdminProductField label="Cost price"><input inputMode="numeric" placeholder="1600" value={draft.costPriceDzd} onChange={(event) => onChange("costPriceDzd", event.target.value)} /></AdminProductField>
-          <AdminProductField label="Compare-at display"><input inputMode="numeric" placeholder={basePrice ? String(basePrice) : "3500"} value={draft.compareAtPriceDzd} onChange={(event) => onChange("compareAtPriceDzd", event.target.value)} /></AdminProductField>
-          <div className="adminPricingStats"><span>Profit: {estimatedProfit.toLocaleString("fr-DZ")} DZD</span><span>Margin: {estimatedMargin}%</span></div>
+          {isOnSale ? <><AdminProductField label="Original Price"><input inputMode="numeric" min="0" placeholder="3500" value={draft.basePriceDzd || draft.compareAtPriceDzd} onChange={(event) => setSaleOriginalPrice(event.target.value)} /></AdminProductField><AdminProductField label="Discount %"><input inputMode="numeric" min="0" max="100" placeholder="10" value={draft.discountPercent} onChange={(event) => setSaleDiscount(event.target.value)} /></AdminProductField></> : <AdminProductField label="Selling Price"><input inputMode="numeric" min="0" placeholder="2900" value={draft.priceDzd} onChange={(event) => setRegularPrice(event.target.value)} /></AdminProductField>}
+          <AdminProductField label="Cost Price"><input inputMode="numeric" min="0" placeholder="1600" value={draft.costPriceDzd} onChange={(event) => onChange("costPriceDzd", normalizeNonNegativeInput(event.target.value))} /></AdminProductField>
+          <div className="adminPricingStats"><span>{isOnSale ? "Final Selling Price" : "Customer Price"}: {formatDzd(finalSellingPrice)}</span>{isOnSale ? <span>Customer Saving: {formatDzd(customerSaving)}</span> : null}<span>Estimated Profit: {formatDzd(estimatedProfit)}</span><span>Profit Margin: {estimatedMargin}%</span></div>
         </div>
         <div className="adminProductGrid adminProductGrid--two"><ToggleCard label="Promo display" checked={draft.isPromo} onChange={(checked) => onChange("isPromo", checked)} /><ToggleCard label="Featured display" checked={draft.featured} onChange={(checked) => onChange("featured", checked)} /></div>
       </AdminProductSection>
@@ -95,7 +131,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
         <div className="adminColorRows">{draft.colors.map((color) => <div className="adminColorRow" key={color.id}><label className="adminColorPicker"><input type="color" value={isHexColor(color.hex) ? color.hex : "#000000"} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} /><span style={{ backgroundColor: isHexColor(color.hex) ? color.hex : "#000000" }} /></label><AdminProductField label="Name"><input placeholder="Black" value={color.name} onChange={(event) => onColorChange(color.id, { name: event.target.value })} /></AdminProductField><AdminProductField label="Hex"><input placeholder="#111111" value={color.hex} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} /></AdminProductField><button type="button" onClick={() => onRemoveColor(color.id)}>Remove</button></div>)}</div>
         <button className="adminInlineAdd" type="button" onClick={onAddColor}>+ Add color</button>
         <div className="adminProductGrid adminProductGrid--two"><ToggleCard label="DROP_001" checked={draft.showInDrop001} onChange={(checked) => onChange("showInDrop001", checked)} /><ToggleCard label="Featured Drop" checked={draft.showInFeaturedDrop} onChange={(checked) => onChange("showInFeaturedDrop", checked)} /></div>
-        <div className="adminProductGrid adminProductGrid--two"><AdminProductField label="Sort"><input inputMode="numeric" value={draft.sortOrder} onChange={(event) => onChange("sortOrder", event.target.value)} /></AdminProductField><AdminProductField label="Featured sort"><input inputMode="numeric" value={draft.featuredSortOrder} onChange={(event) => onChange("featuredSortOrder", event.target.value)} /></AdminProductField></div>
+        <div className="adminProductGrid adminProductGrid--two"><AdminProductField label="Storefront order" helper="Lower numbers appear first."><input inputMode="numeric" value={draft.sortOrder} onChange={(event) => onChange("sortOrder", event.target.value)} /></AdminProductField><AdminProductField label="Featured section order" helper="Lower numbers appear first."><input inputMode="numeric" value={draft.featuredSortOrder} onChange={(event) => onChange("featuredSortOrder", event.target.value)} /></AdminProductField></div>
       </AdminProductSection>
 
       <div className="adminProductActions"><button className="adminPrimary" type="submit">{editingId ? "Save changes" : "Create product"}</button>{editingId ? <button type="button" onClick={onCancelEdit}>Cancel edit</button> : null}</div>
@@ -110,3 +146,9 @@ function UploadButton({ label, busy, disabled, onUpload }: { label: string; busy
 function ToggleCard({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) { return <label className="adminToggleCard"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /><span>{label}</span></label>; }
 function isHexColor(value: string) { return /^#[0-9a-fA-F]{6}$/.test(value); }
 function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""); }
+
+function formatDzd(value: number) { return `${Math.round(value).toLocaleString("fr-DZ")} DZD`; }
+function clampNumber(value: number, min: number, max: number) { return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : min; }
+function normalizeNonNegativeInput(value: string) { const parsed = Number(value); if (!value.trim()) return ""; return String(Math.max(0, Math.trunc(Number.isFinite(parsed) ? parsed : 0))); }
+function normalizeDiscountInput(value: string) { const parsed = Number(value); if (!value.trim()) return ""; return String(clampNumber(Math.trunc(Number.isFinite(parsed) ? parsed : 0), 0, 100)); }
+function calculateSalePrice(original: string, discount: string) { const originalPrice = Math.max(0, Number(original || 0)); const discountPercent = clampNumber(Number(discount || 0), 0, 100); return String(Math.max(0, Math.round(originalPrice * (1 - discountPercent / 100)))); }
