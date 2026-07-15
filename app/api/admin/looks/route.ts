@@ -37,7 +37,9 @@ export async function POST(request: Request) {
   if (!slugSnapshot.empty) return adminJsonError("An entry with this slug already exists.", 409);
   const docRef = getAdminDb().collection(COLLECTION).doc();
   const now = FieldValue.serverTimestamp();
-  await docRef.set({ ...parsed.data, createdAt: now, updatedAt: now, updatedBy: admin.email });
+  const sortOrder = parsed.data.sortOrder ?? await getNextLookSortOrder(parsed.data.collectionId);
+  const homepageFigureOrder = parsed.data.showAsHomepageFigure ? parsed.data.homepageFigureOrder ?? await getNextHomepageFigureOrder() : null;
+  await docRef.set({ ...parsed.data, sortOrder, homepageFigureOrder, createdAt: now, updatedAt: now, updatedBy: admin.email });
   revalidateLooks();
   return Response.json({ id: docRef.id }, { status: 201 });
 }
@@ -52,3 +54,14 @@ function parseCursor(value: string | null): Cursor | null {
   return null;
 }
 function revalidateLooks() { revalidateTag("looks", "max"); revalidatePath("/"); revalidatePath("/looks/[collectionSlug]", "page"); revalidatePath("/look/[lookSlug]", "page"); revalidatePath("/admin/look-collections"); revalidatePath("/admin/looks"); }
+
+async function getNextLookSortOrder(collectionId: string): Promise<number> {
+  const snapshot = await getAdminDb().collection(COLLECTION).where("collectionId", "==", collectionId).orderBy("sortOrder", "desc").limit(1).get();
+  const highest = snapshot.docs[0]?.get("sortOrder");
+  return (typeof highest === "number" && Number.isFinite(highest) ? highest : 0) + 10;
+}
+async function getNextHomepageFigureOrder(): Promise<number> {
+  const snapshot = await getAdminDb().collection(COLLECTION).where("showAsHomepageFigure", "==", true).orderBy("homepageFigureOrder", "desc").limit(1).get();
+  const highest = snapshot.docs[0]?.get("homepageFigureOrder");
+  return (typeof highest === "number" && Number.isFinite(highest) ? highest : 0) + 10;
+}

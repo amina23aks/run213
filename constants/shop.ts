@@ -18,9 +18,9 @@ export const SHOP_CATEGORY_GROUPS: Record<ShopCategoryGroup, ProductCategory[]> 
 };
 
 export const SHOP_CATEGORY_CARD_HREFS: Record<string, string> = {
-  TOPS: "/shop?group=tops",
-  BOTTOMS: "/shop?group=bottoms",
-  ACCESSORIES: "/shop?category=accessories",
+  TOPS: "/shop?group=tops&locked=1",
+  BOTTOMS: "/shop?group=bottoms&locked=1",
+  ACCESSORIES: "/shop?category=accessories&locked=1",
 };
 
 export function isShopCategoryFilter(value: string | null): value is ShopCategoryFilter {

@@ -34,7 +34,7 @@ export const adminProductInputSchema = z.object({
   sizeGuideImageUrl: trimmedString.max(500).optional().transform((value) => value || null),
   sizeGuideImagePublicId: trimmedString.max(240).optional().transform((value) => value || null),
   dropSlug: z.union([z.literal("drop-001"), z.literal(""), z.null()]).transform((value) => value === "drop-001" ? "drop-001" : null),
-  sortOrder: z.union([z.number(), z.string()]).transform(Number).pipe(z.number().int().min(0).max(100_000)),
+  sortOrder: z.union([z.number(), z.string(), z.null(), z.undefined()]).transform((value) => value === null || value === undefined || value === "" ? null : Number(value)).pipe(z.number().int().min(0).max(100_000).nullable()),
   showInDrop001: z.boolean(),
   showInFeaturedDrop: z.boolean(),
   showInShopTheLook: z.boolean(),

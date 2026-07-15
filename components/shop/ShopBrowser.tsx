@@ -17,6 +17,7 @@ export function ShopBrowser({ products }: { products: Product[] }) {
   const query = searchParams.get("q") ?? "";
   const groupParam = searchParams.get("group");
   const categoryParam = searchParams.get("category");
+  const isLocked = searchParams.get("locked") === "1";
   const selectedGroup: ShopCategoryGroup | null = isShopCategoryGroup(groupParam) ? groupParam : null;
   const selectedCategory: ShopCategoryFilter = selectedGroup ? "all" : isShopCategoryFilter(categoryParam) ? categoryParam : "all";
 
@@ -70,8 +71,7 @@ export function ShopBrowser({ products }: { products: Product[] }) {
           </label>
         </form>
         <section className="shopFilters" aria-label="Product categories">
-          {selectedGroup ? <button className="is-active" type="button" onClick={() => updateUrl({ group: null })}>{selectedGroup === "tops" ? "TOPS" : selectedGroup === "bottoms" ? "BOTTOMS" : "ACCESSORIES"}</button> : null}
-          {SHOP_CATEGORY_FILTERS.map((filter) => <button className={!selectedGroup && selectedCategory === filter.value ? "is-active" : undefined} key={filter.value} type="button" onClick={() => updateUrl({ category: filter.value })}>{filter.label}</button>)}
+          {isLocked ? <button className="is-active" type="button">{selectedGroup === "tops" ? "TOPS" : selectedGroup === "bottoms" ? "BOTTOMS" : selectedCategory === "accessories" ? "ACCESSORIES" : "SELECTED"}</button> : <>{selectedGroup ? <button className="is-active" type="button" onClick={() => updateUrl({ group: null })}>{selectedGroup === "tops" ? "TOPS" : selectedGroup === "bottoms" ? "BOTTOMS" : "ACCESSORIES"}</button> : null}{SHOP_CATEGORY_FILTERS.map((filter) => <button className={!selectedGroup && selectedCategory === filter.value ? "is-active" : undefined} key={filter.value} type="button" onClick={() => updateUrl({ category: filter.value })}>{filter.label}</button>)}</>}
         </section>
       </div>
       <ShopGrid products={visibleProducts} />

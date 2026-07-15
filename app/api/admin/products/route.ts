@@ -57,7 +57,8 @@ export async function POST(request: Request) {
 
   const docRef = getAdminDb().collection(COLLECTION).doc();
   const now = FieldValue.serverTimestamp();
-  await docRef.set({ ...parsed.data, createdAt: now, updatedAt: now, updatedBy: admin.email });
+  const sortOrder = await getNextProductSortOrder();
+  await docRef.set({ ...parsed.data, sortOrder, createdAt: now, updatedAt: now, updatedBy: admin.email });
   revalidateProductStorefront(parsed.data.slug);
 
   return Response.json({ id: docRef.id }, { status: 201 });
@@ -92,4 +93,10 @@ function revalidateProductStorefront(slug?: string) {
   revalidatePath("/");
   revalidatePath("/shop");
   if (slug) revalidatePath(`/product/${slug}`);
+}
+
+async function getNextProductSortOrder(): Promise<number> {
+  const snapshot = await getAdminDb().collection(COLLECTION).orderBy("sortOrder", "desc").limit(1).get();
+  const highest = snapshot.docs[0]?.get("sortOrder");
+  return (typeof highest === "number" && Number.isFinite(highest) ? highest : 0) + 10;
 }

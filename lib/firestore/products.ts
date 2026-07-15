@@ -64,7 +64,7 @@ export async function listActivePromoProducts(requestedLimit = DEFAULT_PRODUCT_L
   const limit = clampLimit(requestedLimit);
 
   if (shouldUseStaticFallback()) {
-    return shopProducts.filter((product) => product.isPromo || product.showInFeaturedDrop).sort((a, b) => getPlacementSortOrder(a, "showInFeaturedDrop") - getPlacementSortOrder(b, "showInFeaturedDrop")).slice(0, limit);
+    return shopProducts.filter((product) => product.isPromo || (product.discountPercent ?? 0) > 0 || product.showInFeaturedDrop).sort((a, b) => getPromoRecency(b) - getPromoRecency(a) || a.name.localeCompare(b.name)).slice(0, limit);
   }
 
   if (!isAdminFirestoreConfigured()) {
@@ -75,8 +75,8 @@ export async function listActivePromoProducts(requestedLimit = DEFAULT_PRODUCT_L
   try {
     const products = await readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT);
     return products
-      .filter((product) => product.isPromo === true || product.showInFeaturedDrop === true || product.featured === true)
-      .sort((a, b) => getPlacementSortOrder(a, "showInFeaturedDrop") - getPlacementSortOrder(b, "showInFeaturedDrop"))
+      .filter((product) => product.isPromo === true || (product.discountPercent ?? 0) > 0)
+      .sort((a, b) => getPromoRecency(b) - getPromoRecency(a) || a.name.localeCompare(b.name))
       .slice(0, limit);
   } catch (error) {
     warnProducts("Active promo product query failed; returning no storefront products.", error);
@@ -277,4 +277,8 @@ function isNumber(value: unknown): value is number {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function getPromoRecency(product: Product): number {
+  return Date.parse(product.updatedAt ?? product.createdAt ?? "") || 0;
 }

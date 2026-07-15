@@ -19,7 +19,11 @@ export async function PUT(request: Request, { params }: Params) {
   if (!current.exists) return adminJsonError("Look not found", 404);
   const duplicateSnapshot = await getAdminDb().collection(COLLECTION).where("slug", "==", parsed.data.slug).limit(2).get();
   if (duplicateSnapshot.docs.some((doc) => doc.id !== id)) return adminJsonError("A look with this slug already exists.", 409);
-  await docRef.update({ ...parsed.data, updatedAt: FieldValue.serverTimestamp(), updatedBy: admin.email });
+  const currentSortOrder = current.get("sortOrder");
+  const currentHomepageFigureOrder = current.get("homepageFigureOrder");
+  const sortOrder = parsed.data.sortOrder ?? (typeof currentSortOrder === "number" ? currentSortOrder : 999);
+  const homepageFigureOrder = parsed.data.showAsHomepageFigure ? parsed.data.homepageFigureOrder ?? (typeof currentHomepageFigureOrder === "number" ? currentHomepageFigureOrder : null) : null;
+  await docRef.update({ ...parsed.data, sortOrder, homepageFigureOrder, updatedAt: FieldValue.serverTimestamp(), updatedBy: admin.email });
   revalidateLooks(parsed.data.slug, current.get("slug"), parsed.data.collectionSlug, current.get("collectionSlug"));
   return Response.json({ id });
 }

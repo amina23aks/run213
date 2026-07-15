@@ -52,12 +52,14 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
       onChange("discountPercent", "0");
       onChange("compareAtPriceDzd", "");
       onChange("basePriceDzd", draft.priceDzd);
+      onChange("isPromo", false);
       return;
     }
     const nextOriginal = String(originalPrice || sellingPrice || "");
     onChange("basePriceDzd", nextOriginal);
     onChange("compareAtPriceDzd", nextOriginal);
     onChange("discountPercent", draft.discountPercent === "0" ? "10" : draft.discountPercent);
+    onChange("isPromo", true);
   }
 
   function setRegularPrice(value: string) {
@@ -66,6 +68,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
     onChange("basePriceDzd", normalized);
     onChange("compareAtPriceDzd", "");
     onChange("discountPercent", "0");
+    onChange("isPromo", false);
   }
 
   function setSaleOriginalPrice(value: string) {
@@ -78,6 +81,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
   function setSaleDiscount(value: string) {
     const normalized = normalizeDiscountInput(value);
     onChange("discountPercent", normalized);
+    onChange("isPromo", Number(normalized || 0) > 0);
     onChange("priceDzd", calculateSalePrice(draft.basePriceDzd || draft.compareAtPriceDzd || draft.priceDzd, normalized));
   }
 
@@ -94,7 +98,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
       <AdminProductSection eyebrow="01" title="Basics">
         <div className="adminProductGrid adminProductGrid--two">
           <AdminProductField label="Product name" helper={`Slug: ${slugPreview || "product-name"}`}><input placeholder="Oversized Tee" value={draft.name} onChange={(event) => onChange("name", event.target.value)} /></AdminProductField>
-          <AdminProductField label="Visibility"><div className="adminPillGroup">{(["draft", "active"] as const).map((status) => <button className={draft.status === status ? "isSelected" : undefined} key={status} type="button" onClick={() => onChange("status", status)}>{status}</button>)}</div></AdminProductField>
+          <AdminProductField label="Visibility"><div className="adminPillGroup">{(["draft", "active"] as const).map((status) => <button className={draft.status === status ? "isSelected" : undefined} key={status} type="button" onClick={() => onChange("status", status)}>{status === "active" ? "Active / Published" : "Draft"}</button>)}</div></AdminProductField>
         </div>
         <AdminProductField label="Description"><textarea rows={2} placeholder="Built for daily movement..." value={draft.description} onChange={(event) => onChange("description", event.target.value)} /></AdminProductField>
       </AdminProductSection>
@@ -110,7 +114,6 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
           <AdminProductField label="Cost Price"><input inputMode="numeric" min="0" placeholder="1600" value={draft.costPriceDzd} onChange={(event) => onChange("costPriceDzd", normalizeNonNegativeInput(event.target.value))} /></AdminProductField>
           <div className="adminPricingStats"><span>{isOnSale ? "Final Selling Price" : "Customer Price"}: {formatDzd(finalSellingPrice)}</span>{isOnSale ? <span>Customer Saving: {formatDzd(customerSaving)}</span> : null}<span>Estimated Profit: {formatDzd(estimatedProfit)}</span><span>Profit Margin: {estimatedMargin}%</span></div>
         </div>
-        <div className="adminProductGrid adminProductGrid--two"><ToggleCard label="Promo display" checked={draft.isPromo} onChange={(checked) => onChange("isPromo", checked)} /><ToggleCard label="Featured display" checked={draft.featured} onChange={(checked) => onChange("featured", checked)} /></div>
       </AdminProductSection>
 
       <AdminProductSection eyebrow="04" title="Stock and sizes">
@@ -130,8 +133,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
       <AdminProductSection eyebrow="06" title="Colors and placement">
         <div className="adminColorRows">{draft.colors.map((color) => <div className="adminColorRow" key={color.id}><label className="adminColorPicker"><input type="color" value={isHexColor(color.hex) ? color.hex : "#000000"} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} /><span style={{ backgroundColor: isHexColor(color.hex) ? color.hex : "#000000" }} /></label><AdminProductField label="Name"><input placeholder="Black" value={color.name} onChange={(event) => onColorChange(color.id, { name: event.target.value })} /></AdminProductField><AdminProductField label="Hex"><input placeholder="#111111" value={color.hex} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} /></AdminProductField><button type="button" onClick={() => onRemoveColor(color.id)}>Remove</button></div>)}</div>
         <button className="adminInlineAdd" type="button" onClick={onAddColor}>+ Add color</button>
-        <div className="adminProductGrid adminProductGrid--two"><ToggleCard label="DROP_001" checked={draft.showInDrop001} onChange={(checked) => onChange("showInDrop001", checked)} /><ToggleCard label="Featured Drop" checked={draft.showInFeaturedDrop} onChange={(checked) => onChange("showInFeaturedDrop", checked)} /></div>
-        <div className="adminProductGrid adminProductGrid--two"><AdminProductField label="Storefront order" helper="Lower numbers appear first."><input inputMode="numeric" value={draft.sortOrder} onChange={(event) => onChange("sortOrder", event.target.value)} /></AdminProductField><AdminProductField label="Featured section order" helper="Lower numbers appear first."><input inputMode="numeric" value={draft.featuredSortOrder} onChange={(event) => onChange("featuredSortOrder", event.target.value)} /></AdminProductField></div>
+        <div className="adminProductGrid adminProductGrid--two"><ToggleCard label="DROP_001" checked={draft.showInDrop001} onChange={(checked) => onChange("showInDrop001", checked)} /></div>
       </AdminProductSection>
 
       <div className="adminProductActions"><button className="adminPrimary" type="submit">{editingId ? "Save changes" : "Create product"}</button>{editingId ? <button type="button" onClick={onCancelEdit}>Cancel edit</button> : null}</div>
