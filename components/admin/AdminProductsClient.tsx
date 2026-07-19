@@ -187,7 +187,7 @@ export function AdminProductsClient() {
       setDraft(emptyDraft);
       setEditingId(null);
       await loadProducts();
-      showTemporaryMessage("Product saved.");
+      showTemporaryMessage(draft.status === "active" ? "Product published and is now visible in the storefront." : "Product saved as draft. It is not visible in the storefront.");
     } catch (error) {
       setMessage(formatAdminError(error));
     }
@@ -399,7 +399,10 @@ function AdminAccessState({ missingClientEnv, missingServerEnv, message }: { mis
 function validateDraft(draft: ProductDraft): string[] {
   const errors: string[] = [];
   if (!draft.name.trim()) errors.push("Product name is required.");
-  if (!draft.priceDzd.trim()) errors.push("Price DZD is required.");
+  if (!draft.priceDzd.trim()) errors.push("Selling Price is required.");
+  if (Number(draft.priceDzd) < 0 || Number(draft.basePriceDzd) < 0 || Number(draft.costPriceDzd) < 0 || Number(draft.compareAtPriceDzd) < 0) errors.push("Prices cannot be negative.");
+  const discount = Number(draft.discountPercent || 0);
+  if (!Number.isFinite(discount) || discount < 0 || discount > 100) errors.push("Discount must be between 0 and 100.");
   if (!draft.images.length) errors.push("Upload at least one product image.");
   if (!draft.colors.some((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))) errors.push("Add at least one color with a name and valid #HEX value.");
   if (draft.stockMode === "limited" && !draft.stockQty.trim()) errors.push("Stock quantity is required when stock mode is limited.");
@@ -431,16 +434,21 @@ function formatAdminError(error: unknown): string {
 }
 
 function toPayload(draft: ProductDraft) {
+  const discountPercent = Math.max(0, Math.min(100, Number(draft.discountPercent || 0)));
+  const isOnSale = discountPercent > 0;
+  const priceDzd = draft.priceDzd;
+  const basePriceDzd = isOnSale ? draft.basePriceDzd || draft.compareAtPriceDzd || draft.priceDzd : priceDzd;
+  const compareAtPriceDzd = isOnSale ? basePriceDzd : null;
   return {
     name: draft.name,
     slug: slugify(draft.name),
     description: draft.description,
     category: draft.category,
-    basePriceDzd: draft.basePriceDzd || draft.priceDzd,
-    priceDzd: draft.priceDzd,
-    compareAtPriceDzd: draft.compareAtPriceDzd,
+    basePriceDzd,
+    priceDzd,
+    compareAtPriceDzd,
     costPriceDzd: draft.costPriceDzd,
-    discountPercent: draft.discountPercent,
+    discountPercent,
     images: draft.images.map((image, index) => ({ id: image.id, url: image.url, alt: image.alt || draft.name || "Product image", publicId: image.publicId, sortOrder: image.sortOrder ?? index, isPrimary: image.isPrimary, colorId: image.colorId ?? null })),
     colors: draft.colors
       .filter((color) => /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
@@ -450,7 +458,7 @@ function toPayload(draft: ProductDraft) {
     inStock: draft.stockMode === "unlimited" || Number(draft.stockQty) > 0,
     stockMode: draft.stockMode,
     stockQty: draft.stockQty,
-    isPromo: draft.isPromo,
+    isPromo: isOnSale,
     featured: draft.featured,
     sizeGuideEnabled: draft.sizeGuideEnabled,
     sizeGuideImageUrl: draft.sizeGuideImageUrl,

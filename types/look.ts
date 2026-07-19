@@ -32,6 +32,9 @@ export type Look = {
   description: string;
   priceDzd: number;
   compareAtPriceDzd: number | null;
+  discountPercent?: number;
+  isPromo?: boolean;
+  costPriceDzd?: number | null;
   heroImage: LookImage;
   figureImage?: LookImage | null;
   productIds: string[];

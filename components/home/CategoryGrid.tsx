@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { categoryCards } from "@/constants/home";
+import { getShopCategoryHref } from "@/constants/shop";
 
 const categoryImage: Record<string, string> = {
   TOPS: "/top.png",
@@ -16,7 +17,7 @@ export function CategoryGrid() {
       </aside>
       <div className="category-row">
         {categoryCards.map((category) => (
-          <a className="category-card" href="#shop" key={category}>
+          <a className="category-card" href={getShopCategoryHref(category)} key={category}>
             <Image src={categoryImage[category]} alt={`${category} category`} width={680} height={420} />
             <strong>{category}</strong>
             <span>→</span>

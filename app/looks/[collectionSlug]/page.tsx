@@ -49,7 +49,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                 <div className="lookEditorialContent">
                   <div className="lookEditorialTopline"><span>{look.numberLabel ?? `LOOK ${String(index + 1).padStart(2, "0")}`}</span></div>
                   <h2>{look.name}</h2>
-                  <p>{look.description}</p><strong className="lookEditorialPrice">{formatDzd(look.priceDzd)}</strong>
+                  <p>{look.description}</p><div className="lookPromoPrice">{look.isPromo && look.compareAtPriceDzd && look.compareAtPriceDzd > look.priceDzd ? <><span className="discountBadge">PROMO</span><strong>{formatDzd(look.priceDzd)}</strong><del>{formatDzd(look.compareAtPriceDzd)}</del><em>-{look.discountPercent ?? Math.round(((look.compareAtPriceDzd - look.priceDzd) / look.compareAtPriceDzd) * 100)}%</em></> : <strong className="lookEditorialPrice">{formatDzd(look.priceDzd)}</strong>}</div>
                   <div className="lookMiniProducts">
                     {activeProducts.slice(0, 4).map((product) => {
                       const image = product.images[0];

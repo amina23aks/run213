@@ -32,19 +32,19 @@ export const lookInputSchema = z.object({
   description: trimmedString.max(1200).default(""),
   priceDzd: z.union([z.number(), z.string()]).transform(Number).pipe(z.number().int().positive().max(1_000_000)),
   compareAtPriceDzd: optionalNumber.pipe(z.number().int().positive().max(1_000_000).nullable()),
+  discountPercent: z.union([z.number(), z.string(), z.null(), z.undefined()]).transform((value) => value === null || value === undefined || value === "" ? 0 : Number(value)).pipe(z.number().int().min(0).max(99)).default(0),
+  isPromo: z.boolean().default(false),
+  costPriceDzd: optionalNumber.pipe(z.number().int().min(0).max(1_000_000).nullable()),
   heroImage: lookImageSchema,
   figureImage: lookImageSchema.nullable().optional(),
   productIds: z.array(trimmedString.min(1).max(140)).min(1).max(12),
   status: z.enum(["draft", "active"]),
-  sortOrder: z.union([z.number(), z.string()]).transform(Number).pipe(z.number().int().min(0).max(100_000)),
+  sortOrder: optionalNumber.pipe(z.number().int().min(0).max(100_000).nullable()),
   showAsHomepageFigure: z.boolean(),
   homepageFigureOrder: optionalNumber.pipe(z.number().int().min(0).max(100_000).nullable()),
 }).superRefine((value, context) => {
   if (value.compareAtPriceDzd !== null && value.compareAtPriceDzd <= value.priceDzd) {
     context.addIssue({ code: "custom", path: ["compareAtPriceDzd"], message: "Compare-at price must be higher than price." });
-  }
-  if (value.showAsHomepageFigure && value.homepageFigureOrder === null) {
-    context.addIssue({ code: "custom", path: ["homepageFigureOrder"], message: "Homepage figure order is required when enabled." });
   }
 });
 
