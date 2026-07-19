@@ -49,6 +49,34 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "looks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "collectionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sortOrder",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "looks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "showAsHomepageFigure",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "homepageFigureOrder",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -155,7 +155,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         <span>{look.numberLabel ?? "LOOK"}</span>
         <h1>{look.name}</h1>
         <p>{look.description}</p>
-        <div className="lookTotalBar"><span>{priceResult.pricingMode === "look-price" ? "Look total" : "Selected items total"}</span><strong>{hasValidLookPrice || total > 0 ? formatDzd(total) : "Unavailable"}</strong></div>
+        <div className="lookTotalBar"><span>{priceResult.pricingMode === "look-price" ? "Look total" : "Selected items total"}</span><strong>{hasValidLookPrice || total > 0 ? formatDzd(total) : "Unavailable"}</strong>{look.isPromo && look.compareAtPriceDzd && look.compareAtPriceDzd > look.priceDzd ? <small><b className="discountBadge">PROMO</b> <del>{formatDzd(look.compareAtPriceDzd)}</del> <em>-{look.discountPercent ?? Math.round(((look.compareAtPriceDzd - look.priceDzd) / look.compareAtPriceDzd) * 100)}%</em></small> : null}</div>
         <div className="lookItemsList">
           {look.products.map(({ productId, product }) => {
             const state = selected[productId] ?? { enabled: false, color: null, size: null };

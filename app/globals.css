@@ -4939,3 +4939,10 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   font-weight: 700;
   line-height: 1 !important;
 }
+.lookPromoPrice { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.lookPromoPrice strong { font-size: 1rem; }
+.lookPromoPrice del,
+.lookTotalBar del { color: var(--muted); font-size: 0.78rem; }
+.lookPromoPrice em,
+.lookTotalBar em { color: var(--lime); font-size: 0.72rem; font-style: normal; font-weight: 900; }
+.lookTotalBar small { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
