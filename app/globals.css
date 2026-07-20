@@ -5136,3 +5136,54 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .figure-card { flex-basis: 9.5rem; }
   .figure-card__title { font-size: 0.56rem; }
 }
+
+/* Correction sprint 2: clickable figure marquee + compact Run Club page/grid. */
+.figure-card { background: transparent !important; cursor: pointer; pointer-events: auto; }
+.figure-card:hover { background: transparent !important; }
+.figure-card.is-active { background: transparent !important; transform: none; }
+.figure-card.is-active::before { position: absolute; top: 0.5rem; left: 50%; transform: translateX(-50%); width: 0.36rem; height: 0.36rem; pointer-events: none; }
+.figure-card__title { max-width: 100%; white-space: nowrap; }
+.figure-card:hover .figure-card__title, .figure-card.is-active .figure-card__title { color: color-mix(in srgb, var(--foreground) 76%, var(--lime)); font-weight: 950; text-decoration: none !important; }
+.figure-card img { transition: transform 180ms ease; }
+.figure-card:hover img { transform: scale(1.018); }
+.figure-card .figure-card__promo, .figure-card.is-active::before { pointer-events: none; }
+.figure-row { scroll-snap-type: none; }
+
+.runClubIntro { border: 1px solid var(--border); border-radius: 1.25rem; background: rgba(255,250,240,0.74); padding: clamp(1.2rem, 3vw, 2rem); }
+.runClubIntro h1 { max-width: 9ch; margin: 0; font-size: clamp(3rem, 7vw, 5.8rem); font-weight: 950; letter-spacing: -0.065em; line-height: 0.86; }
+.runClubIntro p:not(.eyebrow) { max-width: 35rem; margin: 0.75rem 0 0; color: rgba(7,7,6,0.76); font-size: clamp(0.9rem, 1.2vw, 1rem); font-weight: 750; line-height: 1.45; }
+.runClubSubmit { display: grid; gap: 0.9rem; }
+.runClubSubmit h2 { margin-bottom: 0.52rem; }
+.runClubSubmit p { margin: 0.28rem 0 0; }
+.submitComingSoon { align-content: start; }
+.submitPreviewFields { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.45rem; }
+.submitPreviewFields span { border: 1px dashed rgba(0,0,0,0.16); border-radius: 0.65rem; background: rgba(255,255,255,0.26); color: rgba(7,7,6,0.65); padding: 0.56rem 0.62rem; font-size: 0.7rem; font-weight: 850; line-height: 1.1; }
+.submitComingSoon .button { width: 100%; }
+.runClubGallery .runClubSectionHeader h2 { max-width: none; }
+.communityGridShell { display: grid; gap: 1rem; }
+.communityGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.72rem; }
+.communityGridEmpty, .communityGridLoaded { margin: 0; color: rgba(7,7,6,0.72); font-size: 0.84rem; font-weight: 800; text-align: center; }
+.communityGridLoadMore { justify-self: center; min-width: min(100%, 12rem); background: rgba(255,250,240,0.72); }
+.communityPost { border-radius: 0.82rem; transition: transform 160ms ease, border-color 160ms ease; }
+.communityPost:hover { border-color: rgba(0,0,0,0.16); transform: translateY(-2px); }
+.communityImageFrame { position: relative; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 0.74rem 0.74rem 0 0; background: rgba(7,7,6,0.08); isolation: isolate; }
+.communityImageFrame__backdrop { z-index: 0; object-fit: cover; opacity: 0.28; filter: blur(12px) saturate(0.82); transform: scale(1.08); }
+.communityImageFrame::after { position: absolute; inset: 0; z-index: 1; background: rgba(247,242,232,0.18); content: ""; pointer-events: none; }
+.communityImageFrame__image { z-index: 2; object-fit: contain; object-position: center; padding: 0.38rem; transition: transform 160ms ease; }
+.communityPost:hover .communityImageFrame__image { transform: scale(1.012); }
+.communityPost__meta { padding: 0.58rem 0.62rem 0.68rem; }
+.communityPost__meta span { font-size: 0.5rem; }
+.communityPost__meta strong { font-size: 0.74rem; line-height: 1.08; }
+.communityPost__meta small, .communityPost__meta p { font-size: 0.66rem; line-height: 1.25; }
+
+@media (min-width: 760px) {
+  .runClubSubmit { grid-template-columns: minmax(0, 0.85fr) minmax(18rem, 1.15fr); align-items: start; }
+  .communityGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1180px) {
+  .communityGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .runClubIntro h1 { font-size: clamp(2.75rem, 16vw, 4rem); }
+  .submitPreviewFields { grid-template-columns: 1fr 1fr; }
+}
