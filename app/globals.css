@@ -4946,3 +4946,72 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .lookPromoPrice em,
 .lookTotalBar em { color: var(--lime); font-size: 0.72rem; font-style: normal; font-weight: 900; }
 .lookTotalBar small { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
+
+/* Focused storefront UI refinement sprint: one-row drop strip and compact Look promo presentation. */
+@media (min-width: 760px) {
+  .product-row,
+  .product-row--promo {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(11.25rem, 13.75rem);
+    grid-template-columns: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+.product-row { scrollbar-width: none; }
+.product-row::-webkit-scrollbar { display: none; }
+.product-row > * { scroll-snap-align: start; }
+@media (prefers-reduced-motion: reduce) {
+  .product-row { scroll-behavior: auto; }
+}
+
+.figure-card { position: relative; display: grid; align-content: end; justify-items: center; gap: 0.38rem; }
+.figure-card strong { display: block; max-width: 12ch; margin: 0 auto; font-size: clamp(0.58rem, 1vw, 0.68rem); letter-spacing: 0.025em; }
+.figure-card img { margin-top: 0.2rem; }
+.figure-card__promo { position: absolute; top: 1.55rem; right: 0.35rem; z-index: 2; display: inline-flex; align-items: center; gap: 0.22rem; border-radius: 999px; background: var(--lime); color: var(--foreground); padding: 0.2rem 0.38rem; font-size: 0.52rem; font-weight: 950; line-height: 1; box-shadow: 0 0.45rem 1rem rgba(7, 7, 6, 0.12); }
+.figure-card__promo b { font: inherit; }
+.figure-card.is-active strong { color: var(--foreground); text-decoration: underline; text-decoration-color: var(--lime); text-decoration-thickness: 0.16rem; text-underline-offset: 0.18rem; }
+.figure-card.is-active .figure-card__promo { transform: scale(0.96); }
+
+.lookPriceDisplay { display: grid; gap: 0.32rem; }
+.lookPriceDisplay__row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.48rem; }
+.lookPriceDisplay__label { color: var(--muted); font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
+.lookPriceDisplay strong { color: var(--foreground); font-size: clamp(1rem, 1.5vw, 1.22rem); font-weight: 950; line-height: 1; }
+.lookPriceDisplay del { color: var(--muted); font-size: 0.82rem; font-weight: 800; line-height: 1; }
+.lookPriceDisplay em { border-radius: 999px; background: var(--lime); color: var(--foreground); padding: 0.22rem 0.42rem; font-size: 0.68rem; font-style: normal; font-weight: 950; line-height: 1; }
+.lookPriceDisplay__saving { margin: 0; color: var(--muted); font-size: 0.78rem; font-weight: 800; line-height: 1.35; }
+
+.lookEditorialModule { gap: clamp(0.85rem, 1.8vw, 1.45rem); }
+.lookEditorialContent { align-content: center; gap: 0.5rem; }
+.lookEditorialTopline { display: none; }
+.lookEditorialContent h2 { max-width: 12ch; font-size: clamp(1.65rem, 3vw, 3rem); line-height: 0.96; }
+.lookEditorialContent p { margin-top: -0.1rem; font-size: clamp(0.86rem, 1vw, 0.98rem); line-height: 1.42; }
+.lookMiniProducts { gap: 0.55rem; padding: 0.1rem 0 0.2rem; scrollbar-width: none; }
+.lookMiniProducts::-webkit-scrollbar { display: none; }
+.lookMiniProduct { flex: 0 0 126px; border-radius: 13px; gap: 0.22rem; padding: 0.4rem; }
+.lookMiniProduct__image { height: 86px; border-radius: 10px; }
+.lookMiniProduct__image img { width: 100%; height: 100%; object-fit: contain; }
+.lookMiniProduct strong { font-size: 0.68rem; line-height: 1.12; }
+.lookMiniProduct span,
+.lookMiniProduct small { font-size: 0.58rem; line-height: 1.15; }
+.lookMiniProduct em { font-size: 0.66rem; line-height: 1.1; }
+.lookViewButton { margin-top: 0.15rem; min-height: 2.45rem; padding-inline: 0.9rem; }
+
+.lookDetailPanel { gap: 0.55rem; }
+.lookDetailPanel > span { display: none; }
+.lookDetailPanel h1 { font-size: clamp(1.9rem, 3.6vw, 3.25rem); line-height: 0.96; }
+.lookDetailPanel > p { margin-bottom: 0.05rem; }
+.lookDetailPanel .lookPriceDisplay { padding-bottom: 0.55rem; border-bottom: 1px solid var(--border); }
+.lookItemsList { gap: 0.55rem; }
+.lookItem { padding: 0.46rem; }
+.lookItemOptions { gap: 0.45rem; }
+.lookItemOptions button { min-height: 2rem; padding-inline: 0.62rem; }
+@media (max-width: 759px) {
+  .lookEditorialContent h2 { font-size: clamp(1.85rem, 9vw, 2.75rem); }
+  .lookMiniProduct { flex-basis: 132px; }
+  .figure-card__promo { top: 1.35rem; right: 0.1rem; }
+}

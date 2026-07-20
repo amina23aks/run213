@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { formatDzd } from "@/constants/products";
+import { LookPriceDisplay } from "@/components/look/LookPriceDisplay";
 import { getActiveLookCollectionBySlug, listActiveLooksByCollection } from "@/lib/firestore/looks";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
           </div>
         </header>
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
-          {looks.length ? looks.map((look, index) => {
+          {looks.length ? looks.map((look) => {
             const activeProducts = look.products.flatMap((entry) => entry.product ? [entry.product] : []);
             return (
               <article className="lookEditorialModule" key={look.id}>
@@ -47,9 +48,9 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                   <Image src={look.heroImage.url} alt={look.heroImage.alt} fill sizes="(max-width: 900px) 100vw, 52vw" unoptimized />
                 </Link>
                 <div className="lookEditorialContent">
-                  <div className="lookEditorialTopline"><span>{look.numberLabel ?? `LOOK ${String(index + 1).padStart(2, "0")}`}</span></div>
                   <h2>{look.name}</h2>
-                  <p>{look.description}</p><div className="lookPromoPrice">{look.isPromo && look.compareAtPriceDzd && look.compareAtPriceDzd > look.priceDzd ? <><span className="discountBadge">PROMO</span><strong>{formatDzd(look.priceDzd)}</strong><del>{formatDzd(look.compareAtPriceDzd)}</del><em>-{look.discountPercent ?? Math.round(((look.compareAtPriceDzd - look.priceDzd) / look.compareAtPriceDzd) * 100)}%</em></> : <strong className="lookEditorialPrice">{formatDzd(look.priceDzd)}</strong>}</div>
+                  <p>{look.description}</p>
+                  <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="You save {amount} with this Look." />
                   <div className="lookMiniProducts">
                     {activeProducts.slice(0, 4).map((product) => {
                       const image = product.images[0];

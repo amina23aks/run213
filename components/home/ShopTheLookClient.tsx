@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { getLookPromoState } from "@/components/look/LookPriceDisplay";
 import type { Look, LookCollection } from "@/types/look";
 
 const AUTO_SLIDE_MS = 4500;
@@ -56,13 +57,12 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
           <div className="figure-row" aria-label="Shop the look figures">
             {figureSlots.map((figure, index) => figure ? (
               <Link className={index === activeFigure ? "figure-card is-active" : "figure-card"} href={`/look/${figure.slug}`} key={figure.id} onFocus={() => activateFigure(index)} onMouseEnter={() => activateFigure(index)}>
-                <span>{figure.numberLabel ?? String(index + 1).padStart(2, "0")}</span>
                 <strong>{figure.name}</strong>
+                {getLookPromoState(figure).isValidPromo ? <span className="figure-card__promo">PROMO <b>-{getLookPromoState(figure).discountPercent}%</b></span> : null}
                 <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt} width={260} height={360} unoptimized />
               </Link>
             ) : (
               <div className="figure-card figure-card--placeholder" key={`figure-placeholder-${index}`}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
                 <strong>{COLLECTION_SLOTS[index]?.name ?? "LOOK"}</strong>
                 <div className="figure-placeholder-surface" />
               </div>
