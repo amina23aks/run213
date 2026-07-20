@@ -3,7 +3,7 @@ import { listActiveLookCollections, listHomepageLooks } from "@/lib/firestore/lo
 
 export async function ShopTheLook() {
   const [figures, collections] = await Promise.all([
-    listHomepageLooks(4),
+    listHomepageLooks(),
     listActiveLookCollections(4),
   ]);
 

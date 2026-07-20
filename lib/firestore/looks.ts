@@ -20,7 +20,7 @@ export async function listActiveLookCollections(limit = 8): Promise<LookCollecti
   }
 }
 
-export async function listHomepageLooks(limit = 4): Promise<Look[]> {
+export async function listHomepageLooks(limit = 20): Promise<Look[]> {
   noStore();
   if (!isConfigured()) return [];
   try {
