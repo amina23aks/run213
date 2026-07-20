@@ -13,7 +13,7 @@ export function RunClub() {
       <aside className="section-intro run-club__intro">
         <h2 id="club-title">213 RUN CLUB</h2>
         <p>Share your run.<br />Build your streak.<br />One month. One winner.</p>
-        <a className="button button--lime" href="#run-club">SUBMIT YOUR RUN <span>→</span></a>
+        <a className="button button--lime" href="/run-club">SUBMIT YOUR RUN <span>→</span></a>
         <p className="run-club__tag">#213RUNCLUB <span aria-hidden="true">◎</span></p>
       </aside>
       <div className="run-club__visuals">
