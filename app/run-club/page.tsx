@@ -1,22 +1,22 @@
 import Link from "next/link";
 import Image from "next/image";
-import { CommunityMarquee } from "@/components/community/CommunityMarquee";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { approvedCommunityEntries, runClubMonthStatus, runClubWinner } from "@/constants/home";
 
-const rules = [
-  "Maximum 26 approved participants per month.",
-  "No minimum distance and no speed requirement.",
-  "Any running level is welcome.",
-  "A real run proof image or app screenshot is required.",
-  "Every submission is reviewed before appearing publicly.",
-  "One accepted entry per person per month.",
-  "The winner is chosen randomly from valid approved participants.",
-  "Distance and speed do not improve the chance of winning.",
+const steps = [
+  { title: "RUN AT YOUR PACE", text: "No minimum distance or speed." },
+  { title: "SAVE YOUR PROOF", text: "Take a run photo or app screenshot." },
+  { title: "SUBMIT YOUR RUN", text: "One entry per person each month." },
+  { title: "GET APPROVED", text: "A maximum of 26 valid entries are approved." },
+  { title: "JOIN THE DRAW", text: "The winner is selected randomly from approved entries." },
 ];
 
-const howItWorks = ["Run your pace.", "Save a real proof image or app screenshot.", "Submit when monthly entries open.", "Approved entries join the gallery and monthly draw."];
+const slogans = [
+  { text: "NO NEED TO BE FAST.", icon: "/shoes.png" },
+  { text: "NO NEED TO RUN FAR.", icon: "/road.png" },
+  { text: "JUST SHOW UP.", icon: "/star.png" },
+];
 
 export default function RunClubPage() {
   const cappedCount = Math.min(runClubMonthStatus.approvedCount, runClubMonthStatus.maximumApprovedParticipants);
@@ -46,20 +46,36 @@ export default function RunClubPage() {
           <div><span>REMAINING</span><strong>{remaining}</strong></div>
           <div><span>STATUS</span><strong className={isClosed ? "is-closed" : "is-open"}>{isClosed ? "Closed" : "Open"}</strong></div>
           <p>{isClosed ? "Submissions are closed for this month." : `${remaining} approved participant spots remain. Mock UI data for this sprint.`}</p>
+          <p className="runClubStatus__winner">{runClubWinner ? `${runClubWinner.name} is the ${runClubWinner.monthLabel} winner.` : "This month’s winner will be announced after the draw."}</p>
         </section>
 
-        <section className="runClubContentGrid">
-          <article className="runClubPanel"><span className="section-number">01</span><h2>HOW IT WORKS</h2>{howItWorks.map((item, index) => <p key={item}><b>{String(index + 1).padStart(2, "0")}</b>{item}</p>)}</article>
-          <article className="runClubPanel"><span className="section-number">02</span><h2>PARTICIPATION RULES</h2>{rules.map((rule) => <p key={rule}>→ {rule}</p>)}</article>
+        <section className="runClubSteps" aria-labelledby="steps-title">
+          <div className="runClubSectionHeader"><span className="section-number">01</span><h2 id="steps-title">HOW IT WORKS</h2><p>Simple rules. Reviewed entries. Random winner.</p></div>
+          <div className="runClubSteps__grid">
+            {steps.map((step, index) => <article key={step.title}><b>{String(index + 1).padStart(2, "0")}</b><h3>{step.title}</h3><p>{step.text}</p></article>)}
+          </div>
         </section>
 
-        <section className="runClubStatement" aria-label="213 RUN Club brand statement"><strong>NO NEED TO BE FAST.</strong><strong>NO NEED TO RUN FAR.</strong><strong>JUST SHOW UP.</strong></section>
+        <section className="runClubStatement" aria-label="213 RUN Club brand statement">
+          {slogans.map((slogan) => <p key={slogan.text}><Image src={slogan.icon} alt="" aria-hidden="true" width={36} height={36} /><strong>{slogan.text}</strong></p>)}
+        </section>
 
-        <section className="runClubGallery" aria-labelledby="gallery-title"><div className="runClubSectionHeader"><span className="section-number">03</span><h2 id="gallery-title">APPROVED COMMUNITY</h2><p>Static approved placeholders only for this public UI sprint.</p></div><CommunityMarquee entries={approvedCommunityEntries} /></section>
+        <section className="runClubGallery" aria-labelledby="gallery-title">
+          <div className="runClubSectionHeader"><span className="section-number">02</span><h2 id="gallery-title">APPROVED COMMUNITY</h2><p>Approved static entries for the public UI sprint.</p></div>
+          <div className="communityGrid">
+            {approvedCommunityEntries.map((entry) => (
+              <article className="communityPost" key={entry.id}>
+                <Image src={entry.image} alt={entry.alt} width={420} height={525} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 25vw" />
+                <div className="communityPost__meta"><span>APPROVED</span><strong>{entry.name}</strong><small>{[entry.city, entry.approvedDate].filter(Boolean).join(" · ")}</small>{"caption" in entry ? <p>{entry.caption}</p> : null}</div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-        <section className="runClubWinner" aria-labelledby="winner-title"><div><span className="section-number">04</span><h2 id="winner-title">MONTHLY WINNER</h2>{runClubWinner ? <p>{runClubWinner.name}</p> : <p>This month’s winner will be announced after the draw.</p>}</div></section>
-
-        <section className="runClubSubmit" id="submit" aria-labelledby="submit-title"><div><span className="section-number">05</span><h2 id="submit-title">SUBMIT YOUR RUN</h2><p>Coming soon. Submissions will be reviewed before appearing publicly.</p></div><div className="submitPreview" aria-label="Coming soon submission fields">{["Name", "Email or phone", "Instagram optional", "Wilaya optional", "Run proof image", "Short note optional", "Consent checkbox"].map((field) => <span key={field}>{field}</span>)}<button className="button button--lime" type="button" disabled>{isClosed ? "SUBMISSIONS CLOSED" : "COMING SOON"}</button></div></section>
+        <section className="runClubSubmit" id="submit" aria-labelledby="submit-title">
+          <div><span className="section-number">03</span><h2 id="submit-title">SUBMIT YOUR RUN</h2><p>Coming soon. The submission form opens in a future backend sprint.</p></div>
+          <div className="submitComingSoon"><strong>{isClosed ? "SUBMISSIONS CLOSED" : "SUBMISSIONS OPENING SOON"}</strong><p>Submissions are reviewed before appearing publicly.</p><p>By submitting, you confirm that you own the content and allow 213 RUN to display approved entries.</p><button className="button button--lime" type="button" disabled>{isClosed ? "CLOSED THIS MONTH" : "COMING SOON"}</button></div>
+        </section>
       </main>
       <div className="club-footer-shell"><Footer /></div>
     </>

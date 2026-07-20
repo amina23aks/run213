@@ -7,9 +7,8 @@ import { getLookPromoState } from "@/components/look/LookPriceDisplay";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import type { Look, LookCollection } from "@/types/look";
 
-const AUTO_STEP_PX = 1;
-const AUTO_TICK_MS = 70;
-const USER_PAUSE_MS = 10_000;
+const AUTO_SLIDE_MS = 5_500;
+const USER_PAUSE_MS = 9_000;
 const COLLECTION_SLOTS = [
   { number: "01", slug: "summer-road", name: "SUMMER ROAD", subtitle: "Light. Fast. Unstoppable." },
   { number: "02", slug: "city-everyday", name: "CITY EVERYDAY", subtitle: "Movement in every moment." },
@@ -28,13 +27,13 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const rowRef = useRef<HTMLDivElement | null>(null);
+  const figureRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const pauseUntilRef = useRef(0);
   const isPausedRef = useRef(false);
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartScrollRef = useRef(0);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const figureSlots = Array.from({ length: 4 }, (_, index) => figures[index] ?? null);
   const hasFigures = figures.length > 0;
 
   const updateScrollState = useCallback(() => {
@@ -50,32 +49,44 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
     pauseUntilRef.current = Date.now() + USER_PAUSE_MS;
   };
 
-  const scrollByFigure = (direction: -1 | 1) => {
+  const scrollToFigure = useCallback((index: number, behavior: ScrollBehavior = "smooth") => {
     const row = rowRef.current;
-    if (!row) return;
-    pauseAfterInteraction();
-    row.scrollBy({ left: direction * Math.max(160, row.clientWidth * 0.55), behavior: "smooth" });
-  };
+    const target = figureRefs.current[index];
+    if (!row || !target) return;
+    row.scrollTo({ left: target.offsetLeft - row.offsetLeft, behavior });
+  }, []);
+
+  const activateFigure = useCallback((index: number, shouldPause = true) => {
+    if (!hasFigures) return;
+    const nextIndex = (index + figures.length) % figures.length;
+    if (shouldPause) pauseAfterInteraction();
+    setActiveFigure(nextIndex);
+    scrollToFigure(nextIndex);
+  }, [figures.length, hasFigures, scrollToFigure]);
 
   useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return undefined;
     updateScrollState();
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(row);
     window.addEventListener("resize", updateScrollState);
-    return () => window.removeEventListener("resize", updateScrollState);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateScrollState);
+    };
   }, [figures.length, updateScrollState]);
 
   useEffect(() => {
     if (!hasFigures || !hasOverflow || prefersReducedMotion) return undefined;
     const interval = window.setInterval(() => {
-      const row = rowRef.current;
-      if (!row || document.hidden || isPausedRef.current || isDraggingRef.current || Date.now() < pauseUntilRef.current) return;
-      if (row.scrollLeft + row.clientWidth >= row.scrollWidth - 2) {
-        row.scrollTo({ left: row.scrollWidth - row.clientWidth, behavior: "smooth" });
-        return;
-      }
-      row.scrollBy({ left: AUTO_STEP_PX, behavior: "smooth" });
-    }, AUTO_TICK_MS);
+      if (document.hidden || isPausedRef.current || isDraggingRef.current || Date.now() < pauseUntilRef.current) return;
+      const nextIndex = activeFigure >= figures.length - 1 ? 0 : activeFigure + 1;
+      setActiveFigure(nextIndex);
+      scrollToFigure(nextIndex);
+    }, AUTO_SLIDE_MS);
     return () => window.clearInterval(interval);
-  }, [hasFigures, hasOverflow, prefersReducedMotion]);
+  }, [activeFigure, figures.length, hasFigures, hasOverflow, prefersReducedMotion, scrollToFigure]);
 
   return (
     <section className="home-section shopLookSection" id="shop-the-look" aria-labelledby="look-title">
@@ -94,7 +105,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
           onFocusCapture={() => { isPausedRef.current = true; }}
           onBlurCapture={() => { isPausedRef.current = false; }}
         >
-          {hasOverflow ? <button className="figure-nav figure-nav--prev" type="button" aria-label="Scroll to previous looks" disabled={!canScrollPrev} onClick={() => scrollByFigure(-1)}>←</button> : null}
+          {hasOverflow ? <button className="figure-nav figure-nav--prev" type="button" aria-label="Scroll to previous looks" disabled={!canScrollPrev} onClick={() => activateFigure(activeFigure - 1)}>←</button> : null}
           <div
             className="figure-row"
             aria-label="Shop the look figures"
@@ -112,23 +123,30 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
               if (!isDraggingRef.current) return;
               event.currentTarget.scrollLeft = dragStartScrollRef.current - (event.clientX - dragStartXRef.current);
             }}
-            onPointerUp={() => { isDraggingRef.current = false; pauseAfterInteraction(); }}
-            onPointerCancel={() => { isDraggingRef.current = false; pauseAfterInteraction(); }}
+            onPointerUp={() => { isDraggingRef.current = false; pauseAfterInteraction(); updateScrollState(); }}
+            onPointerCancel={() => { isDraggingRef.current = false; pauseAfterInteraction(); updateScrollState(); }}
           >
-            {figureSlots.map((figure, index) => figure ? (
-              <Link className={index === activeFigure ? "figure-card is-active" : "figure-card"} href={`/look/${figure.slug}`} key={figure.id} onFocus={() => setActiveFigure(index)} onMouseEnter={() => setActiveFigure(index)} onClick={pauseAfterInteraction}>
-                <strong>{figure.name}</strong>
-                {getLookPromoState(figure).isValidPromo ? <span className="figure-card__promo">PROMO <b>-{getLookPromoState(figure).discountPercent}%</b></span> : null}
-                <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt} width={260} height={360} unoptimized />
-              </Link>
-            ) : (
-              <div className="figure-card figure-card--placeholder" key={`figure-placeholder-${index}`}>
-                <strong>{COLLECTION_SLOTS[index]?.name ?? "LOOK"}</strong>
-                <div className="figure-placeholder-surface" />
-              </div>
-            ))}
+            {figures.map((figure, index) => {
+              const promo = getLookPromoState(figure);
+              return (
+                <Link
+                  className={index === activeFigure ? "figure-card is-active" : "figure-card"}
+                  href={`/look/${figure.slug}`}
+                  key={figure.id}
+                  onFocus={() => { setActiveFigure(index); }}
+                  onMouseEnter={() => { setActiveFigure(index); }}
+                  onClick={pauseAfterInteraction}
+                  ref={(node) => { figureRefs.current[index] = node; }}
+                  title={figure.name}
+                >
+                  <span className="figure-card__title">{figure.name}</span>
+                  {promo.isValidPromo ? <span className="figure-card__promo">PROMO <b>-{promo.discountPercent}%</b></span> : null}
+                  <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt} width={260} height={360} unoptimized />
+                </Link>
+              );
+            })}
           </div>
-          {hasOverflow ? <button className="figure-nav figure-nav--next" type="button" aria-label="Scroll to next looks" disabled={!canScrollNext} onClick={() => scrollByFigure(1)}>→</button> : null}
+          {hasOverflow ? <button className="figure-nav figure-nav--next" type="button" aria-label="Scroll to next looks" disabled={!canScrollNext} onClick={() => activateFigure(activeFigure + 1)}>→</button> : null}
         </div>
       </div>
 

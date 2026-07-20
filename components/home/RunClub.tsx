@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CommunityMarquee } from "@/components/community/CommunityMarquee";
-import { approvedCommunityEntries, runClubCards } from "@/constants/home";
+import { approvedCommunityEntries } from "@/constants/home";
 
 const phraseIcons = [
-  { text: "NO NEED TO BE FAST.", icon: "/shoes.png", alt: "Running shoe icon" },
-  { text: "NO NEED TO RUN FAR.", icon: "/road.png", alt: "Road icon" },
-  { text: "JUST SHOW UP.", icon: "/star.png", alt: "Star icon" },
+  { text: "NO NEED TO BE FAST.", icon: "/shoes.png" },
+  { text: "NO NEED TO RUN FAR.", icon: "/road.png" },
+  { text: "JUST SHOW UP.", icon: "/star.png" },
 ];
 
 export function RunClub() {
@@ -19,11 +19,7 @@ export function RunClub() {
         <p className="run-club__tag">#213RUNCLUB <span aria-hidden="true">◎</span></p>
       </aside>
       <div className="run-club__visuals">
-        <div className="run-club__cards">
-          {runClubCards.map((card) => (
-            <Image key={card.label} src={card.image} alt={card.label} width={420} height={280} />
-          ))}
-        </div>
+        <CommunityMarquee entries={approvedCommunityEntries.slice(0, 6)} compact />
         <div className="run-club__phrases">
           {phraseIcons.map((phrase) => (
             <p key={phrase.text}>
@@ -32,7 +28,6 @@ export function RunClub() {
             </p>
           ))}
         </div>
-        <CommunityMarquee entries={approvedCommunityEntries.slice(0, 6)} compact />
       </div>
     </section>
   );
