@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { formatDzd } from "@/constants/products";
+import { LookPriceDisplay } from "@/components/look/LookPriceDisplay";
 import { calculateLookGroupPrice, isValidLookPrice } from "@/lib/lookPricing";
 import { useCart } from "@/context/cart";
 import type { LookWithProducts } from "@/types/look";
@@ -45,7 +45,6 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
     return state?.enabled && product ? [{ productId, priceDzd: product.priceDzd, quantity: 1 }] : [];
   });
   const priceResult = calculateLookGroupPrice({ canonicalLookPriceDzd: look.priceDzd, originalProductIds: look.productIds, selectedProductLines });
-  const total = priceResult.subtotalDzd;
   const hasValidLookPrice = isValidLookPrice(look.priceDzd);
 
   useEffect(() => {
@@ -152,10 +151,9 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         <Image src={look.heroImage.url} alt={look.heroImage.alt} width={860} height={980} priority unoptimized />
       </div>
       <div className="lookDetailPanel">
-        <span>{look.numberLabel ?? "LOOK"}</span>
         <h1>{look.name}</h1>
         <p>{look.description}</p>
-        <div className="lookTotalBar"><span>{priceResult.pricingMode === "look-price" ? "Look total" : "Selected items total"}</span><strong>{hasValidLookPrice || total > 0 ? formatDzd(total) : "Unavailable"}</strong>{look.isPromo && look.compareAtPriceDzd && look.compareAtPriceDzd > look.priceDzd ? <small><b className="discountBadge">PROMO</b> <del>{formatDzd(look.compareAtPriceDzd)}</del> <em>-{look.discountPercent ?? Math.round(((look.compareAtPriceDzd - look.priceDzd) / look.compareAtPriceDzd) * 100)}%</em></small> : null}</div>
+        {hasValidLookPrice ? <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="You save {amount} when you buy the complete Look." /> : <div className="lookTotalBar"><span>Look total</span><strong>Unavailable</strong></div>}
         <div className="lookItemsList">
           {look.products.map(({ productId, product }) => {
             const state = selected[productId] ?? { enabled: false, color: null, size: null };
