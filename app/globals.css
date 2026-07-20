@@ -5187,3 +5187,54 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .runClubIntro h1 { font-size: clamp(2.75rem, 16vw, 4rem); }
   .submitPreviewFields { grid-template-columns: 1fr 1fr; }
 }
+
+/* Correction sprint 3: locked shop simplification + compact Run Club final order. */
+.shopControls--locked { margin-top: 0; padding-top: 0.25rem; }
+.shopControls--locked .shopSearch { width: min(100%, 28rem); }
+.shopControls--locked + .shopProducts { margin-top: 0.9rem; }
+.shopEmptyState { border: 1px solid var(--border); border-radius: 1rem; background: rgba(255,250,240,0.72); padding: 1rem; text-align: center; }
+.shopEmptyState strong { font-size: 0.82rem; font-weight: 950; text-transform: uppercase; }
+
+.runClubPage { padding-top: clamp(5rem, 8vw, 5.8rem); }
+.runClubIntro { padding: clamp(0.95rem, 2.2vw, 1.45rem); }
+.runClubIntro h1 { max-width: none; font-size: clamp(2.65rem, 5.4vw, 4.7rem); line-height: 0.88; white-space: nowrap; }
+.runClubIntro p:not(.eyebrow) { max-width: 31rem; margin-top: 0.5rem; font-size: 0.9rem; line-height: 1.38; }
+.runClubSubmit { scroll-margin-top: 5.75rem; }
+.submitPreviewFields__caption { min-height: 3.25rem; align-content: start; grid-column: 1 / -1; }
+.runClubSteps, .runClubGallery, .runClubSubmit { padding: clamp(0.85rem, 2vw, 1.1rem); }
+.runClubSectionHeader h2, .runClubSubmit h2 { max-width: none; font-size: clamp(1.25rem, 2.2vw, 1.7rem); line-height: 0.95; white-space: nowrap; }
+.runClubSectionHeader p, .runClubSubmit p { font-size: 0.76rem; line-height: 1.35; }
+.runClubSteps__grid { gap: 0.5rem; }
+.runClubSteps__grid article { border-radius: 0.75rem; padding: 0.62rem; }
+.runClubSteps__grid h3 { font-size: 0.72rem; }
+.runClubSteps__grid p { font-size: 0.68rem; }
+.runClubStatement { padding: 0.62rem; }
+.runClubStatement p { font-size: 0.66rem; }
+.runClubStatement img { width: 1.45rem; height: 1.45rem; }
+.runClubGallery { max-width: 58rem; margin-right: auto; margin-left: auto; }
+.communityGrid { grid-template-columns: minmax(0, min(100%, 17rem)); justify-content: center; gap: 0.62rem; }
+.communityImageFrame { aspect-ratio: 1 / 1; }
+.communityImageFrame__image { padding: 0.44rem; }
+.communityPost__meta { gap: 0.16rem; padding: 0.48rem 0.54rem 0.56rem; }
+.communityPost__meta span { padding: 0.14rem 0.34rem; font-size: 0.46rem; }
+.communityPost__meta strong { font-size: 0.68rem; font-weight: 900; }
+.communityPost__meta small, .communityPost__meta p { font-size: 0.6rem; font-weight: 650; }
+.communityGridLoadMore { min-height: 2.45rem; min-width: min(100%, 10rem); padding: 0.55rem 0.9rem; }
+.runClubMonthlySummary { display: grid; gap: 0.48rem; max-width: 58rem; margin: clamp(1rem, 2.6vw, 1.5rem) auto 0; border: 1px solid var(--border); border-radius: 1rem; background: rgba(255,250,240,0.72); padding: 0.85rem; }
+.runClubMonthlySummary h2 { margin: 0; font-size: 0.86rem; font-weight: 950; letter-spacing: 0.04em; }
+.runClubMonthlySummary div { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.runClubMonthlySummary strong { border-radius: 999px; background: rgba(255,255,255,0.4); padding: 0.32rem 0.5rem; font-size: 0.62rem; font-weight: 950; line-height: 1; }
+.runClubMonthlySummary strong:last-child { background: var(--lime); color: var(--foreground); }
+.runClubMonthlySummary p { margin: 0; color: rgba(7,7,6,0.72); font-size: 0.72rem; font-weight: 750; }
+
+@media (min-width: 760px) {
+  .communityGrid { grid-template-columns: repeat(2, minmax(0, 15.5rem)); }
+}
+@media (min-width: 1180px) {
+  .communityGrid { grid-template-columns: repeat(3, minmax(0, 16rem)); }
+}
+@media (max-width: 480px) {
+  .runClubIntro h1 { white-space: normal; }
+  .submitPreviewFields { grid-template-columns: 1fr; }
+  .communityGrid { grid-template-columns: minmax(0, min(100%, 16.5rem)); }
+}

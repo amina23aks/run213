@@ -92,10 +92,10 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   }, [hasFigures, hasOverflow, prefersReducedMotion]);
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (!hasOverflow) return;
-    isDraggingRef.current = true;
     shouldCancelClickRef.current = false;
     dragDistanceRef.current = 0;
+    if (!hasOverflow) return;
+    isDraggingRef.current = true;
     pauseAfterInteraction();
     dragStartXRef.current = event.clientX;
     dragStartScrollRef.current = event.currentTarget.scrollLeft;
@@ -112,6 +112,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
 
   const finishPointer = (event: PointerEvent<HTMLDivElement>) => {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    shouldCancelClickRef.current = dragDistanceRef.current > DRAG_CANCEL_PX;
     isDraggingRef.current = false;
     pauseAfterInteraction();
     updateScrollState();

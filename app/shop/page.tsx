@@ -6,14 +6,19 @@ import { listActiveProducts } from "@/lib/firestore/products";
 
 export const dynamic = "force-dynamic";
 
-export default async function ShopPage() {
-  const products = await listActiveProducts();
+type ShopPageProps = {
+  searchParams: Promise<{ locked?: string }>;
+};
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const [products, params] = await Promise.all([listActiveProducts(), searchParams]);
+  const isLocked = params.locked === "1";
 
   return (
     <>
       <Header />
       <main className="shopPage">
-        <ShopHero />
+        {isLocked ? null : <ShopHero />}
         <ShopBrowser products={products} />
       </main>
       <div className="club-footer-shell">

@@ -62,7 +62,7 @@ export function ShopBrowser({ products }: { products: Product[] }) {
 
   return (
     <>
-      <div className="shopControls">
+      <div className={isLocked ? "shopControls shopControls--locked" : "shopControls"}>
         <form className="shopSearch" action="#" role="search" onSubmit={(event) => event.preventDefault()}>
           <label>
             <span>Search products</span>
@@ -70,9 +70,7 @@ export function ShopBrowser({ products }: { products: Product[] }) {
             <input type="search" placeholder="Search products..." value={query} onChange={(event) => updateUrl({ query: event.target.value })} />
           </label>
         </form>
-        <section className="shopFilters" aria-label="Product categories">
-          {isLocked ? <button className="is-active" type="button">{selectedGroup === "tops" ? "TOPS" : selectedGroup === "bottoms" ? "BOTTOMS" : selectedCategory === "accessories" ? "ACCESSORIES" : "SELECTED"}</button> : <>{selectedGroup ? <button className="is-active" type="button" onClick={() => updateUrl({ group: null })}>{selectedGroup === "tops" ? "TOPS" : selectedGroup === "bottoms" ? "BOTTOMS" : "ACCESSORIES"}</button> : null}{SHOP_CATEGORY_FILTERS.map((filter) => <button className={!selectedGroup && selectedCategory === filter.value ? "is-active" : undefined} key={filter.value} type="button" onClick={() => updateUrl({ category: filter.value })}>{filter.label}</button>)}</>}
-        </section>
+        {isLocked ? null : <section className="shopFilters" aria-label="Product categories">{selectedGroup ? <button className="is-active" type="button" onClick={() => updateUrl({ group: null })}>{selectedGroup === "tops" ? "TOPS" : selectedGroup === "bottoms" ? "BOTTOMS" : "ACCESSORIES"}</button> : null}{SHOP_CATEGORY_FILTERS.map((filter) => <button className={!selectedGroup && selectedCategory === filter.value ? "is-active" : undefined} key={filter.value} type="button" onClick={() => updateUrl({ category: filter.value })}>{filter.label}</button>)}</section>}
       </div>
       <ShopGrid products={visibleProducts} />
       {canLoadMore ? <div className="shopLoadMore"><button type="button" onClick={() => setVisibleState({ key: filterKey, count: visibleCount + LOAD_MORE_SIZE })}>LOAD MORE <span>→</span></button></div> : null}
