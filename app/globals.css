@@ -5293,3 +5293,45 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 @media (min-width: 1024px) {
   .communityGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* Storefront correction: Look title fit, Figure auto-scroll reliability, image-fit-aware Community media. */
+@media (min-width: 900px) {
+  .lookDetailSection { grid-template-columns: minmax(0, 0.92fr) minmax(25rem, 0.72fr); }
+  .lookDetailPanel { min-width: 0; }
+  .lookDetailPanel h1 { max-width: 100%; font-size: clamp(2rem, 3.05vw, 3rem); line-height: 0.9; letter-spacing: -0.055em; white-space: nowrap; }
+}
+@media (min-width: 1280px) {
+  .lookDetailPanel h1 { font-size: clamp(2.35rem, 3vw, 3.35rem); }
+}
+
+.figure-row { align-items: end; scroll-snap-type: x mandatory; }
+.figure-card { flex-basis: clamp(10rem, 19vw, 14rem); }
+.figure-card img { width: min(10.8rem, 100%); }
+@media (max-width: 700px) {
+  .figure-card { flex-basis: 9.35rem; }
+}
+
+.runClubGallery { max-width: 70rem; }
+.communityGrid { width: min(100%, 1080px); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 1024px) {
+  .communityGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .communityGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+.communityImageFrame--cover .communityImageFrame__backdrop { opacity: 0; }
+.communityImageFrame--cover::after { background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.04)); }
+.communityImageFrame--cover .communityImageFrame__image { object-fit: cover; padding: 0; }
+.communityImageFrame--contain .communityImageFrame__backdrop { opacity: 0.34; }
+.communityImageFrame--contain .communityImageFrame__image { object-fit: contain; padding: clamp(0.18rem, 1vw, 0.34rem); }
+
+.communityMarquee__row { gap: 0.85rem; }
+.communityCard { flex-basis: min(17.5rem, 72vw); border-radius: 1rem; background: var(--charcoal); color: white; }
+.communityMarquee--compact .communityCard { flex-basis: min(15rem, 68vw); }
+.communityCard .communityImageFrame { aspect-ratio: 4 / 3; border-radius: 1rem; }
+.communityCard .communityImageFrame--cover::after { background: linear-gradient(180deg, transparent 38%, rgba(0,0,0,0.78)); }
+.communityCard .communityImageFrame--contain::after { background: linear-gradient(180deg, rgba(7,7,6,0.04), rgba(7,7,6,0.34)); }
+.communityCard > div:not(.communityImageFrame) { position: absolute; inset: auto 0.85rem 0.75rem; z-index: 3; padding: 0; color: white; pointer-events: none; }
+.communityCard strong { color: white; font-size: 0.78rem; }
+.communityCard span, .communityCard small { color: rgba(255,255,255,0.86); font-size: 0.62rem; }

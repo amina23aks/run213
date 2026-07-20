@@ -25,7 +25,7 @@ export function CommunityGrid({ entries }: CommunityGridProps) {
       <div className="communityGrid">
         {visibleEntries.map((entry) => (
           <article className="communityPost" key={entry.id}>
-            <CommunityImageFrame src={entry.image} alt={entry.alt} sizes="(max-width: 339px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 30vw, 220px" variant="grid" />
+            <CommunityImageFrame src={entry.image} alt={entry.alt} sizes="(max-width: 339px) 50vw, (max-width: 767px) 33vw, (max-width: 1199px) 30vw, 200px" variant="grid" fit={entry.imageFit ?? "cover"} />
             <div className="communityPost__meta">
               <strong>{entry.name}</strong>
               <small>{[entry.city, entry.approvedDate].filter(Boolean).join(" · ")}</small>

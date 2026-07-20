@@ -45,19 +45,19 @@ export const footerColumns = [
 ];
 
 export const approvedCommunityEntries = [
-  { id: "algiers-road-01", name: "Yacine", city: "Algiers", label: "Morning road", approvedDate: "July 2026", caption: "Morning road proof.", image: "/model.png", alt: "Approved 213 RUN Club runner proof from Algiers" },
-  { id: "oran-route-02", name: "Meriem", city: "Oran", label: "Route proof", approvedDate: "July 2026", caption: "Route saved after the run.", image: "/tshirt.png", alt: "Approved 213 RUN Club route screenshot from Oran" },
-  { id: "constantine-group-03", name: "Sami", city: "Constantine", label: "Community run", approvedDate: "July 2026", caption: "Community pace, same discipline.", image: "/top.png", alt: "Approved 213 RUN Club community photo from Constantine" },
-  { id: "blida-road-04", name: "Lina", city: "Blida", label: "Evening kilometers", approvedDate: "July 2026", caption: "Evening kilometers submitted.", image: "/bottompart.png", alt: "Approved 213 RUN Club mountain road proof from Blida" },
-  { id: "setif-proof-05", name: "Nour", city: "Sétif", label: "Just show up", approvedDate: "July 2026", caption: "Just showed up today.", image: "/road.png", alt: "Approved 213 RUN Club road image from Setif" },
-  { id: "annaba-proof-06", name: "Ilyes", city: "Annaba", label: "After-run proof", approvedDate: "July 2026", caption: "Approved proof placeholder.", image: "/placeholders/community-proof-placeholder.webp", alt: "Approved 213 RUN Club placeholder proof from Annaba" },
-  { id: "tlemcen-proof-07", name: "Rania", city: "Tlemcen", label: "Easy run", approvedDate: "July 2026", caption: "Easy pace, real proof.", image: "/model.png", alt: "Approved 213 RUN Club proof from Tlemcen" },
-  { id: "bejaia-proof-08", name: "Amir", city: "Béjaïa", label: "Road moment", approvedDate: "July 2026", caption: "A road moment after showing up.", image: "/road.png", alt: "Approved 213 RUN Club road proof from Bejaia" },
-  { id: "batna-proof-09", name: "Sara", city: "Batna", label: "Run screenshot", approvedDate: "July 2026", caption: "Screenshot saved for review.", image: "/tshirt.png", alt: "Approved 213 RUN Club screenshot proof from Batna" },
-  { id: "ghardaia-proof-10", name: "Anis", city: "Ghardaïa", label: "Daily movement", approvedDate: "July 2026", caption: "Daily movement counts.", image: "/top.png", alt: "Approved 213 RUN Club proof from Ghardaia" },
-  { id: "skikda-proof-11", name: "Nesrine", city: "Skikda", label: "Evening proof", approvedDate: "July 2026", caption: "Evening proof approved.", image: "/bottompart.png", alt: "Approved 213 RUN Club evening proof from Skikda" },
-  { id: "msila-proof-12", name: "Kamel", city: "M'Sila", label: "Showed up", approvedDate: "July 2026", caption: "Showed up and submitted.", image: "/placeholders/community-proof-placeholder.webp", alt: "Approved 213 RUN Club proof from Msila" },
-];
+  { id: "algiers-road-01", name: "Yacine", city: "Algiers", label: "Morning road", approvedDate: "July 2026", caption: "Morning road proof.", image: "/model.png", imageFit: "contain", alt: "Approved 213 RUN Club runner proof from Algiers" },
+  { id: "oran-route-02", name: "Meriem", city: "Oran", label: "Route proof", approvedDate: "July 2026", caption: "Route saved after the run.", image: "/tshirt.png", imageFit: "contain", alt: "Approved 213 RUN Club route screenshot from Oran" },
+  { id: "constantine-group-03", name: "Sami", city: "Constantine", label: "Community run", approvedDate: "July 2026", caption: "Community pace, same discipline.", image: "/top.png", imageFit: "cover", alt: "Approved 213 RUN Club community photo from Constantine" },
+  { id: "blida-road-04", name: "Lina", city: "Blida", label: "Evening kilometers", approvedDate: "July 2026", caption: "Evening kilometers submitted.", image: "/bottompart.png", imageFit: "cover", alt: "Approved 213 RUN Club mountain road proof from Blida" },
+  { id: "setif-proof-05", name: "Nour", city: "Sétif", label: "Just show up", approvedDate: "July 2026", caption: "Just showed up today.", image: "/road.png", imageFit: "cover", alt: "Approved 213 RUN Club road image from Setif" },
+  { id: "annaba-proof-06", name: "Ilyes", city: "Annaba", label: "After-run proof", approvedDate: "July 2026", caption: "Approved proof placeholder.", image: "/placeholders/community-proof-placeholder.webp", imageFit: "cover", alt: "Approved 213 RUN Club placeholder proof from Annaba" },
+  { id: "tlemcen-proof-07", name: "Rania", city: "Tlemcen", label: "Easy run", approvedDate: "July 2026", caption: "Easy pace, real proof.", image: "/model.png", imageFit: "contain", alt: "Approved 213 RUN Club proof from Tlemcen" },
+  { id: "bejaia-proof-08", name: "Amir", city: "Béjaïa", label: "Road moment", approvedDate: "July 2026", caption: "A road moment after showing up.", image: "/road.png", imageFit: "cover", alt: "Approved 213 RUN Club road proof from Bejaia" },
+  { id: "batna-proof-09", name: "Sara", city: "Batna", label: "Run screenshot", approvedDate: "July 2026", caption: "Screenshot saved for review.", image: "/tshirt.png", imageFit: "contain", alt: "Approved 213 RUN Club screenshot proof from Batna" },
+  { id: "ghardaia-proof-10", name: "Anis", city: "Ghardaïa", label: "Daily movement", approvedDate: "July 2026", caption: "Daily movement counts.", image: "/top.png", imageFit: "cover", alt: "Approved 213 RUN Club proof from Ghardaia" },
+  { id: "skikda-proof-11", name: "Nesrine", city: "Skikda", label: "Evening proof", approvedDate: "July 2026", caption: "Evening proof approved.", image: "/bottompart.png", imageFit: "cover", alt: "Approved 213 RUN Club evening proof from Skikda" },
+  { id: "msila-proof-12", name: "Kamel", city: "M'Sila", label: "Showed up", approvedDate: "July 2026", caption: "Showed up and submitted.", image: "/placeholders/community-proof-placeholder.webp", imageFit: "cover", alt: "Approved 213 RUN Club proof from Msila" },
+] satisfies Array<{ id: string; name: string; city: string; label: string; approvedDate: string; caption: string; image: string; imageFit: "cover" | "contain"; alt: string; }>;
 
 export type RunClubMonthStatus = {
   monthKey: string;
