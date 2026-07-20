@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { formatDzd } from "@/constants/products";
 import { LookPriceDisplay } from "@/components/look/LookPriceDisplay";
 import { getActiveLookCollectionBySlug, listActiveLooksByCollection } from "@/lib/firestore/looks";
+import { getLookHref } from "@/lib/look-urls";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
             const activeProducts = look.products.flatMap((entry) => entry.product ? [entry.product] : []);
             return (
               <article className="lookEditorialModule" key={look.id}>
-                <Link className="lookEditorialImage" href={`/look/${look.slug}`} aria-label={`View ${look.name}`}>
+                <Link className="lookEditorialImage" href={getLookHref(look)} aria-label={`View ${look.name}`}>
                   <Image src={look.heroImage.url} alt={look.heroImage.alt} fill sizes="(max-width: 900px) 100vw, 52vw" unoptimized />
                 </Link>
                 <div className="lookEditorialContent">
@@ -57,7 +58,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                       return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={image.url} alt={image.alt || product.name} width={150} height={130} unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "No color"}</span><small>{product.sizes.length ? product.sizes.map((size) => size.label).join(" · ") : "One size"}</small><em>{formatDzd(product.priceDzd)}</em></Link>;
                     })}
                   </div>
-                  <Link className="lookViewButton" href={`/look/${look.slug}`}>VIEW LOOK <span>→</span></Link>
+                  <Link className="lookViewButton" href={getLookHref(look)}>VIEW LOOK <span>→</span></Link>
                 </div>
               </article>
             );

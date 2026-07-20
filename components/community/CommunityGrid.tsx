@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { CommunityImageFrame } from "@/components/community/CommunityImageFrame";
 import type { CommunityEntry } from "@/components/community/CommunityMarquee";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 12;
 
 type CommunityGridProps = {
   entries: CommunityEntry[];
@@ -25,9 +25,8 @@ export function CommunityGrid({ entries }: CommunityGridProps) {
       <div className="communityGrid">
         {visibleEntries.map((entry) => (
           <article className="communityPost" key={entry.id}>
-            <CommunityImageFrame src={entry.image} alt={entry.alt} sizes="(max-width: 700px) 100vw, (max-width: 1180px) 50vw, 33vw" />
+            <CommunityImageFrame src={entry.image} alt={entry.alt} sizes="(max-width: 339px) 50vw, (max-width: 767px) 33vw, (max-width: 1023px) 30vw, 220px" variant="grid" />
             <div className="communityPost__meta">
-              <span>APPROVED</span>
               <strong>{entry.name}</strong>
               <small>{[entry.city, entry.approvedDate].filter(Boolean).join(" · ")}</small>
               {entry.caption ? <p>{entry.caption}</p> : null}

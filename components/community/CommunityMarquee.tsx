@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CommunityImageFrame } from "@/components/community/CommunityImageFrame";
 import { usePrefersReducedMotion } from "@/lib/motion";
 
 export type CommunityEntry = {
@@ -91,7 +91,7 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
           const isDuplicate = index >= entries.length;
           return (
             <article className="communityCard" key={`${entry.id}-${isDuplicate ? "duplicate" : "original"}`} aria-hidden={isDuplicate || undefined}>
-              <Image src={entry.image} alt={isDuplicate ? "" : entry.alt} width={compact ? 260 : 340} height={compact ? 190 : 250} sizes={compact ? "260px" : "(max-width: 700px) 76vw, 340px"} />
+              <CommunityImageFrame src={entry.image} alt={isDuplicate ? "" : entry.alt} sizes={compact ? "190px" : "220px"} variant="marquee" />
               <div><strong>{entry.name}</strong><span>{[entry.city, entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
             </article>
           );
