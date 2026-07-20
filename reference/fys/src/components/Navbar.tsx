@@ -232,7 +232,7 @@ export function Navbar() {
           <div className="leading-tight">
             <p className="text-base font-semibold text-white">Fish Your Style</p>
             <span className="text-xs text-sky-100">
-              Streetwear for every mood
+              Streetwear for every moood
             </span>
           </div>
         </Link>
