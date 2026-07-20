@@ -1,5 +1,7 @@
 import Image from "next/image";
-import { runClubCards } from "@/constants/home";
+import Link from "next/link";
+import { CommunityMarquee } from "@/components/community/CommunityMarquee";
+import { approvedCommunityEntries, runClubCards } from "@/constants/home";
 
 const phraseIcons = [
   { text: "NO NEED TO BE FAST.", icon: "/shoes.png", alt: "Running shoe icon" },
@@ -13,7 +15,7 @@ export function RunClub() {
       <aside className="section-intro run-club__intro">
         <h2 id="club-title">213 RUN CLUB</h2>
         <p>Share your run.<br />Build your streak.<br />One month. One winner.</p>
-        <a className="button button--lime" href="#run-club">SUBMIT YOUR RUN <span>→</span></a>
+        <Link className="button button--lime" href="/run-club#submit">SUBMIT YOUR RUN <span>→</span></Link>
         <p className="run-club__tag">#213RUNCLUB <span aria-hidden="true">◎</span></p>
       </aside>
       <div className="run-club__visuals">
@@ -30,6 +32,7 @@ export function RunClub() {
             </p>
           ))}
         </div>
+        <CommunityMarquee entries={approvedCommunityEntries.slice(0, 6)} compact />
       </div>
     </section>
   );

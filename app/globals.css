@@ -5015,3 +5015,63 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .lookMiniProduct { flex-basis: 132px; }
   .figure-card__promo { top: 1.35rem; right: 0.1rem; }
 }
+
+.figure-showcase { grid-template-columns: minmax(0, 1fr); }
+.figure-showcase.has-overflow { grid-template-columns: 2.25rem minmax(0, 1fr) 2.25rem; }
+.figure-row { display: flex; flex-wrap: nowrap; scroll-snap-type: x proximity; scroll-behavior: smooth; touch-action: pan-x; }
+.figure-card { flex: 0 0 clamp(7.2rem, 20vw, 10rem); scroll-snap-align: center; user-select: none; }
+.figure-card span.figure-card__promo { display: inline-flex; margin: 0.32rem auto 0; border-radius: 999px; background: var(--lime); padding: 0.18rem 0.42rem; color: var(--foreground); font-size: 0.58rem; font-weight: 950; }
+.figure-nav:disabled { opacity: 0.32; cursor: not-allowed; transform: none; }
+
+.communityMarquee { min-width: 0; overflow: hidden; }
+.communityMarquee__row { display: flex; gap: 0.85rem; overflow-x: auto; overscroll-behavior-inline: contain; padding: 0.1rem 0 0.65rem; scroll-snap-type: x proximity; scrollbar-width: thin; touch-action: pan-x; }
+.communityCard { position: relative; flex: 0 0 min(21.25rem, 78vw); overflow: hidden; border-radius: 1rem; background: var(--charcoal); color: white; box-shadow: var(--shadow); scroll-snap-align: start; }
+.communityMarquee--compact .communityCard { flex-basis: min(16.25rem, 72vw); }
+.communityCard img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; opacity: 0.92; }
+.communityCard::after { position: absolute; inset: auto 0 0; height: 62%; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.78)); content: ""; }
+.communityCard div { position: absolute; inset: auto 0.9rem 0.85rem; z-index: 1; display: grid; gap: 0.14rem; }
+.communityCard strong { font-size: 0.84rem; font-weight: 950; text-transform: uppercase; }
+.communityCard span, .communityCard small { font-size: 0.68rem; font-weight: 750; opacity: 0.9; }
+.run-club .communityMarquee { margin-top: 0.2rem; }
+
+.runClubPage { width: min(100%, 92rem); margin: 0 auto; padding: 5.75rem clamp(1rem, 4vw, 2.6rem) 2rem; }
+.runClubHero { display: grid; gap: 1.25rem; align-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: clamp(1.35rem, 3vw, 2rem); background: linear-gradient(115deg, rgba(255,250,240,0.98), rgba(239,231,217,0.82)), url("/bottompart.png") center / cover; padding: clamp(1.35rem, 4vw, 3rem); }
+.runClubHero h1 { max-width: 8ch; margin: 0; font-size: clamp(4rem, 9vw, 8rem); font-weight: 950; letter-spacing: -0.07em; line-height: 0.82; }
+.runClubHero p:not(.eyebrow) { max-width: 34rem; margin: 0.9rem 0 0; color: rgba(7,7,6,0.78); font-weight: 750; }
+.runClubHero img { width: min(100%, 31rem); justify-self: center; object-fit: contain; filter: drop-shadow(0 1.4rem 2.2rem rgba(7,7,6,0.16)); }
+.runClubHero__actions { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; margin-top: 1rem; }
+.runClubHero__actions > span { font-size: 0.76rem; font-weight: 950; text-transform: uppercase; }
+.button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+.runClubStatus, .runClubContentGrid, .runClubStatement, .runClubGallery, .runClubWinner, .runClubSubmit { margin-top: clamp(1rem, 2.8vw, 1.65rem); }
+.runClubStatus { display: grid; gap: 0.7rem; border: 1px solid var(--border); border-radius: 1.25rem; background: rgba(255,250,240,0.74); padding: 1rem; }
+.runClubStatus div { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 0.55rem; }
+.runClubStatus span { color: rgba(7,7,6,0.58); font-size: 0.66rem; font-weight: 950; text-transform: uppercase; }
+.runClubStatus strong { font-size: 1rem; font-weight: 950; text-transform: uppercase; }
+.runClubStatus .is-open::before, .runClubStatus .is-closed::before { display: inline-block; width: 0.5rem; height: 0.5rem; margin-right: 0.45rem; border-radius: 999px; background: var(--lime); content: ""; vertical-align: middle; }
+.runClubStatus .is-closed::before { background: #777; }
+.runClubStatus p { margin: 0; font-size: 0.78rem; font-weight: 750; }
+.runClubContentGrid { display: grid; gap: 1rem; }
+.runClubPanel, .runClubWinner, .runClubSubmit, .runClubGallery { border: 1px solid var(--border); border-radius: 1.25rem; background: rgba(255,250,240,0.72); padding: clamp(1rem, 2.5vw, 1.35rem); }
+.runClubPanel h2, .runClubSectionHeader h2, .runClubWinner h2, .runClubSubmit h2 { margin: 0 0 0.8rem; font-size: clamp(1.55rem, 3vw, 2.25rem); font-weight: 950; letter-spacing: -0.045em; line-height: 0.95; }
+.runClubPanel p { display: flex; gap: 0.7rem; margin: 0.45rem 0 0; color: rgba(7,7,6,0.78); font-size: 0.84rem; font-weight: 750; }
+.runClubPanel b { color: var(--foreground); font-size: 0.68rem; }
+.runClubStatement { display: grid; gap: 0.55rem; border-radius: 1.25rem; background: var(--foreground); color: var(--background); padding: 1rem; text-align: center; }
+.runClubStatement strong { font-size: clamp(1rem, 2.2vw, 1.6rem); font-weight: 950; letter-spacing: -0.035em; }
+.runClubSectionHeader p, .runClubWinner p, .runClubSubmit p { margin: 0 0 1rem; color: rgba(7,7,6,0.72); font-size: 0.84rem; font-weight: 750; }
+.submitPreview { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.65rem; }
+.submitPreview span { border: 1px dashed rgba(0,0,0,0.18); border-radius: 0.75rem; background: rgba(255,255,255,0.36); padding: 0.8rem; color: rgba(7,7,6,0.65); font-size: 0.78rem; font-weight: 850; }
+.submitPreview .button { grid-column: 1 / -1; }
+
+@media (min-width: 760px) {
+  .runClubHero { grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.72fr); }
+  .runClubStatus { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .runClubStatus p { grid-column: 1 / -1; }
+  .runClubContentGrid { grid-template-columns: 0.75fr 1.25fr; }
+  .runClubStatement { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 480px) {
+  .figure-showcase.has-overflow { grid-template-columns: 2rem minmax(0, 1fr) 2rem; }
+  .figure-nav { width: 2rem; height: 2rem; font-size: 1rem; }
+  .runClubHero__actions .button { width: 100%; }
+}

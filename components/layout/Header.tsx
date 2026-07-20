@@ -10,7 +10,7 @@ import { useCart } from "@/context/cart";
 const navItems = [
   { label: "SHOP", href: "/shop" },
   { label: "DROP_001", href: "/#drop-001" },
-  { label: "RUN CLUB", href: "/#run-club" },
+  { label: "RUN CLUB", href: "/run-club" },
 ];
 
 function IconHeart() {

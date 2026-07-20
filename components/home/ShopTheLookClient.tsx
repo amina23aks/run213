@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getLookPromoState } from "@/components/look/LookPriceDisplay";
+import { usePrefersReducedMotion } from "@/lib/motion";
 import type { Look, LookCollection } from "@/types/look";
 
-const AUTO_SLIDE_MS = 4500;
-const USER_PAUSE_MS = 7000;
+const AUTO_STEP_PX = 1;
+const AUTO_TICK_MS = 70;
+const USER_PAUSE_MS = 10_000;
 const COLLECTION_SLOTS = [
   { number: "01", slug: "summer-road", name: "SUMMER ROAD", subtitle: "Light. Fast. Unstoppable." },
   { number: "02", slug: "city-everyday", name: "CITY EVERYDAY", subtitle: "Movement in every moment." },
@@ -22,25 +24,58 @@ type ShopTheLookClientProps = {
 
 export function ShopTheLookClient({ figures, collections }: ShopTheLookClientProps) {
   const [activeFigure, setActiveFigure] = useState(0);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+  const rowRef = useRef<HTMLDivElement | null>(null);
   const pauseUntilRef = useRef(0);
-  const isHoveringRef = useRef(false);
+  const isPausedRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollRef = useRef(0);
+  const prefersReducedMotion = usePrefersReducedMotion();
   const figureSlots = Array.from({ length: 4 }, (_, index) => figures[index] ?? null);
   const hasFigures = figures.length > 0;
 
-  const activateFigure = (index: number) => {
-    if (!hasFigures) return;
+  const updateScrollState = useCallback(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const overflow = row.scrollWidth > row.clientWidth + 2;
+    setHasOverflow(overflow);
+    setCanScrollPrev(overflow && row.scrollLeft > 2);
+    setCanScrollNext(overflow && row.scrollLeft + row.clientWidth < row.scrollWidth - 2);
+  }, []);
+
+  const pauseAfterInteraction = () => {
     pauseUntilRef.current = Date.now() + USER_PAUSE_MS;
-    setActiveFigure((index + figures.length) % figures.length);
+  };
+
+  const scrollByFigure = (direction: -1 | 1) => {
+    const row = rowRef.current;
+    if (!row) return;
+    pauseAfterInteraction();
+    row.scrollBy({ left: direction * Math.max(160, row.clientWidth * 0.55), behavior: "smooth" });
   };
 
   useEffect(() => {
-    if (!hasFigures) return undefined;
+    updateScrollState();
+    window.addEventListener("resize", updateScrollState);
+    return () => window.removeEventListener("resize", updateScrollState);
+  }, [figures.length, updateScrollState]);
+
+  useEffect(() => {
+    if (!hasFigures || !hasOverflow || prefersReducedMotion) return undefined;
     const interval = window.setInterval(() => {
-      if (isHoveringRef.current || Date.now() < pauseUntilRef.current) return;
-      setActiveFigure((current) => (current + 1) % figures.length);
-    }, AUTO_SLIDE_MS);
+      const row = rowRef.current;
+      if (!row || document.hidden || isPausedRef.current || isDraggingRef.current || Date.now() < pauseUntilRef.current) return;
+      if (row.scrollLeft + row.clientWidth >= row.scrollWidth - 2) {
+        row.scrollTo({ left: row.scrollWidth - row.clientWidth, behavior: "smooth" });
+        return;
+      }
+      row.scrollBy({ left: AUTO_STEP_PX, behavior: "smooth" });
+    }, AUTO_TICK_MS);
     return () => window.clearInterval(interval);
-  }, [figures.length, hasFigures]);
+  }, [hasFigures, hasOverflow, prefersReducedMotion]);
 
   return (
     <section className="home-section shopLookSection" id="shop-the-look" aria-labelledby="look-title">
@@ -52,11 +87,36 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
       </aside>
 
       <div className="shopLookFigures">
-        <div className="figure-showcase" onMouseEnter={() => { isHoveringRef.current = true; }} onMouseLeave={() => { isHoveringRef.current = false; }}>
-          <button className="figure-nav figure-nav--prev" type="button" aria-label="Previous look" onClick={() => activateFigure(activeFigure - 1)}>←</button>
-          <div className="figure-row" aria-label="Shop the look figures">
+        <div
+          className={hasOverflow ? "figure-showcase has-overflow" : "figure-showcase"}
+          onMouseEnter={() => { isPausedRef.current = true; }}
+          onMouseLeave={() => { isPausedRef.current = false; }}
+          onFocusCapture={() => { isPausedRef.current = true; }}
+          onBlurCapture={() => { isPausedRef.current = false; }}
+        >
+          {hasOverflow ? <button className="figure-nav figure-nav--prev" type="button" aria-label="Scroll to previous looks" disabled={!canScrollPrev} onClick={() => scrollByFigure(-1)}>←</button> : null}
+          <div
+            className="figure-row"
+            aria-label="Shop the look figures"
+            ref={rowRef}
+            onScroll={updateScrollState}
+            onPointerDown={(event) => {
+              if (!hasOverflow) return;
+              isDraggingRef.current = true;
+              pauseAfterInteraction();
+              dragStartXRef.current = event.clientX;
+              dragStartScrollRef.current = event.currentTarget.scrollLeft;
+              event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+            onPointerMove={(event) => {
+              if (!isDraggingRef.current) return;
+              event.currentTarget.scrollLeft = dragStartScrollRef.current - (event.clientX - dragStartXRef.current);
+            }}
+            onPointerUp={() => { isDraggingRef.current = false; pauseAfterInteraction(); }}
+            onPointerCancel={() => { isDraggingRef.current = false; pauseAfterInteraction(); }}
+          >
             {figureSlots.map((figure, index) => figure ? (
-              <Link className={index === activeFigure ? "figure-card is-active" : "figure-card"} href={`/look/${figure.slug}`} key={figure.id} onFocus={() => activateFigure(index)} onMouseEnter={() => activateFigure(index)}>
+              <Link className={index === activeFigure ? "figure-card is-active" : "figure-card"} href={`/look/${figure.slug}`} key={figure.id} onFocus={() => setActiveFigure(index)} onMouseEnter={() => setActiveFigure(index)} onClick={pauseAfterInteraction}>
                 <strong>{figure.name}</strong>
                 {getLookPromoState(figure).isValidPromo ? <span className="figure-card__promo">PROMO <b>-{getLookPromoState(figure).discountPercent}%</b></span> : null}
                 <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt} width={260} height={360} unoptimized />
@@ -68,25 +128,14 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
               </div>
             ))}
           </div>
-          <button className="figure-nav figure-nav--next" type="button" aria-label="Next look" onClick={() => activateFigure(activeFigure + 1)}>→</button>
+          {hasOverflow ? <button className="figure-nav figure-nav--next" type="button" aria-label="Scroll to next looks" disabled={!canScrollNext} onClick={() => scrollByFigure(1)}>→</button> : null}
         </div>
       </div>
 
       <div className="shopLookCards">
         {COLLECTION_SLOTS.map((slot, index) => {
           const collection = collections[index] ?? collections.find((item) => item.slug === slot.slug) ?? null;
-          const content = (
-            <>
-              {collection ? <Image src={collection.cardImage.url} alt={collection.cardImage.alt} fill sizes="(max-width: 900px) 80vw, 25vw" unoptimized /> : <div className="look-card__placeholder" />}
-              <span>{slot.number}</span>
-              <div>
-                <h3>{collection?.name ?? slot.name}</h3>
-                <p>{collection?.subtitle || slot.subtitle}</p>
-              </div>
-              <small className="look-card__arrow" aria-hidden="true">→</small>
-            </>
-          );
-
+          const content = (<>{collection ? <Image src={collection.cardImage.url} alt={collection.cardImage.alt} fill sizes="(max-width: 900px) 80vw, 25vw" unoptimized /> : <div className="look-card__placeholder" />}<span>{slot.number}</span><div><h3>{collection?.name ?? slot.name}</h3><p>{collection?.subtitle || slot.subtitle}</p></div><small className="look-card__arrow" aria-hidden="true">→</small></>);
           return collection ? <Link className="look-card" href={`/looks/${collection.slug}`} key={slot.slug}>{content}</Link> : <article className="look-card look-card--disabled" key={slot.slug}>{content}</article>;
         })}
       </div>
