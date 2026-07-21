@@ -76,6 +76,31 @@ export async function getActiveLookBySlug(slug: string): Promise<LookWithProduct
   }
 }
 
+export async function getActiveLooksByIds(lookIds: string[]): Promise<Map<string, Look>> {
+  noStore();
+  const looks = new Map<string, Look>();
+  const uniqueIds = Array.from(new Set(lookIds.filter(isString)));
+
+  if (!uniqueIds.length || !isConfigured()) return looks;
+
+  try {
+    const [{ getAdminDb }, { FieldPath }] = await Promise.all([import("@/lib/firebase/admin"), import("firebase-admin/firestore")]);
+    const db = getAdminDb();
+    const chunks = chunkIds(uniqueIds, 30);
+    await Promise.all(chunks.map(async (chunk) => {
+      const snapshot = await db.collection(LOOKS).where(FieldPath.documentId(), "in", chunk).get();
+      snapshot.docs.forEach((doc) => {
+        const look = parseLook(doc.id, doc.data());
+        if (look) looks.set(doc.id, look);
+      });
+    }));
+  } catch (error) {
+    warnLooks("Favorite looks could not be resolved.", error);
+  }
+
+  return looks;
+}
+
 async function resolveLookProducts(looks: Look[]): Promise<LookWithProducts[]> {
   const productIds = looks.flatMap((look) => look.productIds);
   const products = await getActiveProductsByIds(productIds);
@@ -126,6 +151,12 @@ function parseLook(id: string, data: Record<string, unknown>): Look | null {
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
+}
+
+function chunkIds(ids: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < ids.length; index += size) chunks.push(ids.slice(index, index + size));
+  return chunks;
 }
 
 function isConfigured() { return getMissingFirebaseAdminEnv().length === 0; }

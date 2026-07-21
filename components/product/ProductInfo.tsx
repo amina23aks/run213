@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
@@ -110,7 +111,7 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
 
       <div className="productActionsRow">
         <button className="productAddButton" type="button" disabled={isOutOfStock} onClick={handleAddToCart}>{isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}</button>
-        <button className="productWishlistButton" type="button" aria-label="Add to wishlist">♡</button>
+        <FavoriteButton itemType="product" itemId={product.id} itemName={product.name} variant="detail" stopPropagation={false} />
       </div>
 
       {cartMessage ? <p className="productDeliveryNote" role="status">{cartMessage}</p> : null}

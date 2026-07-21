@@ -97,11 +97,15 @@ export async function getActiveProductsByIds(productIds: string[]): Promise<Map<
   }
 
   try {
-    const { getAdminDb } = await import("@/lib/firebase/admin");
-    await Promise.all(uniqueIds.map(async (id) => {
-      const snapshot = await getAdminDb().collection(PRODUCTS_COLLECTION).doc(id).get();
-      const product = snapshot.exists ? parseProduct(snapshot.id, snapshot.data() ?? {}) : null;
-      if (product) products.set(id, product);
+    const [{ getAdminDb }, { FieldPath }] = await Promise.all([import("@/lib/firebase/admin"), import("firebase-admin/firestore")]);
+    const db = getAdminDb();
+    const chunks = chunkIds(uniqueIds, 30);
+    await Promise.all(chunks.map(async (chunk) => {
+      const snapshot = await db.collection(PRODUCTS_COLLECTION).where(FieldPath.documentId(), "in", chunk).get();
+      snapshot.docs.forEach((doc) => {
+        const product = parseProduct(doc.id, doc.data());
+        if (product) products.set(doc.id, product);
+      });
     }));
   } catch (error) {
     warnProducts("Connected look products could not be resolved.", error);
@@ -156,6 +160,12 @@ function isAdminFirestoreConfigured(): boolean {
 
 function shouldUseStaticFallback(): boolean {
   return process.env.USE_STATIC_PRODUCT_FALLBACK === "true";
+}
+
+function chunkIds(ids: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < ids.length; index += size) chunks.push(ids.slice(index, index + size));
+  return chunks;
 }
 
 function clampLimit(requestedLimit: number): number {

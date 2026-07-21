@@ -23,16 +23,22 @@ service cloud.firestore {
 
     match /users/{userId}/productFavorites/{productId} {
       allow read, delete: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if request.auth != null
+      allow create: if request.auth != null
         && request.auth.uid == userId
-        && request.resource.data.productId == productId;
+        && request.resource.data.keys().hasOnly(["itemId", "createdAt"])
+        && request.resource.data.itemId == productId
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
     }
 
     match /users/{userId}/lookFavorites/{lookId} {
       allow read, delete: if request.auth != null && request.auth.uid == userId;
-      allow create, update: if request.auth != null
+      allow create: if request.auth != null
         && request.auth.uid == userId
-        && request.resource.data.lookId == lookId;
+        && request.resource.data.keys().hasOnly(["itemId", "createdAt"])
+        && request.resource.data.itemId == lookId
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
     }
 
     match /{document=**} {
