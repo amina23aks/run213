@@ -8,8 +8,10 @@ import { getLookHref } from "@/lib/look-urls";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import type { Look, LookCollection } from "@/types/look";
 
-const AUTO_ADVANCE_MS = 4_000;
-const END_RESET_PAUSE_MS = 1_250;
+const DESKTOP_SPEED_PX_PER_SECOND = 14;
+const TABLET_SPEED_PX_PER_SECOND = 11;
+const MOBILE_SPEED_PX_PER_SECOND = 8;
+const END_RESET_PAUSE_MS = 1_350;
 const USER_PAUSE_MS = 7_000;
 const COLLECTION_SLOTS = [
   { number: "01", slug: "summer-road", name: "SUMMER ROAD", subtitle: "Light. Fast. Unstoppable." },
@@ -29,17 +31,31 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const rowRef = useRef<HTMLDivElement | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const resetTimerRef = useRef<number | null>(null);
   const userPauseTimerRef = useRef<number | null>(null);
   const isPausedRef = useRef(false);
   const isUserPausedRef = useRef(false);
   const isResettingRef = useRef(false);
+  const lastFrameTimeRef = useRef<number | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const clearResetTimer = useCallback(() => {
     if (resetTimerRef.current === null) return;
     window.clearTimeout(resetTimerRef.current);
     resetTimerRef.current = null;
+  }, []);
+
+  const clearAnimationFrame = useCallback(() => {
+    if (animationFrameRef.current === null) return;
+    window.cancelAnimationFrame(animationFrameRef.current);
+    animationFrameRef.current = null;
+  }, []);
+
+  const getAutoSpeed = useCallback(() => {
+    if (window.innerWidth < 700) return MOBILE_SPEED_PX_PER_SECOND;
+    if (window.innerWidth < 1100) return TABLET_SPEED_PX_PER_SECOND;
+    return DESKTOP_SPEED_PX_PER_SECOND;
   }, []);
 
   const getFigureStep = useCallback(() => {
@@ -84,45 +100,81 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
     resizeObserver.observe(row);
     Array.from(row.children).forEach((child) => resizeObserver.observe(child));
     window.addEventListener("resize", updateScrollState);
+    let rafTwo: number | null = null;
     const rafOne = window.requestAnimationFrame(() => {
       updateScrollState();
-      window.requestAnimationFrame(updateScrollState);
+      rafTwo = window.requestAnimationFrame(updateScrollState);
     });
     return () => {
       resizeObserver.disconnect();
       window.cancelAnimationFrame(rafOne);
+      if (rafTwo !== null) window.cancelAnimationFrame(rafTwo);
       window.removeEventListener("resize", updateScrollState);
     };
   }, [figures.length, updateScrollState]);
 
   useEffect(() => {
     if (!figures.length || !hasOverflow || prefersReducedMotion) return undefined;
-    const interval = window.setInterval(() => {
+
+    const animate = (timestamp: number) => {
       const row = rowRef.current;
       const step = getFigureStep();
-      if (!row || step <= 0 || document.hidden || isPausedRef.current || isUserPausedRef.current || isResettingRef.current) return;
-      const maxScroll = Math.max(row.scrollWidth - row.clientWidth, 0);
-      if (row.scrollLeft >= maxScroll - step * 0.5) {
-        clearResetTimer();
-        isResettingRef.current = true;
-        resetTimerRef.current = window.setTimeout(() => {
-          row.scrollTo({ left: 0, behavior: "smooth" });
-          window.setTimeout(() => { isResettingRef.current = false; }, 450);
-        }, END_RESET_PAUSE_MS);
+      const isPaused = !row || step <= 0 || document.hidden || isPausedRef.current || isUserPausedRef.current || isResettingRef.current;
+
+      if (!row || step <= 0) {
+        lastFrameTimeRef.current = timestamp;
+        animationFrameRef.current = window.requestAnimationFrame(animate);
         return;
       }
-      row.scrollBy({ left: Math.min(step, maxScroll - row.scrollLeft), behavior: "smooth" });
-    }, AUTO_ADVANCE_MS);
-    return () => {
-      window.clearInterval(interval);
-      clearResetTimer();
+
+      if (isPaused) {
+        lastFrameTimeRef.current = timestamp;
+        animationFrameRef.current = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      const previousTimestamp = lastFrameTimeRef.current ?? timestamp;
+      const elapsedSeconds = Math.min((timestamp - previousTimestamp) / 1000, 0.08);
+      lastFrameTimeRef.current = timestamp;
+
+      const maxScroll = Math.max(row.scrollWidth - row.clientWidth, 0);
+      if (row.scrollLeft >= maxScroll - 1) {
+        clearResetTimer();
+        isResettingRef.current = true;
+        lastFrameTimeRef.current = timestamp;
+        resetTimerRef.current = window.setTimeout(() => {
+          row.scrollTo({ left: 0, behavior: "auto" });
+          lastFrameTimeRef.current = null;
+          isResettingRef.current = false;
+          updateScrollState();
+        }, END_RESET_PAUSE_MS);
+      } else {
+        row.scrollLeft = Math.min(row.scrollLeft + getAutoSpeed() * elapsedSeconds, maxScroll);
+      }
+
+      animationFrameRef.current = window.requestAnimationFrame(animate);
     };
-  }, [clearResetTimer, figures.length, getFigureStep, hasOverflow, prefersReducedMotion]);
+
+    const handleVisibilityChange = () => {
+      lastFrameTimeRef.current = null;
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    animationFrameRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearAnimationFrame();
+      clearResetTimer();
+      lastFrameTimeRef.current = null;
+    };
+  }, [clearAnimationFrame, clearResetTimer, figures.length, getAutoSpeed, getFigureStep, hasOverflow, prefersReducedMotion, updateScrollState]);
 
   useEffect(() => () => {
+    clearAnimationFrame();
     clearResetTimer();
     if (userPauseTimerRef.current !== null) window.clearTimeout(userPauseTimerRef.current);
-  }, [clearResetTimer]);
+  }, [clearAnimationFrame, clearResetTimer]);
 
   return (
     <section className="home-section shopLookSection" id="shop-the-look" aria-labelledby="look-title">
