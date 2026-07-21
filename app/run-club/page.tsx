@@ -2,6 +2,7 @@ import Image from "next/image";
 import { CommunityGrid } from "@/components/community/CommunityGrid";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { RunClubSubmissionForm } from "@/components/run-club/RunClubSubmissionForm";
 import { approvedCommunityEntries, runClubMonthStatus, runClubWinner } from "@/constants/home";
 
 const steps = [
@@ -18,7 +19,6 @@ const slogans = [
   { text: "JUST SHOW UP.", icon: "/star.png" },
 ];
 
-const plannedFields = ["Name", "Email or phone", "Instagram optional", "Wilaya optional", "Run proof image", "Run caption optional"];
 
 export default function RunClubPage() {
   const cappedCount = Math.min(runClubMonthStatus.approvedCount, runClubMonthStatus.maximumApprovedParticipants);
@@ -42,12 +42,7 @@ export default function RunClubPage() {
             <p>Submissions are reviewed before appearing publicly.</p>
             <p>By submitting, you confirm that you own the content and allow 213 RUN to display approved entries.</p>
           </div>
-          <div className="submitComingSoon" aria-label="Disabled submission preview coming soon">
-            <div className="submitPreviewFields">
-              {plannedFields.map((field) => field === "Run caption optional" ? <span className="submitPreviewFields__caption" key={field}>{field}</span> : <span key={field}>{field}</span>)}
-            </div>
-            <button className="button button--lime" type="button" disabled>{isClosed ? "SUBMISSIONS CLOSED" : "SUBMISSIONS OPENING SOON"}</button>
-          </div>
+          <RunClubSubmissionForm isClosed={isClosed} />
         </section>
 
         <section className="runClubSteps" aria-labelledby="steps-title">

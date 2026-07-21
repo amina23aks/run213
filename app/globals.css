@@ -5437,3 +5437,28 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 @media (max-width: 1279px) { .favoritesLoading, .favoritesCompactGrid, .favoritesUnifiedGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 899px) { .favoritesLoading, .favoritesCompactGrid, .favoritesUnifiedGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 329px) { .favoritesLoading, .favoritesCompactGrid, .favoritesUnifiedGrid { grid-template-columns: 1fr; } }
+
+/* Run Club public submission foundation. */
+.runClubForm { display: grid; gap: 0.62rem; align-content: start; border: 1px dashed rgba(0,0,0,0.18); border-radius: 1rem; background: rgba(255,255,255,0.28); padding: 1rem; }
+.runClubForm label { display: grid; gap: 0.3rem; color: rgba(7,7,6,0.78); font-size: 0.66rem; font-weight: 950; text-transform: uppercase; }
+.runClubForm input, .runClubForm textarea { width: 100%; border: 1px solid rgba(0,0,0,0.12); border-radius: 0.68rem; background: rgba(255,250,240,0.74); color: var(--foreground); padding: 0.68rem 0.72rem; font: inherit; font-size: 0.78rem; font-weight: 750; outline: none; text-transform: none; }
+.runClubForm textarea { min-height: 5.25rem; resize: vertical; }
+.runClubForm input:focus, .runClubForm textarea:focus { border-color: color-mix(in srgb, var(--lime) 72%, #000); box-shadow: 0 0 0 3px rgba(199,244,0,0.2); }
+.runClubForm [aria-invalid="true"] { border-color: #b42318; }
+.runClubForm label span, .runClubDropzone > span { color: #b42318; font-size: 0.68rem; font-weight: 850; text-transform: none; }
+.runClubForm__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.55rem; }
+.runClubDropzone { display: grid; gap: 0.55rem; justify-items: center; border: 1px dashed rgba(0,0,0,0.2); border-radius: 0.82rem; background: rgba(255,250,240,0.45); padding: 0.75rem; text-align: center; }
+.runClubDropzone p { margin: 0; color: rgba(7,7,6,0.68); font-size: 0.78rem; font-weight: 800; }
+.runClubDropzone img { width: min(100%, 20rem); height: auto; max-height: 14rem; border-radius: 0.72rem; object-fit: contain; background: rgba(7,7,6,0.06); }
+.runClubDropzone input[type="file"] { display: none; }
+.runClubDropzone div { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; }
+.runClubDropzone .button { min-height: 2.35rem; padding: 0.62rem 0.82rem; font-size: 0.66rem; }
+.runClubConsent { grid-template-columns: auto minmax(0, 1fr); align-items: start; column-gap: 0.52rem; border: 1px solid rgba(0,0,0,0.08); border-radius: 0.72rem; background: rgba(255,250,240,0.42); padding: 0.62rem; font-size: 0.68rem !important; line-height: 1.35; text-transform: none !important; }
+.runClubConsent input { width: 1rem; height: 1rem; accent-color: var(--lime); }
+.runClubConsent span { grid-column: 1 / -1; }
+.runClubForm > .button--lime { width: 100%; }
+.runClubFormMessage { border-radius: 0.74rem; padding: 0.72rem; font-size: 0.76rem; font-weight: 800; }
+.runClubFormMessage p { margin: 0.18rem 0 0; font-size: 0.76rem; }
+.runClubFormMessage.is-success { border: 1px solid rgba(92,128,0,0.26); background: rgba(199,244,0,0.18); }
+.runClubFormMessage.is-error { border: 1px solid rgba(180,35,24,0.25); background: rgba(180,35,24,0.08); color: #7a1610; }
+.runClubHoneypot { position: absolute; left: -10000px; width: 1px !important; height: 1px !important; opacity: 0; }
