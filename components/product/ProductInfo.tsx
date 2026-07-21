@@ -111,7 +111,7 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
 
       <div className="productActionsRow">
         <button className="productAddButton" type="button" disabled={isOutOfStock} onClick={handleAddToCart}>{isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}</button>
-        <FavoriteButton className="productWishlistButton" itemType="product" itemId={product.id} itemName={product.name} variant="detail" stopPropagation={false} />
+        <FavoriteButton itemType="product" itemId={product.id} itemName={product.name} variant="detail" stopPropagation={false} />
       </div>
 
       {cartMessage ? <p className="productDeliveryNote" role="status">{cartMessage}</p> : null}

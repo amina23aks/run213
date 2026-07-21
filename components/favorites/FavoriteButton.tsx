@@ -19,7 +19,7 @@ export function FavoriteButton({ itemType, itemId, itemName, variant = "card", c
   const { isFavorite, toggleFavorite, isHydrated, isSyncing } = useFavorites();
   const active = isHydrated && isFavorite(itemType, itemId);
   const label = `${active ? "Remove" : "Add"} ${itemName} ${active ? "from" : "to"} favorites`;
-  const classes = [variant === "card" ? "favoriteButton" : "lookActions__favorite", className].filter(Boolean).join(" ");
+  const classes = ["favoriteButton", variant === "detail" ? "favoriteButton--detail" : null, className].filter(Boolean).join(" ");
 
   function handleClick(event: MouseEvent<HTMLButtonElement>) {
     if (stopPropagation) {
