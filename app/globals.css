@@ -5029,7 +5029,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityMarquee--compact .communityCard { flex-basis: min(16.25rem, 72vw); }
 .communityCard img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; opacity: 0.92; }
 .communityCard::after { position: absolute; inset: auto 0 0; height: 62%; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.78)); content: ""; }
-.communityCard div { position: absolute; inset: auto 0.9rem 0.85rem; z-index: 1; display: grid; gap: 0.14rem; }
+.communityCard__meta { position: absolute; inset: auto 0.9rem 0.85rem; z-index: 1; display: grid; gap: 0.14rem; }
 .communityCard strong { font-size: 0.84rem; font-weight: 950; text-transform: uppercase; }
 .communityCard span, .communityCard small { font-size: 0.68rem; font-weight: 750; opacity: 0.9; }
 .run-club .communityMarquee { margin-top: 0.2rem; }
@@ -5238,3 +5238,132 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .submitPreviewFields { grid-template-columns: 1fr; }
   .communityGrid { grid-template-columns: minmax(0, min(100%, 16.5rem)); }
 }
+
+/* Corrective sprint: native Figure carousel + compact full-image Community cards. */
+.figure-showcase { grid-template-columns: minmax(0, 1fr); }
+.figure-showcase.has-overflow { grid-template-columns: 2.25rem minmax(0, 1fr) 2.25rem; }
+.figure-row { display: flex; flex-wrap: nowrap; gap: clamp(0.68rem, 1.35vw, 1rem); overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; padding: 0.1rem 0.1rem 0.35rem; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+.figure-row::-webkit-scrollbar { display: none; }
+.figure-card { position: relative; display: grid; flex: 0 0 clamp(8.8rem, 16vw, 11.75rem); align-content: end; justify-items: center; gap: 0.24rem; min-width: 0; border: 0; border-radius: 0; background: transparent; color: var(--foreground); opacity: 0.68; padding: 0.44rem 0.34rem 0.12rem; text-align: center; scroll-snap-align: start; transition: opacity 180ms ease, transform 180ms ease; }
+.figure-card:hover, .figure-card:focus-visible, .figure-card.is-active { opacity: 1; transform: scale(1.035); }
+.figure-card.is-active::before { position: absolute; top: 0.5rem; left: 50%; width: 0.36rem; height: 0.36rem; border-radius: 999px; background: var(--lime); content: ""; pointer-events: none; transform: translateX(-50%); }
+.figure-card__title { display: block; max-width: 100%; overflow: hidden; color: var(--foreground); font-size: clamp(0.58rem, 0.9vw, 0.66rem); font-weight: 950; letter-spacing: 0.02em; line-height: 1; text-align: center; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.figure-card:hover .figure-card__title, .figure-card:focus-visible .figure-card__title, .figure-card.is-active .figure-card__title { color: color-mix(in srgb, var(--foreground) 76%, var(--lime)); text-decoration: none; }
+.figure-card img { width: min(8.6rem, 100%); margin: 0.18rem auto 0; aspect-ratio: 3 / 4.15; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 0.95rem 1.25rem rgba(7, 7, 6, 0.12)); transition: transform 180ms ease; }
+.figure-card:hover img, .figure-card:focus-visible img { transform: scale(1.018); }
+.figure-card .figure-card__promo { position: absolute; top: 1.65rem; right: 0.28rem; z-index: 2; display: inline-flex; align-items: center; gap: 0.2rem; margin: 0; border-radius: 999px; background: var(--lime); color: var(--foreground); padding: 0.18rem 0.34rem; font-size: 0.5rem; font-weight: 950; line-height: 1; pointer-events: none; }
+.figure-nav:disabled { opacity: 0.32; cursor: not-allowed; transform: none; }
+
+.runClubSectionHeader { gap: 0.35rem; margin-bottom: clamp(0.85rem, 2vw, 1.15rem); }
+.runClubSectionHeader h2#gallery-title { font-size: clamp(2rem, 5vw, 4.1rem); line-height: 0.92; white-space: nowrap; }
+.runClubSectionHeader p { max-width: 34rem; font-size: clamp(0.82rem, 1.5vw, 1rem); }
+
+.communityGridShell { display: grid; gap: 0.9rem; justify-items: center; }
+.communityGrid { display: grid; width: min(100%, 940px); grid-template-columns: repeat(3, minmax(0, 1fr)); justify-content: center; gap: clamp(0.38rem, 1.2vw, 0.7rem); }
+.communityPost { min-width: 0; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); border-radius: 0.62rem; background: rgba(255,255,255,0.26); box-shadow: none; transition: transform 160ms ease, border-color 160ms ease; }
+.communityPost:hover { border-color: rgba(0,0,0,0.16); transform: translateY(-1px); }
+.communityPost__meta { display: grid; gap: 0.12rem; padding: clamp(0.34rem, 1vw, 0.52rem); }
+.communityPost__meta strong { overflow: hidden; font-size: clamp(0.54rem, 1.7vw, 0.72rem); font-weight: 950; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.communityPost__meta small, .communityPost__meta p { margin: 0; color: rgba(7,7,6,0.68); font-size: clamp(0.48rem, 1.55vw, 0.64rem); font-weight: 700; line-height: 1.18; }
+.communityPost__meta p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.communityGridEmpty, .communityGridLoaded { margin: 0; color: rgba(7,7,6,0.72); font-size: 0.84rem; font-weight: 800; text-align: center; }
+.communityGridLoadMore { justify-self: center; min-height: 2.45rem; min-width: min(100%, 10rem); padding: 0.55rem 0.9rem; background: rgba(255,250,240,0.72); }
+
+.communityImageFrame { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: rgba(7,7,6,0.08); isolation: isolate; }
+.communityPost .communityImageFrame { border-radius: 0.58rem 0.58rem 0 0; }
+.communityImageFrame__backdrop { z-index: 0; object-fit: cover; opacity: 0.28; filter: blur(12px) saturate(0.82); pointer-events: none; transform: scale(1.08); }
+.communityImageFrame::after { position: absolute; inset: 0; z-index: 1; background: rgba(247,242,232,0.18); content: ""; pointer-events: none; }
+.communityImageFrame__image { z-index: 2; object-fit: contain; object-position: center; padding: clamp(0.18rem, 1vw, 0.34rem); transition: transform 160ms ease; }
+.communityPost:hover .communityImageFrame__image { transform: scale(1.006); }
+
+.communityMarquee { min-width: 0; overflow: hidden; }
+.communityMarquee__row { display: flex; gap: 0.62rem; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; padding: 0.1rem 0 0.45rem; scroll-snap-type: none; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+.communityMarquee__row::-webkit-scrollbar { display: none; }
+.communityCard { position: relative; display: grid; flex: 0 0 min(13.75rem, 64vw); overflow: hidden; border: 1px solid rgba(0, 0, 0, 0.07); border-radius: 0.78rem; background: rgba(255,255,255,0.26); color: var(--foreground); box-shadow: none; transition: transform 160ms ease, border-color 160ms ease; }
+.communityMarquee--compact .communityCard { flex-basis: min(11.8rem, 58vw); }
+.communityCard:hover { border-color: rgba(0,0,0,0.15); transform: translateY(-1px); }
+.communityCard::after { content: none; }
+.communityCard__meta { position: static; display: grid; gap: 0.08rem; padding: 0.44rem 0.52rem 0.52rem; }
+.communityCard strong { overflow: hidden; color: var(--foreground); font-size: 0.66rem; font-weight: 950; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.communityCard span, .communityCard small { color: rgba(7,7,6,0.68); font-size: 0.56rem; font-weight: 750; line-height: 1.12; }
+
+@media (max-width: 339px) {
+  .communityGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .communityGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Storefront correction: Look title fit, Figure auto-scroll reliability, image-fit-aware Community media. */
+@media (min-width: 900px) {
+  .lookDetailSection { grid-template-columns: minmax(0, 0.92fr) minmax(25rem, 0.72fr); }
+  .lookDetailPanel { min-width: 0; }
+  .lookDetailPanel h1 { max-width: 100%; font-size: clamp(2rem, 3.05vw, 3rem); line-height: 0.9; letter-spacing: -0.055em; white-space: nowrap; }
+}
+@media (min-width: 1280px) {
+  .lookDetailPanel h1 { font-size: clamp(2.35rem, 3vw, 3.35rem); }
+}
+
+.figure-row { align-items: end; scroll-snap-type: x mandatory; }
+.figure-card { flex-basis: clamp(10rem, 19vw, 14rem); }
+.figure-card img { width: min(10.8rem, 100%); }
+@media (max-width: 700px) {
+  .figure-card { flex-basis: 9.35rem; }
+}
+
+.runClubGallery { max-width: 70rem; }
+.communityGrid { width: min(100%, 1080px); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 1024px) {
+  .communityGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 1280px) {
+  .communityGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+.communityImageFrame--cover .communityImageFrame__backdrop { opacity: 0; }
+.communityImageFrame--cover::after { background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.04)); }
+.communityImageFrame--cover .communityImageFrame__image { object-fit: cover; padding: 0; }
+.communityImageFrame--contain .communityImageFrame__backdrop { opacity: 0.34; }
+.communityImageFrame--contain .communityImageFrame__image { object-fit: contain; padding: clamp(0.18rem, 1vw, 0.34rem); }
+
+.communityMarquee__row { gap: 0.85rem; }
+.communityCard { flex-basis: min(17.5rem, 72vw); border-radius: 1rem; background: var(--charcoal); color: white; }
+.communityMarquee--compact .communityCard { flex-basis: min(15rem, 68vw); }
+.communityCard .communityImageFrame { aspect-ratio: 4 / 3; border-radius: 1rem; }
+.communityCard .communityImageFrame--cover::after { background: linear-gradient(180deg, transparent 38%, rgba(0,0,0,0.78)); }
+.communityCard .communityImageFrame--contain::after { background: linear-gradient(180deg, rgba(7,7,6,0.04), rgba(7,7,6,0.34)); }
+.communityCard__meta { position: absolute; inset: auto 0.85rem 0.75rem; z-index: 3; padding: 0; color: white; pointer-events: none; }
+.communityCard strong { color: white; font-size: 0.78rem; }
+.communityCard span, .communityCard small { color: rgba(255,255,255,0.86); font-size: 0.62rem; }
+
+
+/* Corrective sprint: repair homepage Run Club marquee cards and reliable figure auto-motion. */
+.communityMarquee { width: 100%; min-width: 0; overflow: hidden; }
+.communityMarquee__row { display: flex; flex-wrap: nowrap; gap: clamp(0.75rem, 1.7vw, 1rem); overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; padding: 0.1rem 0 0.5rem; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+.communityMarquee__row::-webkit-scrollbar { display: none; }
+.communityCard { position: relative; display: block; flex: 0 0 clamp(17.5rem, 24vw, 20rem); min-width: clamp(17.5rem, 24vw, 20rem); overflow: hidden; border: 0; border-radius: 1rem; background: var(--charcoal); color: white; box-shadow: none; }
+.communityMarquee--compact .communityCard { flex-basis: clamp(14rem, 22vw, 17rem); min-width: clamp(14rem, 22vw, 17rem); }
+.communityCard > .communityImageFrame { position: relative; inset: auto; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: inherit; background: rgba(7,7,6,0.28); }
+.communityCard .communityImageFrame__backdrop { display: none; }
+.communityCard .communityImageFrame::after { position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, transparent 38%, rgba(0,0,0,0.76)); content: ""; pointer-events: none; }
+.communityCard .communityImageFrame__image { z-index: 1; object-position: center; }
+.communityCard .communityImageFrame--cover .communityImageFrame__image { object-fit: cover; padding: 0; }
+.communityCard .communityImageFrame--contain { background: linear-gradient(135deg, rgba(245,241,232,0.92), rgba(226,220,207,0.84)); }
+.communityCard .communityImageFrame--contain .communityImageFrame__image { object-fit: contain; padding: 0.45rem; }
+.communityCard__meta { position: absolute; inset: auto 0.85rem 0.75rem; z-index: 3; display: grid; gap: 0.08rem; padding: 0; color: white; pointer-events: none; }
+.communityCard__meta strong { overflow: hidden; color: white; font-size: 0.78rem; font-weight: 950; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.communityCard__meta span, .communityCard__meta small { color: rgba(255,255,255,0.86); font-size: 0.62rem; font-weight: 750; line-height: 1.12; }
+.run-club__phrases { margin-top: clamp(0.65rem, 1.6vw, 0.95rem); }
+
+.figure-row { display: flex; flex-wrap: nowrap; align-items: end; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+.figure-card { flex: 0 0 clamp(10.25rem, 19vw, 14.25rem); scroll-snap-align: start; }
+
+@media (max-width: 700px) {
+  .communityCard, .communityMarquee--compact .communityCard { flex-basis: clamp(11.875rem, 58vw, 14.375rem); min-width: clamp(11.875rem, 58vw, 14.375rem); }
+  .figure-card { flex-basis: 9.5rem; }
+}
+
+
+/* Focused correction: Figure marquee uses continuous motion without automatic snap. */
+.figure-row { scroll-snap-type: none; }
+.figure-card { scroll-snap-align: none; }
