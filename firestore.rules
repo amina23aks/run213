@@ -49,6 +49,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /runClubSubmissionKeys/{keyId} {
+      allow read, write: if false;
+    }
+
+    match /runClubMonths/{monthKey} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -22,6 +22,10 @@ export function createSubmitterHash(monthKey: string, normalizedContact: string)
   return sha256(`${monthKey}:${normalizedContact}`);
 }
 
+export function createIdentityHash(monthKey: string, type: "contact" | "instagram", normalizedValue: string) {
+  return sha256(`${monthKey}:${type}:${normalizedValue}`);
+}
+
 export function getClientIp(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const realIp = request.headers.get("x-real-ip")?.trim();

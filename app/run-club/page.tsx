@@ -3,7 +3,8 @@ import { CommunityGrid } from "@/components/community/CommunityGrid";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RunClubSubmissionForm } from "@/components/run-club/RunClubSubmissionForm";
-import { approvedCommunityEntries, runClubMonthStatus, runClubWinner } from "@/constants/home";
+import { runClubWinner } from "@/constants/home";
+import { getPublicRunClubEntries, getRunClubMonthStatus } from "@/lib/run-club/public";
 
 const steps = [
   { title: "RUN AT YOUR PACE", text: "No minimum distance or speed." },
@@ -20,10 +21,12 @@ const slogans = [
 ];
 
 
-export default function RunClubPage() {
+export default async function RunClubPage() {
+  const [runClubMonthStatus, publicEntries] = await Promise.all([getRunClubMonthStatus(), getPublicRunClubEntries(60)]);
+  const approvedEntries = publicEntries.map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, image: entry.proofImage.secureUrl, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
   const cappedCount = Math.min(runClubMonthStatus.approvedCount, runClubMonthStatus.maximumApprovedParticipants);
   const remaining = Math.max(runClubMonthStatus.maximumApprovedParticipants - cappedCount, 0);
-  const isClosed = runClubMonthStatus.status === "closed" || cappedCount >= runClubMonthStatus.maximumApprovedParticipants;
+  const isClosed = runClubMonthStatus.status === "full" || cappedCount >= runClubMonthStatus.maximumApprovedParticipants;
   const statusLabel = isClosed ? "CLOSED" : "OPEN";
 
   return (
@@ -58,7 +61,7 @@ export default function RunClubPage() {
 
         <section className="runClubGallery" aria-labelledby="gallery-title">
           <div className="runClubSectionHeader"><h2 id="gallery-title">213 COMMUNITY</h2><p>Runs, proof, and moments from people who showed up.</p></div>
-          <CommunityGrid entries={approvedCommunityEntries} />
+          <CommunityGrid entries={approvedEntries} />
         </section>
 
         <section className="runClubMonthlySummary" aria-labelledby="monthly-status-title">

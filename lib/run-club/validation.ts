@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeInstagram } from "@/lib/run-club/instagram";
 
 export const RUN_CLUB_MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const RUN_CLUB_ALLOWED_FORMATS = ["jpg", "jpeg", "png", "webp"] as const;
@@ -39,7 +40,7 @@ export const cloudinaryUploadProofSchema = z.object({
 export const runClubSubmissionSchema = z.object({
   name: trimmedRequired(2, 80, "Name"),
   contact: z.string().trim().min(1, "Email or phone is required.").refine(isValidContact, "Enter a valid email or phone number."),
-  instagram: trimmedOptional(60),
+  instagram: trimmedOptional(60).refine((value) => value === null || normalizeInstagram(value) !== null, "Enter a valid Instagram username or URL."),
   wilaya: trimmedOptional(60),
   caption: trimmedOptional(280),
   consentAccepted: z.literal(true, { error: "Consent is required." }),
