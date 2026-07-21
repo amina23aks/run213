@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
 
@@ -40,26 +41,9 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const [selectedColorId, setSelectedColorId] = useState<string | null>(() => getInitialColorId(sourceProduct));
   const [selectedSize, setSelectedSize] = useState<string | null>(() => getInitialSize(sourceProduct));
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteBusy, setFavoriteBusy] = useState(false);
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
   const isUnavailable = Boolean(sourceProduct && (!sourceProduct.inStock || sourceProduct.status !== "active" || (sourceProduct.stockMode === "limited" && (sourceProduct.stockQty ?? 0) <= 0)));
-
-  useEffect(() => {
-    if (!sourceProduct) return undefined;
-    let cancelled = false;
-    let unsubscribeAuth: (() => void) | undefined;
-    Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]).then(([client, authModule, firestore]) => {
-      unsubscribeAuth = authModule.onAuthStateChanged(client.auth, (user) => {
-        if (!user) { if (!cancelled) setIsFavorite(false); return; }
-        firestore.getDoc(firestore.doc(client.db, "users", user.uid, "productFavorites", sourceProduct.id)).then((snapshot) => {
-          if (!cancelled) setIsFavorite(snapshot.exists());
-        }).catch(() => { if (!cancelled) setIsFavorite(false); });
-      });
-    }).catch(() => { if (!cancelled) setIsFavorite(false); });
-    return () => { cancelled = true; unsubscribeAuth?.(); };
-  }, [sourceProduct]);
 
   function handleColorSelect(colorId: string) {
     setSelectedColorId(colorId);
@@ -69,33 +53,6 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   function handleSizeSelect(sizeLabel: string) {
     setSelectedSize(sizeLabel);
     setHelperMessage(null);
-  }
-
-  async function handleFavoriteToggle() {
-    if (!sourceProduct || favoriteBusy) return;
-    setFavoriteBusy(true);
-    const previous = isFavorite;
-    setIsFavorite(!previous);
-    try {
-      const [{ auth, db }, authModule, firestore] = await Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]);
-      const user = auth.currentUser ?? await new Promise<import("firebase/auth").User | null>((resolve) => {
-        const unsubscribe = authModule.onAuthStateChanged(auth, (nextUser) => { unsubscribe(); resolve(nextUser); });
-      });
-      if (!user) {
-        setIsFavorite(previous);
-        window.dispatchEvent(new CustomEvent("run213:open-auth"));
-        return;
-      }
-      const ref = firestore.doc(db, "users", user.uid, "productFavorites", sourceProduct.id);
-      if (previous) await firestore.deleteDoc(ref);
-      else await firestore.setDoc(ref, { productId: sourceProduct.id, createdAt: firestore.serverTimestamp() });
-    } catch (error) {
-      if (process.env.NODE_ENV !== "production") console.error("[favorites] update failed", error);
-      setIsFavorite(previous);
-      setHelperMessage("Could not update favorite. Please try again.");
-    } finally {
-      setFavoriteBusy(false);
-    }
   }
 
   function handleAddToCart() {
@@ -127,9 +84,17 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
             <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
           </Link>
         ) : <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />}
-        <button className="productCard__favorite favoriteButton" type="button" aria-label={`${isFavorite ? "Remove" : "Save"} ${product.name}`} aria-pressed={isFavorite} disabled={favoriteBusy} onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleFavoriteToggle(); }}>
-          <span aria-hidden="true">{isFavorite ? "♥" : "♡"}</span>
-        </button>
+        {sourceProduct ? (
+          <FavoriteButton
+            className="productCard__favorite favoriteButton"
+            kind="product"
+            id={sourceProduct.id}
+            slug={sourceProduct.slug}
+            label={product.name}
+            onError={setHelperMessage}
+            onClickCapture={(event) => { event.stopPropagation(); }}
+          />
+        ) : null}
       </div>
 
       <div className="productCard__content productInfo">

@@ -25,14 +25,18 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && request.auth.uid == userId;
       allow create, update: if request.auth != null
         && request.auth.uid == userId
-        && request.resource.data.productId == productId;
+        && request.resource.data.keys().hasOnly(["productId", "productSlug", "createdAt"])
+        && request.resource.data.productId == productId
+        && (!("productSlug" in request.resource.data) || request.resource.data.productSlug is string);
     }
 
     match /users/{userId}/lookFavorites/{lookId} {
       allow read, delete: if request.auth != null && request.auth.uid == userId;
       allow create, update: if request.auth != null
         && request.auth.uid == userId
-        && request.resource.data.lookId == lookId;
+        && request.resource.data.keys().hasOnly(["lookId", "lookSlug", "createdAt"])
+        && request.resource.data.lookId == lookId
+        && (!("lookSlug" in request.resource.data) || request.resource.data.lookSlug is string);
     }
 
     match /{document=**} {
