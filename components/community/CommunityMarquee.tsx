@@ -30,12 +30,13 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
   const dragStartScrollRef = useRef(0);
   const [canAnimate, setCanAnimate] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const renderedEntries = useMemo(() => [...entries, ...entries], [entries]);
+  const uniqueEntries = useMemo(() => Array.from(new Map(entries.map((entry) => [entry.id, entry])).values()), [entries]);
+  const renderedEntries = useMemo(() => (canAnimate && uniqueEntries.length >= 3 ? [...uniqueEntries, ...uniqueEntries] : uniqueEntries), [canAnimate, uniqueEntries]);
 
   useEffect(() => {
     const row = rowRef.current;
     if (!row) return undefined;
-    const update = () => setCanAnimate(row.scrollWidth / 2 > row.clientWidth + 2);
+    const update = () => setCanAnimate(uniqueEntries.length >= 3 && row.scrollWidth > row.clientWidth + 2);
     update();
     const resizeObserver = new ResizeObserver(update);
     resizeObserver.observe(row);
@@ -44,7 +45,7 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
       resizeObserver.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, [entries.length]);
+  }, [uniqueEntries.length]);
 
   useEffect(() => {
     if (prefersReducedMotion || !canAnimate) return undefined;
@@ -70,7 +71,7 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
       onBlurCapture={() => { isPausedRef.current = false; }}
     >
       <div
-        className="communityMarquee__row"
+        className={`communityMarquee__row ${canAnimate ? "communityMarquee__row--animated" : "communityMarquee__row--static"}`}
         ref={rowRef}
         tabIndex={0}
         aria-label="Approved 213 RUN Club community gallery"
@@ -89,9 +90,9 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
         onPointerCancel={() => { isDraggingRef.current = false; pauseAfterInteraction(); }}
       >
         {renderedEntries.map((entry, index) => {
-          const isDuplicate = index >= entries.length;
+          const isDuplicate = canAnimate && index >= uniqueEntries.length;
           return (
-            <article className="communityCard" key={`${entry.id}-${isDuplicate ? "duplicate" : "original"}`} aria-hidden={isDuplicate || undefined}>
+            <article className="communityCard" key={isDuplicate ? `${entry.id}-marquee-copy` : entry.id} aria-hidden={isDuplicate || undefined}>
               <CommunityImageFrame src={entry.image} alt={isDuplicate ? "" : entry.alt} sizes={compact ? "220px" : "280px"} variant="marquee" fit={entry.imageFit ?? "cover"} />
               <div className="communityCard__meta"><strong>{entry.name}</strong><span>{[entry.city, entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
             </article>
