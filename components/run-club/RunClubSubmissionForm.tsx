@@ -60,16 +60,16 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
   }
   const processing = status === "uploading" || status === "submitting";
   return <form className="runClubForm" onSubmit={onSubmit} noValidate>
-    <input className="runClubHoneypot" tabIndex={-1} autoComplete="off" value={fields.website} onChange={(event) => updateField("website", event.target.value)} aria-hidden="true" />
+    <input className="runClubHoneypot" tabIndex={-1} autoComplete="new-password" value={fields.website} onChange={(event) => updateField("website", event.target.value)} aria-hidden="true" />
     <label htmlFor="run-club-name">Name<input id="run-club-name" value={fields.name} onChange={(event) => updateField("name", event.target.value)} aria-invalid={Boolean(errors.name)} required />{errors.name && <span>{errors.name}</span>}</label>
     <label htmlFor="run-club-contact">Email or phone<input id="run-club-contact" value={fields.contact} onChange={(event) => updateField("contact", event.target.value)} aria-invalid={Boolean(errors.contact)} required />{errors.contact && <span>{errors.contact}</span>}</label>
     <div className="runClubForm__row"><label htmlFor="run-club-instagram">Instagram<input id="run-club-instagram" value={fields.instagram} onChange={(event) => updateField("instagram", event.target.value)} placeholder="@213run" /></label><label htmlFor="run-club-wilaya">Wilaya<input id="run-club-wilaya" value={fields.wilaya} onChange={(event) => updateField("wilaya", event.target.value)} placeholder="Algiers" /></label></div>
     <label htmlFor="run-club-caption">Run caption<textarea id="run-club-caption" value={fields.caption} maxLength={280} onChange={(event) => updateField("caption", event.target.value)} placeholder="What did showing up feel like today?" />{errors.caption && <span>{errors.caption}</span>}</label>
     <div className="runClubDropzone" onDrop={(event) => { event.preventDefault(); selectFile(event.dataTransfer.files[0] ?? null); }} onDragOver={(event) => event.preventDefault()}>
-      <div className="runClubDropzone__copy"><strong>Proof image</strong><p>Drag and drop your run app screenshot or photo here.</p><small>Accepted: JPG, PNG, WEBP · Maximum 5 MB.</small></div>
+      <div className="runClubDropzone__copy"><strong>Proof image</strong><p>Drag your proof image here, or choose a file.</p><small>JPG, PNG, WEBP · Maximum 5 MB</small></div>
       {preview ? <Image src={preview} alt="Selected run proof preview" width={420} height={280} unoptimized /> : null}
       <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} />
-      <div><button type="button" className="button" onClick={() => fileInputRef.current?.click()}>{file ? "REPLACE IMAGE" : "CHOOSE IMAGE"}</button>{file && <button type="button" className="button" onClick={() => selectFile(null)}>REMOVE</button>}</div>
+      <div><button type="button" className="button" onClick={() => fileInputRef.current?.click()}>{file ? "REPLACE" : "CHOOSE IMAGE"}</button>{file && <button type="button" className="button" onClick={() => selectFile(null)}>REMOVE</button>}</div>
       {errors.proofImage && <span>{errors.proofImage}</span>}
     </div>
     <label className="runClubConsent"><input type="checkbox" checked={fields.consentAccepted} onChange={(event) => updateField("consentAccepted", event.target.checked)} /><span>I confirm that I own this content and allow 213 RUN to display it if my submission is approved.</span>{errors.consentAccepted && <span className="runClubConsent__error">{errors.consentAccepted}</span>}</label>

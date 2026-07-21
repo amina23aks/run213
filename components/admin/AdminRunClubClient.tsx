@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 
@@ -37,6 +37,7 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
   const [loading, setLoading] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const reviewButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const token = useCallback(async () => {
     const [{ auth }] = await Promise.all([import("@/lib/firebase/client"), import("firebase/auth")]);
@@ -77,6 +78,20 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
 
   useEffect(() => { const timer = window.setTimeout(() => { void load(false); }, 0); return () => window.clearTimeout(timer); }, [load]);
 
+  const closeDrawer = useCallback(() => {
+    setSelected(null);
+    setIsRejecting(false);
+    setRejectionReason("");
+    window.requestAnimationFrame(() => reviewButtonRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (!selected) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") closeDrawer(); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [closeDrawer, selected]);
+
   async function moderate(action: "approve" | "reject") {
     if (!selected) return;
     if (action === "reject" && !isRejecting && selected.status !== "rejected") { setIsRejecting(true); return; }
@@ -91,15 +106,20 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Moderation failed.");
       setMessage(action === "approve" ? "Submission approved." : "Submission rejected.");
-      setSelected(null);
-      setIsRejecting(false);
-      setRejectionReason("");
+      closeDrawer();
       await load(false);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Moderation failed.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function openDrawer(item: Submission, button: HTMLButtonElement) {
+    reviewButtonRef.current = button;
+    setSelected(item);
+    setIsRejecting(false);
+    setRejectionReason(item.rejectionReason ?? "");
   }
 
   const summaryCards = useMemo(() => summary ? [
@@ -119,11 +139,11 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
           {summary ? <div className="adminRunClubStats" aria-label="Run Club moderation summary">{summaryCards.map(([label, value, tone]) => <article className={`adminRunClubStat adminRunClubStat--${tone}`} key={label}><span>{label}</span><strong>{value}</strong></article>)}</div> : null}
           <div className="adminRunClubControls"><label htmlFor="run-club-month">Month<input id="run-club-month" type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label><label htmlFor="run-club-status">Status<select id="run-club-status" value={status} onChange={(event) => setStatus(event.target.value as Status)}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></label><button className="adminSecondary" disabled={loading} onClick={() => void load(false)} type="button">{loading ? "Refreshing..." : "Refresh"}</button></div>
           {message ? <p className="adminNotice" role="status">{message}</p> : null}
-          <div className="adminRunClubTable" role="table" aria-label="Run Club submissions"><div className="adminRunClubTable__head" role="row"><span>Proof</span><span>Participant</span><span>Contact</span><span>Instagram</span><span>Submitted</span><span>Status</span><span>Action</span></div>{items.length ? items.map((item) => <button className="adminRunClubRow" key={item.id} type="button" onClick={() => { setSelected(item); setIsRejecting(false); setRejectionReason(item.rejectionReason ?? ""); }}><span>{item.proofImage ? <Image src={item.proofImage.secureUrl} alt={`Run proof thumbnail for ${item.name}`} width={64} height={64} /> : null}</span><strong>{item.name}</strong><span>{item.contactType}: {item.contactValue}</span><span>{item.instagram || "—"}</span><span>{formatSubmitted(item.createdAt)}</span><StatusBadge status={item.status} /><span className="adminRunClubRow__action">Review</span></button>) : <p className="adminRunClubEmpty">No submissions found for this month and status.</p>}</div>
+          <div className="adminRunClubTable" role="table" aria-label="Run Club submissions"><div className="adminRunClubTable__head" role="row"><span>Proof</span><span>Participant</span><span>Contact</span><span>Instagram</span><span>Submitted</span><span>Status</span><span>Action</span></div>{items.length ? items.map((item) => <div className="adminRunClubRow" key={item.id} role="row"><span>{item.proofImage ? <Image src={item.proofImage.secureUrl} alt={`Run proof thumbnail for ${item.name}`} width={64} height={64} /> : null}</span><strong>{item.name}</strong><span>{item.contactType}: {item.contactValue}</span><span>{item.instagram || "—"}</span><span>{formatSubmitted(item.createdAt)}</span><StatusBadge status={item.status} /><button className="adminRunClubReview" type="button" onClick={(event) => openDrawer(item, event.currentTarget)}>REVIEW</button></div>) : <p className="adminRunClubEmpty">No submissions found for this month and status.</p>}</div>
           {cursor ? <button className="adminSecondary" disabled={loading} onClick={() => void load(true)} type="button">Load more</button> : null}
         </section>
 
-        {selected ? <aside className="adminCard adminRunClubDetail" aria-labelledby="submission-detail-title"><div className="adminRunClubDetail__media">{selected.proofImage ? <Image className="adminRunClubDetail__image" src={selected.proofImage.secureUrl} alt={`Full run proof submitted by ${selected.name}`} width={720} height={720} /> : <p>No proof image.</p>}</div><div className="adminRunClubDetail__content"><div className="adminCard__heading"><p>SUBMISSION DETAIL</p><h2 id="submission-detail-title">{selected.name}</h2><span>{selected.status.toUpperCase()} · {selected.monthKey}</span></div><section className="adminRunClubInfo"><h3>Submission information</h3><dl><dt>Name</dt><dd>{selected.name}</dd><dt>Contact</dt><dd>{selected.contactType}: {selected.contactValue}</dd><dt>Instagram</dt><dd>{selected.instagram || "—"}</dd><dt>Wilaya</dt><dd>{selected.wilaya || "—"}</dd><dt>Caption</dt><dd>{selected.caption || "—"}</dd><dt>Consent</dt><dd>{selected.consentAccepted ? "Accepted" : "Missing"}</dd><dt>Submitted</dt><dd>{formatSubmitted(selected.createdAt)}</dd><dt>Image</dt><dd>{selected.proofImage ? `${selected.proofImage.width}×${selected.proofImage.height} · ${selected.proofImage.format ?? "image"} · ${formatBytes(selected.proofImage.bytes)}` : "—"}</dd><dt>Status</dt><dd><StatusBadge status={selected.status} /></dd></dl></section>{(isRejecting || selected.status === "rejected") ? <label className="adminRunClubRejectReason" htmlFor="rejection-reason">Rejection reason<textarea id="rejection-reason" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Add the reason before confirming rejection." /></label> : null}<div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void moderate("approve")} type="button">{loading ? "Working..." : "APPROVE"}</button><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject")} type="button">{loading ? "Working..." : isRejecting || selected.status === "rejected" ? "CONFIRM REJECT" : "REJECT"}</button><button className="adminSecondary" disabled={loading} onClick={() => { setSelected(null); setIsRejecting(false); setRejectionReason(""); }} type="button">CLOSE</button></div></div></aside> : null}
+        {selected ? <div className="adminRunClubDrawerOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDrawer(); }}><aside className="adminRunClubDrawer" role="dialog" aria-modal="true" aria-labelledby="submission-detail-title"><header className="adminRunClubDrawer__header"><div><p>SUBMISSION DETAIL</p><h2 id="submission-detail-title">{selected.name}</h2><span>{selected.monthKey}</span></div><StatusBadge status={selected.status} /><button className="adminRunClubDrawer__close" type="button" onClick={closeDrawer} autoFocus>Close</button></header><div className="adminRunClubDrawer__body"><div className="adminRunClubDetail__media">{selected.proofImage ? <Image className="adminRunClubDetail__image" src={selected.proofImage.secureUrl} alt={`Full run proof submitted by ${selected.name}`} width={720} height={720} /> : <p>No proof image.</p>}</div><section className="adminRunClubInfo"><h3>Submission information</h3><dl><dt>Name</dt><dd>{selected.name}</dd><dt>Contact</dt><dd>{selected.contactType}: {selected.contactValue}</dd><dt>Instagram</dt><dd>{selected.instagram || "—"}</dd><dt>Wilaya</dt><dd>{selected.wilaya || "—"}</dd><dt>Caption</dt><dd>{selected.caption || "—"}</dd><dt>Consent</dt><dd>{selected.consentAccepted ? "Accepted" : "Missing"}</dd><dt>Submitted</dt><dd>{formatSubmitted(selected.createdAt)}</dd><dt>Month</dt><dd>{selected.monthKey}</dd><dt>Current status</dt><dd><StatusBadge status={selected.status} /></dd><dt>Image</dt><dd>{selected.proofImage ? `${selected.proofImage.width}×${selected.proofImage.height} · ${selected.proofImage.format ?? "image"} · ${formatBytes(selected.proofImage.bytes)}` : "—"}</dd></dl></section></div>{(isRejecting || selected.status === "rejected") ? <label className="adminRunClubRejectReason" htmlFor="rejection-reason">Rejection reason<textarea id="rejection-reason" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Add the reason before confirming rejection." /></label> : null}<div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void moderate("approve")} type="button">{loading ? "Working..." : "APPROVE"}</button><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject")} type="button">{loading ? "Working..." : isRejecting || selected.status === "rejected" ? "CONFIRM REJECT" : "REJECT"}</button><button className="adminSecondary" disabled={loading} onClick={closeDrawer} type="button">CLOSE</button></div></aside></div> : null}
       </AdminAccessGate>
     </AdminShell>
   );
