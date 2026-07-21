@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { LookPriceDisplay } from "@/components/look/LookPriceDisplay";
 import { calculateLookGroupPrice, isValidLookPrice } from "@/lib/lookPricing";
 import { useCart } from "@/context/cart";
@@ -31,8 +32,6 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   const { addLookGroup } = useCart();
   const [message, setMessage] = useState<string | null>(null);
   const [invalidIds, setInvalidIds] = useState<Set<string>>(() => new Set());
-  const [isLookFavorite, setIsLookFavorite] = useState(false);
-  const [favoriteBusy, setFavoriteBusy] = useState(false);
   const itemRefs = useRef<Record<string, HTMLElement | null>>({});
   const [selected, setSelected] = useState<Record<string, SelectedItem>>(() => Object.fromEntries(look.products.map(({ productId, product }) => [productId, {
     enabled: !isUnavailable(product),
@@ -46,42 +45,6 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   });
   const priceResult = calculateLookGroupPrice({ canonicalLookPriceDzd: look.priceDzd, originalProductIds: look.productIds, selectedProductLines });
   const hasValidLookPrice = isValidLookPrice(look.priceDzd);
-
-  useEffect(() => {
-    let cancelled = false;
-    let unsubscribeAuth: (() => void) | undefined;
-    Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]).then(([client, authModule, firestore]) => {
-      unsubscribeAuth = authModule.onAuthStateChanged(client.auth, (user) => {
-        if (!user) { if (!cancelled) setIsLookFavorite(false); return; }
-        firestore.getDoc(firestore.doc(client.db, "users", user.uid, "lookFavorites", look.id)).then((snapshot) => {
-          if (!cancelled) setIsLookFavorite(snapshot.exists());
-        }).catch(() => { if (!cancelled) setIsLookFavorite(false); });
-      });
-    }).catch(() => { if (!cancelled) setIsLookFavorite(false); });
-    return () => { cancelled = true; unsubscribeAuth?.(); };
-  }, [look.id]);
-
-  async function handleLookFavoriteToggle() {
-    if (favoriteBusy) return;
-    setFavoriteBusy(true);
-    const previous = isLookFavorite;
-    setIsLookFavorite(!previous);
-    try {
-      const [{ auth, db }, authModule, firestore] = await Promise.all([import("@/lib/firebase/client"), import("firebase/auth"), import("firebase/firestore")]);
-      const user = auth.currentUser ?? await new Promise<import("firebase/auth").User | null>((resolve) => {
-        const unsubscribe = authModule.onAuthStateChanged(auth, (nextUser) => { unsubscribe(); resolve(nextUser); });
-      });
-      if (!user) { setIsLookFavorite(previous); window.dispatchEvent(new CustomEvent("run213:open-auth")); return; }
-      const ref = firestore.doc(db, "users", user.uid, "lookFavorites", look.id);
-      if (previous) await firestore.deleteDoc(ref);
-      else await firestore.setDoc(ref, { lookId: look.id, lookSlug: look.slug, createdAt: firestore.serverTimestamp() });
-    } catch {
-      setIsLookFavorite(previous);
-      setMessage("Could not update favorite. Please try again.");
-    } finally {
-      setFavoriteBusy(false);
-    }
-  }
 
   function patchItem(productId: string, patch: Partial<SelectedItem>) {
     setSelected((current) => ({ ...current, [productId]: { ...current[productId], ...patch } }));
@@ -181,7 +144,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         {message ? <p className={message === LOOK_VALIDATION_MESSAGE ? "lookCartMessage lookCartMessage--error" : "lookCartMessage"} role="status">{message}</p> : null}
         <div className="lookActions">
           <button className="lookActions__cart" type="button" disabled={!hasValidLookPrice || priceResult.selectedItemCount === 0} onClick={addSelectedLook}>ADD LOOK TO CART</button>
-          <button className="lookActions__favorite" type="button" aria-label={`${isLookFavorite ? "Remove" : "Add"} Look favorite`} aria-pressed={isLookFavorite} disabled={favoriteBusy} onClick={handleLookFavoriteToggle}>{isLookFavorite ? "♥" : "♡"}</button>
+          <FavoriteButton className="lookActions__favorite" kind="look" id={look.id} slug={look.slug} label={`${look.name} Look`} onError={setMessage} />
         </div>
       </div>
     </section>
