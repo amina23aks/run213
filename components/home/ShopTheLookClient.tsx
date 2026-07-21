@@ -8,9 +8,9 @@ import { getLookHref } from "@/lib/look-urls";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import type { Look, LookCollection } from "@/types/look";
 
-const AUTO_ADVANCE_MS = 5_000;
-const END_RESET_PAUSE_MS = 900;
-const USER_PAUSE_MS = 8_000;
+const AUTO_ADVANCE_MS = 4_000;
+const END_RESET_PAUSE_MS = 1_250;
+const USER_PAUSE_MS = 7_000;
 const COLLECTION_SLOTS = [
   { number: "01", slug: "summer-road", name: "SUMMER ROAD", subtitle: "Light. Fast. Unstoppable." },
   { number: "02", slug: "city-everyday", name: "CITY EVERYDAY", subtitle: "Movement in every moment." },
@@ -33,6 +33,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   const userPauseTimerRef = useRef<number | null>(null);
   const isPausedRef = useRef(false);
   const isUserPausedRef = useRef(false);
+  const isResettingRef = useRef(false);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const clearResetTimer = useCallback(() => {
@@ -83,9 +84,13 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
     resizeObserver.observe(row);
     Array.from(row.children).forEach((child) => resizeObserver.observe(child));
     window.addEventListener("resize", updateScrollState);
-    window.requestAnimationFrame(updateScrollState);
+    const rafOne = window.requestAnimationFrame(() => {
+      updateScrollState();
+      window.requestAnimationFrame(updateScrollState);
+    });
     return () => {
       resizeObserver.disconnect();
+      window.cancelAnimationFrame(rafOne);
       window.removeEventListener("resize", updateScrollState);
     };
   }, [figures.length, updateScrollState]);
@@ -95,14 +100,18 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
     const interval = window.setInterval(() => {
       const row = rowRef.current;
       const step = getFigureStep();
-      if (!row || step <= 0 || document.hidden || isPausedRef.current || isUserPausedRef.current) return;
+      if (!row || step <= 0 || document.hidden || isPausedRef.current || isUserPausedRef.current || isResettingRef.current) return;
       const maxScroll = Math.max(row.scrollWidth - row.clientWidth, 0);
       if (row.scrollLeft >= maxScroll - step * 0.5) {
         clearResetTimer();
-        resetTimerRef.current = window.setTimeout(() => row.scrollTo({ left: 0, behavior: "smooth" }), END_RESET_PAUSE_MS);
+        isResettingRef.current = true;
+        resetTimerRef.current = window.setTimeout(() => {
+          row.scrollTo({ left: 0, behavior: "smooth" });
+          window.setTimeout(() => { isResettingRef.current = false; }, 450);
+        }, END_RESET_PAUSE_MS);
         return;
       }
-      row.scrollBy({ left: step, behavior: "smooth" });
+      row.scrollBy({ left: Math.min(step, maxScroll - row.scrollLeft), behavior: "smooth" });
     }, AUTO_ADVANCE_MS);
     return () => {
       window.clearInterval(interval);
@@ -133,7 +142,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
           onBlurCapture={() => { isPausedRef.current = false; }}
         >
           {hasOverflow ? <button className="figure-nav figure-nav--prev" type="button" aria-label="Scroll to previous looks" disabled={!canScrollPrev} onClick={() => scrollByFigure(-1)}>←</button> : null}
-          <div className="figure-row" aria-label="Shop the look figures" ref={rowRef} onScroll={updateScrollState}>
+          <div className="figure-row" aria-label="Shop the look figures" ref={rowRef} onScroll={updateScrollState} onPointerDown={pauseAfterInteraction} onWheel={pauseAfterInteraction}>
             {figures.map((figure, index) => {
               const promo = getLookPromoState(figure);
               const displayTitle = `${String(index + 1).padStart(2, "0")}. ${figure.name}`;
@@ -149,7 +158,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
                 >
                   <span className="figure-card__title">{displayTitle}</span>
                   {promo.isValidPromo ? <span className="figure-card__promo">PROMO <b>-{promo.discountPercent}%</b></span> : null}
-                  <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt || displayTitle} width={260} height={360} unoptimized />
+                  <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt || displayTitle} width={260} height={360} onLoad={updateScrollState} unoptimized />
                 </Link>
               );
             })}

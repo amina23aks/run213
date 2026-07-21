@@ -5029,7 +5029,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityMarquee--compact .communityCard { flex-basis: min(16.25rem, 72vw); }
 .communityCard img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; opacity: 0.92; }
 .communityCard::after { position: absolute; inset: auto 0 0; height: 62%; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.78)); content: ""; }
-.communityCard div { position: absolute; inset: auto 0.9rem 0.85rem; z-index: 1; display: grid; gap: 0.14rem; }
+.communityCard__meta { position: absolute; inset: auto 0.9rem 0.85rem; z-index: 1; display: grid; gap: 0.14rem; }
 .communityCard strong { font-size: 0.84rem; font-weight: 950; text-transform: uppercase; }
 .communityCard span, .communityCard small { font-size: 0.68rem; font-weight: 750; opacity: 0.9; }
 .run-club .communityMarquee { margin-top: 0.2rem; }
@@ -5283,7 +5283,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityMarquee--compact .communityCard { flex-basis: min(11.8rem, 58vw); }
 .communityCard:hover { border-color: rgba(0,0,0,0.15); transform: translateY(-1px); }
 .communityCard::after { content: none; }
-.communityCard > div:not(.communityImageFrame) { position: static; display: grid; gap: 0.08rem; padding: 0.44rem 0.52rem 0.52rem; }
+.communityCard__meta { position: static; display: grid; gap: 0.08rem; padding: 0.44rem 0.52rem 0.52rem; }
 .communityCard strong { overflow: hidden; color: var(--foreground); font-size: 0.66rem; font-weight: 950; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .communityCard span, .communityCard small { color: rgba(7,7,6,0.68); font-size: 0.56rem; font-weight: 750; line-height: 1.12; }
 
@@ -5332,6 +5332,33 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityCard .communityImageFrame { aspect-ratio: 4 / 3; border-radius: 1rem; }
 .communityCard .communityImageFrame--cover::after { background: linear-gradient(180deg, transparent 38%, rgba(0,0,0,0.78)); }
 .communityCard .communityImageFrame--contain::after { background: linear-gradient(180deg, rgba(7,7,6,0.04), rgba(7,7,6,0.34)); }
-.communityCard > div:not(.communityImageFrame) { position: absolute; inset: auto 0.85rem 0.75rem; z-index: 3; padding: 0; color: white; pointer-events: none; }
+.communityCard__meta { position: absolute; inset: auto 0.85rem 0.75rem; z-index: 3; padding: 0; color: white; pointer-events: none; }
 .communityCard strong { color: white; font-size: 0.78rem; }
 .communityCard span, .communityCard small { color: rgba(255,255,255,0.86); font-size: 0.62rem; }
+
+
+/* Corrective sprint: repair homepage Run Club marquee cards and reliable figure auto-motion. */
+.communityMarquee { width: 100%; min-width: 0; overflow: hidden; }
+.communityMarquee__row { display: flex; flex-wrap: nowrap; gap: clamp(0.75rem, 1.7vw, 1rem); overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; padding: 0.1rem 0 0.5rem; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+.communityMarquee__row::-webkit-scrollbar { display: none; }
+.communityCard { position: relative; display: block; flex: 0 0 clamp(17.5rem, 24vw, 20rem); min-width: clamp(17.5rem, 24vw, 20rem); overflow: hidden; border: 0; border-radius: 1rem; background: var(--charcoal); color: white; box-shadow: none; }
+.communityMarquee--compact .communityCard { flex-basis: clamp(14rem, 22vw, 17rem); min-width: clamp(14rem, 22vw, 17rem); }
+.communityCard > .communityImageFrame { position: relative; inset: auto; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: inherit; background: rgba(7,7,6,0.28); }
+.communityCard .communityImageFrame__backdrop { display: none; }
+.communityCard .communityImageFrame::after { position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, transparent 38%, rgba(0,0,0,0.76)); content: ""; pointer-events: none; }
+.communityCard .communityImageFrame__image { z-index: 1; object-position: center; }
+.communityCard .communityImageFrame--cover .communityImageFrame__image { object-fit: cover; padding: 0; }
+.communityCard .communityImageFrame--contain { background: linear-gradient(135deg, rgba(245,241,232,0.92), rgba(226,220,207,0.84)); }
+.communityCard .communityImageFrame--contain .communityImageFrame__image { object-fit: contain; padding: 0.45rem; }
+.communityCard__meta { position: absolute; inset: auto 0.85rem 0.75rem; z-index: 3; display: grid; gap: 0.08rem; padding: 0; color: white; pointer-events: none; }
+.communityCard__meta strong { overflow: hidden; color: white; font-size: 0.78rem; font-weight: 950; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.communityCard__meta span, .communityCard__meta small { color: rgba(255,255,255,0.86); font-size: 0.62rem; font-weight: 750; line-height: 1.12; }
+.run-club__phrases { margin-top: clamp(0.65rem, 1.6vw, 0.95rem); }
+
+.figure-row { display: flex; flex-wrap: nowrap; align-items: end; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+.figure-card { flex: 0 0 clamp(10.25rem, 19vw, 14.25rem); scroll-snap-align: start; }
+
+@media (max-width: 700px) {
+  .communityCard, .communityMarquee--compact .communityCard { flex-basis: clamp(11.875rem, 58vw, 14.375rem); min-width: clamp(11.875rem, 58vw, 14.375rem); }
+  .figure-card { flex-basis: 9.5rem; }
+}

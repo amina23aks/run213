@@ -38,7 +38,6 @@ export default function RunClubPage() {
 
         <section className="runClubSubmit" id="submit" aria-labelledby="submit-title">
           <div>
-            <span className="section-number">01</span>
             <h2 id="submit-title">SUBMIT YOUR RUN</h2>
             <p>Submissions are reviewed before appearing publicly.</p>
             <p>By submitting, you confirm that you own the content and allow 213 RUN to display approved entries.</p>
@@ -52,7 +51,7 @@ export default function RunClubPage() {
         </section>
 
         <section className="runClubSteps" aria-labelledby="steps-title">
-          <div className="runClubSectionHeader"><span className="section-number">02</span><h2 id="steps-title">HOW IT WORKS</h2><p>Simple rules. Reviewed entries. Random winner.</p></div>
+          <div className="runClubSectionHeader"><h2 id="steps-title">HOW IT WORKS</h2><p>Simple rules. Reviewed entries. Random winner.</p></div>
           <div className="runClubSteps__grid">
             {steps.map((step, index) => <article key={step.title}><b>{String(index + 1).padStart(2, "0")}</b><h3>{step.title}</h3><p>{step.text}</p></article>)}
           </div>
@@ -63,7 +62,7 @@ export default function RunClubPage() {
         </section>
 
         <section className="runClubGallery" aria-labelledby="gallery-title">
-          <div className="runClubSectionHeader"><span className="section-number">03</span><h2 id="gallery-title">213 COMMUNITY</h2><p>Runs, proof, and moments from people who showed up.</p></div>
+          <div className="runClubSectionHeader"><h2 id="gallery-title">213 COMMUNITY</h2><p>Runs, proof, and moments from people who showed up.</p></div>
           <CommunityGrid entries={approvedCommunityEntries} />
         </section>
 

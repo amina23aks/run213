@@ -93,7 +93,7 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
           return (
             <article className="communityCard" key={`${entry.id}-${isDuplicate ? "duplicate" : "original"}`} aria-hidden={isDuplicate || undefined}>
               <CommunityImageFrame src={entry.image} alt={isDuplicate ? "" : entry.alt} sizes={compact ? "220px" : "280px"} variant="marquee" fit={entry.imageFit ?? "cover"} />
-              <div><strong>{entry.name}</strong><span>{[entry.city, entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
+              <div className="communityCard__meta"><strong>{entry.name}</strong><span>{[entry.city, entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
             </article>
           );
         })}
