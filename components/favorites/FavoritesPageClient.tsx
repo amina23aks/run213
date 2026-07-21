@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { getLookPromoState } from "@/components/look/LookPriceDisplay";
 import { formatDzd } from "@/constants/products";
@@ -36,6 +37,10 @@ type ResolveResponse = {
   unavailableLookIds: string[];
   error?: string;
 };
+
+type SavedGridItem =
+  | { type: "product"; product: ResolvedProductFavorite }
+  | { type: "look"; look: ResolvedLookFavorite };
 
 export function getSavedItemsLabel(count: number) {
   return `${count} SAVED ITEM${count === 1 ? "" : "S"}`;
@@ -116,9 +121,13 @@ export function FavoritesPageClient() {
   const visibleLooks = useMemo(() => looks.filter((look) => favorites.lookIds.includes(look.id)), [favorites.lookIds, looks]);
   const visibleUnavailableProductIds = useMemo(() => unavailableProductIds.filter((id) => favorites.productIds.includes(id)), [favorites.productIds, unavailableProductIds]);
   const visibleUnavailableLookIds = useMemo(() => unavailableLookIds.filter((id) => favorites.lookIds.includes(id)), [favorites.lookIds, unavailableLookIds]);
+  const savedGridItems = useMemo<SavedGridItem[]>(() => [
+    ...visibleProducts.map((product) => ({ type: "product" as const, product })),
+    ...visibleLooks.map((look) => ({ type: "look" as const, look })),
+  ], [visibleProducts, visibleLooks]);
   const visibleUnavailableCount = visibleUnavailableProductIds.length + visibleUnavailableLookIds.length;
   const isEmpty = favorites.isHydrated && !favorites.totalFavoriteCount;
-  const showResolvedEmpty = favorites.isHydrated && favorites.totalFavoriteCount > 0 && !isLoadingDetails && !visibleProducts.length && !visibleLooks.length && !visibleUnavailableCount && !resolutionError;
+  const showResolvedEmpty = favorites.isHydrated && favorites.totalFavoriteCount > 0 && !isLoadingDetails && !savedGridItems.length && !visibleUnavailableCount && !resolutionError;
 
   return (
     <section className="favoritesPage" aria-labelledby="favorites-title">
@@ -134,22 +143,10 @@ export function FavoritesPageClient() {
       {isEmpty ? <FavoritesEmpty /> : null}
       {showResolvedEmpty ? <UnavailableOnlyState productIds={favorites.productIds} lookIds={favorites.lookIds} /> : null}
 
-      {visibleProducts.length ? (
-        <section className="favoritesSection" aria-labelledby="favorite-products-title">
-          <h2 id="favorite-products-title">PRODUCTS · {favorites.productFavoriteCount}</h2>
-          <div className="favoritesCompactGrid">
-            {visibleProducts.map((product) => <FavoriteProductCard product={product} key={product.id} />)}
-          </div>
-        </section>
-      ) : null}
-
-      {visibleLooks.length ? (
-        <section className="favoritesSection" aria-labelledby="favorite-looks-title">
-          <h2 id="favorite-looks-title">LOOKS · {favorites.lookFavoriteCount}</h2>
-          <div className="favoritesCompactGrid">
-            {visibleLooks.map((look) => <FavoriteLookCard look={look} key={look.id} />)}
-          </div>
-        </section>
+      {savedGridItems.length ? (
+        <div className="favoritesUnifiedGrid" aria-label="Saved Products and Looks">
+          {savedGridItems.map((item) => item.type === "product" ? <FavoriteProductCard product={item.product} key={`product-${item.product.id}`} /> : <FavoriteLookCard look={item.look} key={`look-${item.look.id}`} />)}
+        </div>
       ) : null}
 
       {visibleUnavailableCount ? (
@@ -193,60 +190,57 @@ function FavoriteProductCard({ product }: { product: ResolvedProductFavorite }) 
   const href = `/product/${product.sourceProduct.slug}`;
   const promo = getProductPromo(product.sourceProduct);
   return (
-    <article className="favoriteCompactCard favoriteCompactCard--product">
-      <div className="favoriteCompactCard__media">
-        <Link href={href} aria-label={`View product ${product.card.name}`}>
-          <Image src={product.card.image} alt={product.sourceProduct.images[0]?.alt || `${product.card.name} product image`} fill sizes="(max-width: 339px) 100vw, (max-width: 900px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized />
-        </Link>
-        <FavoriteButton itemType="product" itemId={product.id} itemName={product.card.name} variant="card" className="favoriteCompactCard__favorite" />
-      </div>
-      <div className="favoriteCompactCard__body">
-        <h3><Link href={href}>{product.card.name}</Link></h3>
-        <div className="favoriteCompactCard__price">
-          <strong>{formatDzd(product.sourceProduct.priceDzd)}</strong>
-          {promo.hasValidCompareAt ? <del>{formatDzd(promo.compareAt ?? 0)}</del> : null}
-          {promo.hasValidCompareAt ? <em aria-label={`${promo.discountPercent}% discount`}>-{promo.discountPercent}%</em> : null}
-        </div>
-        <Link className="favoriteCompactCard__action" href={href} aria-label={`View product ${product.card.name}`}>VIEW PRODUCT <span>→</span></Link>
-      </div>
-    </article>
+    <FavoriteSavedCardShell
+      className="favoriteCompactCard--product"
+      media={<Link href={href} aria-label={`View product ${product.card.name}`}><Image src={product.card.image} alt={product.sourceProduct.images[0]?.alt || `${product.card.name} product image`} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
+      favoriteButton={<FavoriteButton itemType="product" itemId={product.id} itemName={product.card.name} variant="card" className="favoriteCompactCard__favorite" />}
+      title={<Link href={href}>{product.card.name}</Link>}
+      pricing={<><strong>{formatDzd(product.sourceProduct.priceDzd)}</strong>{promo.hasValidCompareAt ? <del>{formatDzd(promo.compareAt ?? 0)}</del> : null}{promo.hasValidCompareAt ? <em aria-label={`${promo.discountPercent}% discount`}>-{promo.discountPercent}%</em> : null}</>}
+      action={<Link className="favoriteCompactCard__action" href={href} aria-label={`View product ${product.card.name}`}>VIEW PRODUCT →</Link>}
+    />
   );
 }
 
 function UnavailableFavoriteCard({ itemType, itemId }: { itemType: "product" | "look"; itemId: string }) {
   return (
-    <article className="favoriteCompactCard favoriteUnavailableCard">
-      <FavoriteButton itemType={itemType} itemId={itemId} itemName="saved item" variant="card" className="favoriteCompactCard__favorite" />
-      <div className="favoriteUnavailableCard__placeholder" aria-hidden="true">♡</div>
-      <div className="favoriteCompactCard__body">
-        <h3>This saved item is no longer available.</h3>
-        <p>Remove it from your Favorites or keep it saved in case it returns.</p>
-      </div>
-    </article>
+    <FavoriteSavedCardShell
+      className="favoriteUnavailableCard"
+      media={<div className="favoriteUnavailableCard__placeholder" aria-hidden="true">♡</div>}
+      favoriteButton={<FavoriteButton itemType={itemType} itemId={itemId} itemName="saved item" variant="card" className="favoriteCompactCard__favorite" />}
+      title="This saved item is no longer available."
+      description="Remove it from your Favorites or keep it saved in case it returns."
+    />
   );
 }
 
 function FavoriteLookCard({ look }: { look: ResolvedLookFavorite }) {
   const promo = getLookPromoState({ priceDzd: look.priceDzd, compareAtPriceDzd: look.compareAtPriceDzd, discountPercent: look.discountPercent, isPromo: look.isPromo });
   return (
-    <article className="favoriteCompactCard favoriteCompactCard--look">
-      <div className="favoriteCompactCard__media">
-        <Link href={look.href} aria-label={`View look ${look.name}`}>
-          <Image src={look.image.url} alt={look.image.alt || look.name} fill sizes="(max-width: 339px) 100vw, (max-width: 900px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized />
-        </Link>
-        <FavoriteButton itemType="look" itemId={look.id} itemName={look.name} variant="card" className="favoriteCompactCard__favorite" />
-      </div>
+    <FavoriteSavedCardShell
+      className="favoriteCompactCard--look"
+      media={<Link href={look.href} aria-label={`View look ${look.name}`}><Image src={look.image.url} alt={look.image.alt || look.name} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
+      favoriteButton={<FavoriteButton itemType="look" itemId={look.id} itemName={look.name} variant="card" className="favoriteCompactCard__favorite" />}
+      meta={look.productCount ? `${look.productCount} PRODUCT${look.productCount === 1 ? "" : "S"}` : undefined}
+      title={<Link href={look.href}>{look.name}</Link>}
+      description={look.description}
+      pricing={<><strong>{formatDzd(look.priceDzd)}</strong>{promo.isValidPromo ? <del>{formatDzd(look.compareAtPriceDzd ?? 0)}</del> : null}{promo.isValidPromo ? <em aria-label={`${promo.discountPercent}% discount`}>-{promo.discountPercent}%</em> : null}</>}
+      savings={promo.savingsDzd > 0 ? `You save ${formatDzd(promo.savingsDzd)}` : undefined}
+      action={<Link className="favoriteCompactCard__action" href={look.href} aria-label={`View look ${look.name}`}>VIEW LOOK →</Link>}
+    />
+  );
+}
+
+function FavoriteSavedCardShell({ className, media, favoriteButton, meta, title, description, pricing, savings, action }: { className?: string; media: ReactNode; favoriteButton: ReactNode; meta?: string; title: ReactNode; description?: string; pricing?: ReactNode; savings?: string; action?: ReactNode }) {
+  return (
+    <article className={["favoriteCompactCard", className].filter(Boolean).join(" ")}>
+      <div className="favoriteCompactCard__media">{media}{favoriteButton}</div>
       <div className="favoriteCompactCard__body">
-        {look.productCount ? <span>{look.productCount} PRODUCT{look.productCount === 1 ? "" : "S"}</span> : null}
-        <h3><Link href={look.href}>{look.name}</Link></h3>
-        {look.description ? <p>{look.description}</p> : null}
-        <div className="favoriteCompactCard__price">
-          <strong>{formatDzd(look.priceDzd)}</strong>
-          {promo.isValidPromo ? <del>{formatDzd(look.compareAtPriceDzd ?? 0)}</del> : null}
-          {promo.isValidPromo ? <em aria-label={`${promo.discountPercent}% discount`}>-{promo.discountPercent}%</em> : null}
-        </div>
-        {promo.savingsDzd > 0 ? <small>You save {formatDzd(promo.savingsDzd)}</small> : null}
-        <Link className="favoriteCompactCard__action" href={look.href} aria-label={`View look ${look.name}`}>VIEW LOOK <span>→</span></Link>
+        {meta ? <span>{meta}</span> : null}
+        <h3>{title}</h3>
+        {description ? <p>{description}</p> : null}
+        {pricing ? <div className="favoriteCompactCard__price">{pricing}</div> : null}
+        {savings ? <small>{savings}</small> : null}
+        {action}
       </div>
     </article>
   );
