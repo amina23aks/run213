@@ -5362,3 +5362,8 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .communityCard, .communityMarquee--compact .communityCard { flex-basis: clamp(11.875rem, 58vw, 14.375rem); min-width: clamp(11.875rem, 58vw, 14.375rem); }
   .figure-card { flex-basis: 9.5rem; }
 }
+
+
+/* Focused correction: Figure marquee uses continuous motion without automatic snap. */
+.figure-row { scroll-snap-type: none; }
+.figure-card { scroll-snap-align: none; }
