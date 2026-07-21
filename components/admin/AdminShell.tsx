@@ -11,6 +11,7 @@ const adminNavItems = [
   { label: "Look Collections", href: "/admin/look-collections" },
   { label: "Looks", href: "/admin/looks" },
   { label: "Orders", href: "/admin/orders" },
+  { label: "Run Club", href: "/admin/run-club" },
   { label: "Favorites", href: "/admin/favorites" },
   { label: "Wishlist", href: "/admin/wishlist" },
   { label: "Settings", href: "/admin/settings" },

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CommunityMarquee } from "@/components/community/CommunityMarquee";
-import { approvedCommunityEntries } from "@/constants/home";
+import { getPublicRunClubEntries } from "@/lib/run-club/public";
 
 const phraseIcons = [
   { text: "NO NEED TO BE FAST.", icon: "/shoes.png" },
@@ -9,7 +9,8 @@ const phraseIcons = [
   { text: "JUST SHOW UP.", icon: "/star.png" },
 ];
 
-export function RunClub() {
+export async function RunClub() {
+  const entries = (await getPublicRunClubEntries(6)).map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, label: "Approved run", approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, image: entry.proofImage.secureUrl, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
   return (
     <section className="home-section run-club" id="run-club" aria-labelledby="club-title">
       <aside className="section-intro run-club__intro">
@@ -19,7 +20,7 @@ export function RunClub() {
         <p className="run-club__tag">#213RUNCLUB <span aria-hidden="true">◎</span></p>
       </aside>
       <div className="run-club__visuals">
-        <CommunityMarquee entries={approvedCommunityEntries.slice(0, 6)} compact />
+        {entries.length ? <CommunityMarquee entries={entries} compact /> : <p className="communityGridEmpty">No community posts yet. Be the first to show up.</p>}
         <div className="run-club__phrases">
           {phraseIcons.map((phrase) => (
             <p key={phrase.text}>

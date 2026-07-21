@@ -41,6 +41,22 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    match /runClubSubmissions/{submissionId} {
+      allow read, write: if false;
+    }
+
+    match /runClubRateLimits/{rateLimitId} {
+      allow read, write: if false;
+    }
+
+    match /runClubSubmissionKeys/{keyId} {
+      allow read, write: if false;
+    }
+
+    match /runClubMonths/{monthKey} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
