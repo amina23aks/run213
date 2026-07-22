@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import type { Timestamp } from "firebase-admin/firestore";
 import { getMissingFirebaseAdminEnv } from "@/lib/env";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { dedupePublicRunClubEntries, normalizeMonthStatus, serializePublicWinner } from "@/lib/run-club/draw";
+import { dedupePublicRunClubEntries, getWinnerSubmissionIds, normalizeMonthStatus, serializePublicWinner } from "@/lib/run-club/draw";
 import { getAlgiersMonthKey } from "@/lib/run-club/security";
 import { RUN_CLUB_MAX_APPROVED, type PublicRunClubEntry, type PublicRunClubWinner } from "@/lib/run-club/types";
 
@@ -19,15 +19,19 @@ export const getRunClubMonthStatus = unstable_cache(async (monthKey = getAlgiers
   return { ...normalizeMonthStatus(monthKey, doc.exists ? doc.data() : undefined, RUN_CLUB_MAX_APPROVED), monthLabel: formatMonthLabel(monthKey) };
 }, ["run-club-month-status"], { revalidate: 60, tags: ["run-club"] });
 
-export const getPublicRunClubWinner = unstable_cache(async (monthKey = getAlgiersMonthKey()): Promise<PublicRunClubWinner | null> => {
-  if (getMissingFirebaseAdminEnv().length) return null;
+export const getPublicRunClubWinners = unstable_cache(async (monthKey = getAlgiersMonthKey()): Promise<PublicRunClubWinner[]> => {
+  if (getMissingFirebaseAdminEnv().length) return [];
   const db = getAdminDb();
   const monthDoc = await db.collection("runClubMonths").doc(monthKey).get();
-  const winnerSubmissionId = monthDoc.exists && typeof monthDoc.get("winnerSubmissionId") === "string" ? monthDoc.get("winnerSubmissionId") as string : null;
-  if (!winnerSubmissionId) return null;
-  const submissionDoc = await db.collection("runClubSubmissions").doc(winnerSubmissionId).get();
-  if (!submissionDoc.exists) return null;
-  return serializePublicWinner(submissionDoc.id, submissionDoc.data() ?? {}, monthKey, monthDoc.get("winnerSelectedAt"));
+  const winnerSubmissionIds = getWinnerSubmissionIds(monthDoc.exists ? monthDoc.data() : undefined);
+  if (!winnerSubmissionIds.length) return [];
+  const submissionDocs = await Promise.all(winnerSubmissionIds.map((id) => db.collection("runClubSubmissions").doc(id).get()));
+  return submissionDocs.map((submissionDoc, index) => submissionDoc.exists ? serializePublicWinner(submissionDoc.id, submissionDoc.data() ?? {}, monthKey, monthDoc.get("winnerSelectedAt"), index + 1) : null).filter((winner): winner is PublicRunClubWinner => winner !== null);
+}, ["public-run-club-winners"], { revalidate: 60, tags: ["run-club"] });
+
+export const getPublicRunClubWinner = unstable_cache(async (monthKey = getAlgiersMonthKey()): Promise<PublicRunClubWinner | null> => {
+  const winners = await getPublicRunClubWinners(monthKey);
+  return winners[0] ?? null;
 }, ["public-run-club-winner"], { revalidate: 60, tags: ["run-club"] });
 
 export function serializePublicEntry(doc: FirebaseFirestore.QueryDocumentSnapshot): PublicRunClubEntry | null {

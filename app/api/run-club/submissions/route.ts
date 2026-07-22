@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         id: submissionId, monthKey, status: "pending", name: parsed.data.name, contactType, contactValue: parsed.data.contact.trim(), normalizedContact, submitterHash, normalizedInstagram, instagramHash,
         instagram: parsed.data.instagram, wilaya: parsed.data.wilaya, caption: parsed.data.caption, publicName: parsed.data.name, publicCaption: parsed.data.caption, publicWilaya: parsed.data.wilaya,
         proofImage: { publicId: image.publicId, secureUrl: image.secureUrl, width: image.width, height: image.height, format: image.format, bytes: image.bytes },
-        consentAccepted: true, source: "web", createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+        consentAccepted: true, source: "web", customerProfile: { userId: null, linkedAt: null, linkStatus: "guest_pending" }, createdByUserId: null, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
       });
       transaction.create(contactLockRef, { type: "contact", monthKey, identityHash: contactHash, submissionId, createdAt: FieldValue.serverTimestamp() });
       if (instagramLockRef && instagramHash) transaction.create(instagramLockRef, { type: "instagram", monthKey, identityHash: instagramHash, submissionId, createdAt: FieldValue.serverTimestamp() });

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { getRunClubDrawStatus, isEligibleRunClubSubmission, serializePublicWinner } from "@/lib/run-club/draw";
+import { getRunClubDrawStatus, getWinnerSubmissionIds, isEligibleRunClubSubmission, serializePublicWinner } from "@/lib/run-club/draw";
 import { getAlgiersMonthKey } from "@/lib/run-club/security";
 import { RUN_CLUB_MAX_APPROVED } from "@/lib/run-club/types";
 
@@ -22,11 +22,9 @@ export async function GET(request: Request) {
   const monthData = monthDoc.exists ? monthDoc.data() ?? {} : {};
   const storedApprovedCount = Number(monthDoc.get("approvedCount") ?? approved.data().count ?? 0);
   const eligibleDocs = eligibleSnapshot.docs.filter((doc) => isEligibleRunClubSubmission(doc.data()));
-  const winnerSubmissionId = typeof monthData.winnerSubmissionId === "string" ? monthData.winnerSubmissionId : null;
-  let winner = null;
-  if (winnerSubmissionId) {
-    const winnerDoc = await db.collection("runClubSubmissions").doc(winnerSubmissionId).get();
-    if (winnerDoc.exists) winner = serializePublicWinner(winnerDoc.id, winnerDoc.data() ?? {}, monthKey, monthData.winnerSelectedAt);
-  }
-  return Response.json({ ok: true, monthKey, pendingCount: pending.data().count, approvedCount: approved.data().count, rejectedCount: rejected.data().count, monthlyApprovedCount: storedApprovedCount, maximumApproved: RUN_CLUB_MAX_APPROVED, remaining: Math.max(RUN_CLUB_MAX_APPROVED - storedApprovedCount, 0), status: storedApprovedCount >= RUN_CLUB_MAX_APPROVED ? "full" : "open", eligibleDrawCount: eligibleDocs.length, drawStatus: getRunClubDrawStatus(monthData), winner, winnerSubmissionId, eligibleCountAtDraw: typeof monthData.eligibleCountAtDraw === "number" ? monthData.eligibleCountAtDraw : null, winnerSelectedAt: winner?.winnerSelectedAt ?? null, approvedCountMismatch: storedApprovedCount !== eligibleDocs.length });
+  const winnerSubmissionIds = getWinnerSubmissionIds(monthData);
+  const winnerDocs = await Promise.all(winnerSubmissionIds.map((id) => db.collection("runClubSubmissions").doc(id).get()));
+  const winners = winnerDocs.map((winnerDoc, index) => winnerDoc.exists ? serializePublicWinner(winnerDoc.id, winnerDoc.data() ?? {}, monthKey, monthData.winnerSelectedAt, index + 1) : null).filter((winner) => winner !== null);
+  const winner = winners[0] ?? null;
+  return Response.json({ ok: true, monthKey, pendingCount: pending.data().count, approvedCount: approved.data().count, rejectedCount: rejected.data().count, monthlyApprovedCount: storedApprovedCount, maximumApproved: RUN_CLUB_MAX_APPROVED, remaining: Math.max(RUN_CLUB_MAX_APPROVED - storedApprovedCount, 0), status: storedApprovedCount >= RUN_CLUB_MAX_APPROVED ? "full" : "open", eligibleDrawCount: eligibleDocs.length, drawStatus: getRunClubDrawStatus(monthData), winner, winners, winnerSubmissionId: winnerSubmissionIds[0] ?? null, winnerSubmissionIds, winnerCount: winners.length || Number(monthData.winnerCount ?? 0), eligibleCountAtDraw: typeof monthData.eligibleCountAtDraw === "number" ? monthData.eligibleCountAtDraw : null, winnerSelectedAt: winner?.winnerSelectedAt ?? null, approvedCountMismatch: storedApprovedCount !== eligibleDocs.length });
 }

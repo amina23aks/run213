@@ -3,14 +3,14 @@ import { CommunityGrid } from "@/components/community/CommunityGrid";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RunClubSubmissionForm } from "@/components/run-club/RunClubSubmissionForm";
-import { getPublicRunClubEntries, getPublicRunClubWinner, getRunClubMonthStatus } from "@/lib/run-club/public";
+import { getPublicRunClubEntries, getPublicRunClubWinners, getRunClubMonthStatus } from "@/lib/run-club/public";
 
 const steps = [
   { title: "RUN AT YOUR PACE", text: "No minimum distance or speed." },
   { title: "SAVE YOUR PROOF", text: "Take a run photo or app screenshot." },
   { title: "SUBMIT YOUR RUN", text: "One entry per person each month." },
   { title: "GET APPROVED", text: "A maximum of 26 valid entries are approved." },
-  { title: "JOIN THE DRAW", text: "The winner is selected randomly from approved entries." },
+  { title: "JOIN THE DRAW", text: "One to three winners are selected randomly from approved entries." },
 ];
 
 const slogans = [
@@ -21,7 +21,7 @@ const slogans = [
 
 
 export default async function RunClubPage() {
-  const [runClubMonthStatus, publicEntries, monthlyWinner] = await Promise.all([getRunClubMonthStatus(), getPublicRunClubEntries(60), getPublicRunClubWinner()]);
+  const [runClubMonthStatus, publicEntries, monthlyWinners] = await Promise.all([getRunClubMonthStatus(), getPublicRunClubEntries(60), getPublicRunClubWinners()]);
   const approvedEntries = publicEntries.map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, image: entry.proofImage.secureUrl, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
   const cappedCount = Math.min(runClubMonthStatus.approvedCount, runClubMonthStatus.maximumApprovedParticipants);
   const remaining = Math.max(runClubMonthStatus.maximumApprovedParticipants - cappedCount, 0);
@@ -66,7 +66,7 @@ export default async function RunClubPage() {
         <section className="runClubMonthlySummary" aria-labelledby="monthly-status-title">
           <h2 id="monthly-status-title">{runClubMonthStatus.monthLabel.toUpperCase()}</h2>
           <div><strong>{cappedCount} / 26 APPROVED</strong><strong>{remaining} SPOTS REMAIN</strong><strong>{statusLabel}</strong></div>
-          {monthlyWinner ? <article className="runClubWinnerCard"><Image src={monthlyWinner.proofImage.secureUrl} alt={`Monthly winner proof from ${monthlyWinner.publicName}`} width={160} height={120} /><div><strong>MONTHLY WINNER</strong><h3>{monthlyWinner.publicName}</h3><p>{[monthlyWinner.publicWilaya, runClubMonthStatus.monthLabel].filter(Boolean).join(" · ")}</p>{monthlyWinner.publicCaption ? <small>{monthlyWinner.publicCaption}</small> : null}</div></article> : <p>MONTHLY WINNER<br />This month’s winner will be announced after the draw.</p>}
+          <div className="runClubWinnerPanel"><span className="runClubWinnerBadge">MONTHLY WINNER</span>{monthlyWinners.length ? <div className="runClubWinnerList">{monthlyWinners.map((winner) => <article className="runClubWinnerCard" key={winner.submissionId}><Image src={winner.proofImage.secureUrl} alt={`Monthly winner proof from ${winner.publicName}`} width={160} height={120} /><div><strong>{winner.placement ? `WINNER ${winner.placement}` : "WINNER"}</strong><h3>{winner.publicName}</h3><p>{[winner.publicWilaya, runClubMonthStatus.monthLabel].filter(Boolean).join(" · ")}</p>{winner.publicCaption ? <small>{winner.publicCaption}</small> : null}</div></article>)}</div> : <p>This month’s winner will be announced after the draw.</p>}</div>
         </section>
       </main>
       <div className="club-footer-shell"><Footer /></div>
