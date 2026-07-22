@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getRunClubDrawStatus, isEligibleRunClubSubmission, serializePublicWinner } from "@/lib/run-club/draw";
 import { getAlgiersMonthKey } from "@/lib/run-club/security";
 import { RUN_CLUB_MAX_APPROVED } from "@/lib/run-club/types";
 
@@ -11,12 +12,21 @@ export async function GET(request: Request) {
   const parsed = querySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams)); if (!parsed.success) return Response.json({ ok: false, code: "validation_failed", message: "Invalid month." }, { status: 400 });
   const monthKey = parsed.data.month ?? getAlgiersMonthKey();
   const db = getAdminDb();
-  const [pending, approved, rejected, monthDoc] = await Promise.all([
+  const [pending, approved, rejected, monthDoc, eligibleSnapshot] = await Promise.all([
     db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "pending").count().get(),
     db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").count().get(),
     db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "rejected").count().get(),
     db.collection("runClubMonths").doc(monthKey).get(),
+    db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").get(),
   ]);
-  const approvedCount = Number(monthDoc.get("approvedCount") ?? approved.data().count ?? 0);
-  return Response.json({ ok: true, monthKey, pendingCount: pending.data().count, approvedCount: approved.data().count, rejectedCount: rejected.data().count, monthlyApprovedCount: approvedCount, maximumApproved: RUN_CLUB_MAX_APPROVED, remaining: Math.max(RUN_CLUB_MAX_APPROVED - approvedCount, 0), status: approvedCount >= RUN_CLUB_MAX_APPROVED ? "full" : "open" });
+  const monthData = monthDoc.exists ? monthDoc.data() ?? {} : {};
+  const storedApprovedCount = Number(monthDoc.get("approvedCount") ?? approved.data().count ?? 0);
+  const eligibleDocs = eligibleSnapshot.docs.filter((doc) => isEligibleRunClubSubmission(doc.data()));
+  const winnerSubmissionId = typeof monthData.winnerSubmissionId === "string" ? monthData.winnerSubmissionId : null;
+  let winner = null;
+  if (winnerSubmissionId) {
+    const winnerDoc = await db.collection("runClubSubmissions").doc(winnerSubmissionId).get();
+    if (winnerDoc.exists) winner = serializePublicWinner(winnerDoc.id, winnerDoc.data() ?? {}, monthKey, monthData.winnerSelectedAt);
+  }
+  return Response.json({ ok: true, monthKey, pendingCount: pending.data().count, approvedCount: approved.data().count, rejectedCount: rejected.data().count, monthlyApprovedCount: storedApprovedCount, maximumApproved: RUN_CLUB_MAX_APPROVED, remaining: Math.max(RUN_CLUB_MAX_APPROVED - storedApprovedCount, 0), status: storedApprovedCount >= RUN_CLUB_MAX_APPROVED ? "full" : "open", eligibleDrawCount: eligibleDocs.length, drawStatus: getRunClubDrawStatus(monthData), winner, winnerSubmissionId, eligibleCountAtDraw: typeof monthData.eligibleCountAtDraw === "number" ? monthData.eligibleCountAtDraw : null, winnerSelectedAt: winner?.winnerSelectedAt ?? null, approvedCountMismatch: storedApprovedCount !== eligibleDocs.length });
 }

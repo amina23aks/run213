@@ -3,8 +3,7 @@ import { CommunityGrid } from "@/components/community/CommunityGrid";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RunClubSubmissionForm } from "@/components/run-club/RunClubSubmissionForm";
-import { runClubWinner } from "@/constants/home";
-import { getPublicRunClubEntries, getRunClubMonthStatus } from "@/lib/run-club/public";
+import { getPublicRunClubEntries, getPublicRunClubWinner, getRunClubMonthStatus } from "@/lib/run-club/public";
 
 const steps = [
   { title: "RUN AT YOUR PACE", text: "No minimum distance or speed." },
@@ -22,7 +21,7 @@ const slogans = [
 
 
 export default async function RunClubPage() {
-  const [runClubMonthStatus, publicEntries] = await Promise.all([getRunClubMonthStatus(), getPublicRunClubEntries(60)]);
+  const [runClubMonthStatus, publicEntries, monthlyWinner] = await Promise.all([getRunClubMonthStatus(), getPublicRunClubEntries(60), getPublicRunClubWinner()]);
   const approvedEntries = publicEntries.map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, image: entry.proofImage.secureUrl, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
   const cappedCount = Math.min(runClubMonthStatus.approvedCount, runClubMonthStatus.maximumApprovedParticipants);
   const remaining = Math.max(runClubMonthStatus.maximumApprovedParticipants - cappedCount, 0);
@@ -67,7 +66,7 @@ export default async function RunClubPage() {
         <section className="runClubMonthlySummary" aria-labelledby="monthly-status-title">
           <h2 id="monthly-status-title">{runClubMonthStatus.monthLabel.toUpperCase()}</h2>
           <div><strong>{cappedCount} / 26 APPROVED</strong><strong>{remaining} SPOTS REMAIN</strong><strong>{statusLabel}</strong></div>
-          <p>{runClubWinner ? `${runClubWinner.name} is the ${runClubWinner.monthLabel} winner.` : "This month’s winner will be announced after the draw."}</p>
+          {monthlyWinner ? <article className="runClubWinnerCard"><Image src={monthlyWinner.proofImage.secureUrl} alt={`Monthly winner proof from ${monthlyWinner.publicName}`} width={160} height={120} /><div><strong>MONTHLY WINNER</strong><h3>{monthlyWinner.publicName}</h3><p>{[monthlyWinner.publicWilaya, runClubMonthStatus.monthLabel].filter(Boolean).join(" · ")}</p>{monthlyWinner.publicCaption ? <small>{monthlyWinner.publicCaption}</small> : null}</div></article> : <p>MONTHLY WINNER<br />This month’s winner will be announced after the draw.</p>}
         </section>
       </main>
       <div className="club-footer-shell"><Footer /></div>

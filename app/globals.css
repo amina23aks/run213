@@ -5509,3 +5509,23 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 @media (max-width: 900px) { .adminRunClubStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .adminRunClubTable__head { display: none; } .adminRunClubRow { grid-template-columns: 3.65rem minmax(0, 1fr) auto; gap: 0.4rem 0.62rem; } .adminRunClubRow > span:nth-of-type(2), .adminRunClubRow > span:nth-of-type(3), .adminRunClubRow > span:nth-of-type(4), .adminRunClubReview { grid-column: 2 / -1; justify-self: start; } .adminRunClubDrawer { width: min(100vw, 44rem); } .adminRunClubDrawer__body { grid-template-columns: 1fr; } .adminRunClubDetail__image { max-height: 24rem; } }
 @media (max-width: 767px) { .runClubForm__row { grid-template-columns: 1fr; } .adminRunClubControls { align-items: stretch; } .adminRunClubControls label, .adminRunClubControls .adminSecondary { flex-basis: 100%; width: 100%; } .adminRunClubStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .adminRunClubDrawer { width: 100vw; max-width: 100vw; } .adminRunClubDrawer__header { grid-template-columns: minmax(0, 1fr) auto; } .adminRunClubDrawer__header .adminRunClubBadge { grid-column: 1; } .adminRunClubInfo dl { grid-template-columns: 1fr; gap: 0.14rem; } .adminRunClubActions button { flex: 1 1 100%; } }
 @media (max-width: 430px) { .adminRunClubStats { grid-template-columns: 1fr; } }
+.adminRunClubDraw { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid rgba(199,244,0,0.22); border-radius: 1rem; background: rgba(199,244,0,0.06); padding: 1rem; }
+.adminRunClubDraw p { margin: 0 0 0.22rem; color: var(--lime); font-size: 0.68rem; font-weight: 950; letter-spacing: 0.12em; }
+.adminRunClubDraw h3 { margin: 0; font-size: 1.1rem; font-weight: 950; text-transform: uppercase; }
+.adminRunClubDraw span, .adminRunClubDraw small { color: rgba(255,255,255,0.68); font-size: 0.72rem; font-weight: 750; }
+.adminRunClubDraw__warning { display: block; margin-top: 0.42rem; color: #ffd36a; font-size: 0.7rem; }
+.adminRunClubWinner { display: flex; align-items: center; gap: 0.72rem; min-width: min(100%, 22rem); border-radius: 0.82rem; background: rgba(0,0,0,0.18); padding: 0.52rem; }
+.adminRunClubWinner img { width: 4.5rem; height: 4.5rem; border-radius: 0.65rem; object-fit: cover; }
+.adminRunClubWinner div { display: grid; gap: 0.1rem; }
+.adminRunClubWinner strong { color: var(--lime); font-size: 0.72rem; font-weight: 950; }
+.adminRunClubConfirm { width: min(92vw, 28rem); border: 1px solid rgba(255,255,255,0.14); border-radius: 1rem; background: #111211; color: #f4f4f0; padding: 1.1rem; box-shadow: 0 24px 80px rgba(0,0,0,0.45); }
+.adminRunClubConfirm h2 { margin: 0 0 0.65rem; font-size: 1.3rem; font-weight: 950; text-transform: uppercase; }
+.adminRunClubConfirm p { margin: 0 0 1rem; color: rgba(244,244,240,0.74); font-size: 0.85rem; line-height: 1.5; }
+@media (max-width: 767px) { .adminRunClubDraw { align-items: stretch; flex-direction: column; } .adminRunClubWinner { width: 100%; } }
+.runClubWinnerCard { display: flex; align-items: center; gap: 0.75rem; max-width: 30rem; border: 1px solid rgba(0,0,0,0.1); border-radius: 0.9rem; background: rgba(255,255,255,0.32); padding: 0.55rem; }
+.runClubWinnerCard img { width: 7rem; height: 5rem; border-radius: 0.7rem; object-fit: cover; }
+.runClubWinnerCard div { display: grid !important; gap: 0.12rem !important; }
+.runClubWinnerCard strong { width: fit-content; background: var(--lime) !important; color: var(--foreground); }
+.runClubWinnerCard h3 { margin: 0; font-size: 1rem; font-weight: 950; text-transform: uppercase; }
+.runClubWinnerCard p, .runClubWinnerCard small { margin: 0; color: rgba(7,7,6,0.7); font-size: 0.72rem; font-weight: 750; }
+@media (max-width: 520px) { .runClubWinnerCard { align-items: stretch; flex-direction: column; } .runClubWinnerCard img { width: 100%; height: 9rem; } }

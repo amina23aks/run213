@@ -14,6 +14,8 @@ export type CommunityEntry = {
   image: string;
   alt: string;
   imageFit?: "cover" | "contain";
+  imagePublicId?: string | null;
+  isWinner?: boolean;
 };
 
 type CommunityMarqueeProps = {
@@ -30,13 +32,24 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
   const dragStartScrollRef = useRef(0);
   const [canAnimate, setCanAnimate] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const uniqueEntries = useMemo(() => Array.from(new Map(entries.map((entry) => [entry.id, entry])).values()), [entries]);
-  const renderedEntries = useMemo(() => (canAnimate && uniqueEntries.length >= 3 ? [...uniqueEntries, ...uniqueEntries] : uniqueEntries), [canAnimate, uniqueEntries]);
+  const uniqueEntries = useMemo(() => {
+    const seenIds = new Set<string>();
+    const seenPublicIds = new Set<string>();
+    return entries.filter((entry) => {
+      if (seenIds.has(entry.id)) return false;
+      const publicId = entry.imagePublicId?.trim();
+      if (publicId && seenPublicIds.has(publicId)) return false;
+      seenIds.add(entry.id);
+      if (publicId) seenPublicIds.add(publicId);
+      return true;
+    });
+  }, [entries]);
+  const renderedEntries = useMemo(() => (canAnimate ? [...uniqueEntries, ...uniqueEntries] : uniqueEntries), [canAnimate, uniqueEntries]);
 
   useEffect(() => {
     const row = rowRef.current;
     if (!row) return undefined;
-    const update = () => setCanAnimate(uniqueEntries.length >= 3 && row.scrollWidth > row.clientWidth + 2);
+    const update = () => setCanAnimate(uniqueEntries.length > 1 && row.scrollWidth > row.clientWidth + 2);
     update();
     const resizeObserver = new ResizeObserver(update);
     resizeObserver.observe(row);
@@ -94,7 +107,7 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
           return (
             <article className="communityCard" key={isDuplicate ? `${entry.id}-marquee-copy` : entry.id} aria-hidden={isDuplicate || undefined}>
               <CommunityImageFrame src={entry.image} alt={isDuplicate ? "" : entry.alt} sizes={compact ? "220px" : "280px"} variant="marquee" fit={entry.imageFit ?? "cover"} />
-              <div className="communityCard__meta"><strong>{entry.name}</strong><span>{[entry.city, entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
+              <div className="communityCard__meta"><strong>{entry.name}</strong><span>{[entry.city, entry.isWinner ? "MONTHLY WINNER" : entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
             </article>
           );
         })}
