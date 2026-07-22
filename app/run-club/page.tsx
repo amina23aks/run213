@@ -22,7 +22,7 @@ const slogans = [
 
 export default async function RunClubPage() {
   const [runClubMonthStatus, publicEntries, monthlyWinners] = await Promise.all([getRunClubMonthStatus(), getPublicRunClubEntries(60), getPublicRunClubWinners()]);
-  const approvedEntries = publicEntries.map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, image: entry.proofImage.secureUrl, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
+  const approvedEntries = publicEntries.map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, isWinner: entry.isWinner, winnerPlacement: entry.winnerPlacement, image: entry.proofImage.secureUrl, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
   const cappedCount = Math.min(runClubMonthStatus.approvedCount, runClubMonthStatus.maximumApprovedParticipants);
   const remaining = Math.max(runClubMonthStatus.maximumApprovedParticipants - cappedCount, 0);
   const isClosed = runClubMonthStatus.status === "full" || cappedCount >= runClubMonthStatus.maximumApprovedParticipants;

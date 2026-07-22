@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { createRunClubPendingFolder, getCloudinaryEnv, verifyUploadSignature } from "@/lib/run-club/cloudinary";
 import { checkRunClubRateLimit, createIdentityHash, createSubmitterHash, getAlgiersMonthKey, safeApiError } from "@/lib/run-club/security";
 import { normalizeInstagram } from "@/lib/run-club/instagram";
@@ -8,6 +8,18 @@ import { getContactType, normalizeContact, runClubSubmissionSchema, RUN_CLUB_MAX
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+async function getOptionalOwnerUid(request: NextRequest): Promise<string | null> {
+  const authorization = request.headers.get("authorization") ?? "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+  try {
+    const decodedToken = await getAdminAuth().verifyIdToken(match[1]);
+    return decodedToken.uid || null;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(request: NextRequest) {
   let rateLimit;
@@ -38,6 +50,7 @@ export async function POST(request: NextRequest) {
     return safeApiError("cloudinary_verification_failed", "Proof image could not be verified. Upload it again.", 503);
   }
 
+  const ownerUid = await getOptionalOwnerUid(request);
   const normalizedContact = normalizeContact(parsed.data.contact);
   const contactType = getContactType(normalizedContact);
   const normalizedInstagram = normalizeInstagram(parsed.data.instagram);
@@ -59,7 +72,7 @@ export async function POST(request: NextRequest) {
         id: submissionId, monthKey, status: "pending", name: parsed.data.name, contactType, contactValue: parsed.data.contact.trim(), normalizedContact, submitterHash, normalizedInstagram, instagramHash,
         instagram: parsed.data.instagram, wilaya: parsed.data.wilaya, caption: parsed.data.caption, publicName: parsed.data.name, publicCaption: parsed.data.caption, publicWilaya: parsed.data.wilaya,
         proofImage: { publicId: image.publicId, secureUrl: image.secureUrl, width: image.width, height: image.height, format: image.format, bytes: image.bytes },
-        consentAccepted: true, source: "web", customerProfile: { userId: null, linkedAt: null, linkStatus: "guest_pending" }, createdByUserId: null, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+        consentAccepted: true, source: "web", ownerUid, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
       });
       transaction.create(contactLockRef, { type: "contact", monthKey, identityHash: contactHash, submissionId, createdAt: FieldValue.serverTimestamp() });
       if (instagramLockRef && instagramHash) transaction.create(instagramLockRef, { type: "instagram", monthKey, identityHash: instagramHash, submissionId, createdAt: FieldValue.serverTimestamp() });

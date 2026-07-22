@@ -5586,3 +5586,6 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .runClubWinnerCard small { color: #5f5f58; }
 .runClubMonthlySummary > p, .runClubWinnerPanel > p { color: #484842; }
 @media (max-width: 900px) { .adminRunClubModal__body { grid-template-columns: 1fr; } .adminRunClubDetail__image { width: min(100%, 19rem); max-height: 21rem; } .adminRunClubInfo { max-height: none; } }
+.communityWinnerBadge { display: inline-flex; width: fit-content; border-radius: 999px; background: #c7f400; color: #050505; padding: 0.22rem 0.42rem; font-size: 0.55rem; font-weight: 950; line-height: 1; letter-spacing: 0.06em; text-transform: uppercase; }
+.communityCard__meta .communityWinnerBadge { margin-bottom: 0.08rem; }
+.communityPost__meta .communityWinnerBadge { margin-bottom: 0.14rem; }

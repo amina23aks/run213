@@ -16,6 +16,7 @@ export type CommunityEntry = {
   imageFit?: "cover" | "contain";
   imagePublicId?: string | null;
   isWinner?: boolean;
+  winnerPlacement?: number;
 };
 
 type CommunityMarqueeProps = {
@@ -105,7 +106,7 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
         {uniqueEntries.map((entry) => (
           <article className="communityCard" key={entry.id}>
             <CommunityImageFrame src={entry.image} alt={entry.alt} sizes={compact ? "220px" : "280px"} variant="marquee" fit={entry.imageFit ?? "cover"} />
-            <div className="communityCard__meta"><strong>{entry.name}</strong><span>{[entry.city, entry.isWinner ? "MONTHLY WINNER" : entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
+            <div className="communityCard__meta">{entry.isWinner ? <b className="communityWinnerBadge">{entry.winnerPlacement ? `WINNER ${String(entry.winnerPlacement).padStart(2, "0")}` : "MONTHLY WINNER"}</b> : null}<strong>{entry.name}</strong><span>{[entry.city, entry.isWinner ? "MONTHLY WINNER" : entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
           </article>
         ))}
       </div>

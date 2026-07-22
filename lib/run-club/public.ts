@@ -7,9 +7,9 @@ import { dedupePublicRunClubEntries, getWinnerSubmissionIds, normalizeMonthStatu
 import { getAlgiersMonthKey } from "@/lib/run-club/security";
 import { RUN_CLUB_MAX_APPROVED, type PublicRunClubEntry, type PublicRunClubWinner } from "@/lib/run-club/types";
 
-export const getPublicRunClubEntries = unstable_cache(async (limit = 12): Promise<PublicRunClubEntry[]> => {
+export const getPublicRunClubEntries = unstable_cache(async (limit = 12, monthKey = getAlgiersMonthKey()): Promise<PublicRunClubEntry[]> => {
   if (getMissingFirebaseAdminEnv().length) return [];
-  const snapshot = await getAdminDb().collection("runClubSubmissions").where("status", "==", "approved").orderBy("approvedAt", "desc").limit(Math.max(limit * 3, limit)).get();
+  const snapshot = await getAdminDb().collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").orderBy("approvedAt", "desc").limit(Math.max(limit * 3, limit)).get();
   return dedupePublicRunClubEntries(snapshot.docs.map(serializePublicEntry).filter((entry): entry is PublicRunClubEntry => entry !== null)).slice(0, limit);
 }, ["public-run-club-entries"], { revalidate: 60, tags: ["run-club"] });
 
@@ -40,7 +40,7 @@ export function serializePublicEntry(doc: FirebaseFirestore.QueryDocumentSnapsho
   const proof = data.proofImage;
   if (!proof || typeof proof.secureUrl !== "string") return null;
   const approvedAt = data.approvedAt as Timestamp | undefined;
-  return { id: doc.id, publicName: String(data.publicName || data.name || "Runner"), publicCaption: typeof data.publicCaption === "string" ? data.publicCaption : null, publicWilaya: typeof data.publicWilaya === "string" ? data.publicWilaya : null, proofImage: { secureUrl: proof.secureUrl, width: Number(proof.width || 1), height: Number(proof.height || 1), publicId: typeof proof.publicId === "string" ? proof.publicId : null }, approvedAt: approvedAt?.toDate().toISOString() ?? new Date(0).toISOString(), isWinner: data.isWinner === true, winnerMonthKey: typeof data.winnerMonthKey === "string" ? data.winnerMonthKey : null };
+  return { id: doc.id, publicName: String(data.publicName || data.name || "Runner"), publicCaption: typeof data.publicCaption === "string" ? data.publicCaption : null, publicWilaya: typeof data.publicWilaya === "string" ? data.publicWilaya : null, proofImage: { secureUrl: proof.secureUrl, width: Number(proof.width || 1), height: Number(proof.height || 1), publicId: typeof proof.publicId === "string" ? proof.publicId : null }, approvedAt: approvedAt?.toDate().toISOString() ?? new Date(0).toISOString(), isWinner: data.isWinner === true, winnerMonthKey: typeof data.winnerMonthKey === "string" ? data.winnerMonthKey : null, winnerPlacement: typeof data.winnerPlacement === "number" ? data.winnerPlacement : undefined };
 }
 
 export function formatMonthLabel(monthKey: string) {

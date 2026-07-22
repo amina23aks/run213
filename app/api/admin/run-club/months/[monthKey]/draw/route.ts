@@ -20,11 +20,8 @@ export async function POST(request: Request, context: { params: Promise<{ monthK
   if (!parsed.success) return Response.json({ ok: false, code: "validation_failed", message: "Choose between 1 and 3 winners." }, { status: 400 });
   const db = getAdminDb();
   try {
-    const eligibleSnapshot = await db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").get();
-    const eligibleDocs = eligibleSnapshot.docs.filter((doc) => isEligibleRunClubSubmission(doc.data()));
-    if (eligibleDocs.length === 0) return Response.json({ ok: false, code: "no_approved_participants", message: "No eligible approved participants for this month." }, { status: 409 });
-    const winnerCount = normalizeWinnerCount(parsed.data?.winnerCount, eligibleDocs.length);
-    const selectedDocs = selectSecureWinnerIndexes(eligibleDocs.length, winnerCount).map((index) => eligibleDocs[index]);
+    const requestedWinnerCount = parsed.data?.winnerCount ?? 1;
+    const eligibleQuery = db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved");
     const result = await db.runTransaction(async (transaction) => {
       const monthRef = db.collection("runClubMonths").doc(monthKey);
       const monthSnap = await transaction.get(monthRef);
@@ -33,8 +30,14 @@ export async function POST(request: Request, context: { params: Promise<{ monthK
         const winnerSnaps = await Promise.all(existingWinnerIds.map((id) => transaction.get(db.collection("runClubSubmissions").doc(id))));
         const winners = winnerSnaps.map((winnerSnap, index) => winnerSnap.exists ? serializePublicWinner(winnerSnap.id, winnerSnap.data() ?? {}, monthKey, monthSnap.get("winnerSelectedAt"), index + 1) : null).filter((winner) => winner !== null);
         if (winners.length === 0) throw new Error("MISSING_WINNER_SUBMISSION");
-        return { alreadyDrawn: true, eligibleCount: Number(monthSnap.get("eligibleCountAtDraw") ?? eligibleDocs.length), winners };
+        return { alreadyDrawn: true, eligibleCount: Number(monthSnap.get("eligibleCountAtDraw") ?? winners.length), winners };
       }
+      const eligibleSnapshot = await transaction.get(eligibleQuery);
+      const eligibleDocs = eligibleSnapshot.docs.filter((doc) => isEligibleRunClubSubmission(doc.data()));
+      if (eligibleDocs.length === 0) throw new Error("NO_ELIGIBLE_PARTICIPANTS");
+      if (requestedWinnerCount > eligibleDocs.length) throw new Error("WINNER_COUNT_EXCEEDS_ELIGIBLE");
+      const winnerCount = normalizeWinnerCount(requestedWinnerCount, eligibleDocs.length);
+      const selectedDocs = selectSecureWinnerIndexes(eligibleDocs.length, winnerCount).map((index) => eligibleDocs[index]);
       const chosenRefs = selectedDocs.map((doc) => db.collection("runClubSubmissions").doc(doc.id));
       const chosenSnaps = await Promise.all(chosenRefs.map((ref) => transaction.get(ref)));
       if (chosenSnaps.some((snap) => !snap.exists || !isEligibleRunClubSubmission(snap.data() ?? {}) || snap.get("monthKey") !== monthKey)) throw new Error("CHOSEN_INELIGIBLE");
@@ -50,6 +53,8 @@ export async function POST(request: Request, context: { params: Promise<{ monthK
     revalidateTag("run-club", "max"); revalidatePath("/"); revalidatePath("/run-club");
     return Response.json({ ok: true, code: result.alreadyDrawn ? "already_drawn" : "winners_drawn", message: result.alreadyDrawn ? "Winner draw already completed." : "Winner draw completed and saved.", monthKey, eligibleCount: result.eligibleCount, winners: result.winners, winner: result.winners[0] ?? null });
   } catch (error) {
+    if (error instanceof Error && error.message === "NO_ELIGIBLE_PARTICIPANTS") return Response.json({ ok: false, code: "no_approved_participants", message: "No eligible approved participants for this month." }, { status: 409 });
+    if (error instanceof Error && error.message === "WINNER_COUNT_EXCEEDS_ELIGIBLE") return Response.json({ ok: false, code: "winner_count_exceeds_eligible", message: "Winner count cannot exceed eligible approved participants." }, { status: 409 });
     if (error instanceof Error && error.message === "MISSING_WINNER_SUBMISSION") return Response.json({ ok: false, code: "missing_winner_submission", message: "The saved winner submissions could not be loaded." }, { status: 409 });
     console.error("[run-club-draw] draw failed");
     return Response.json({ ok: false, code: "draw_failed", message: "Winner draw could not be completed." }, { status: 500 });

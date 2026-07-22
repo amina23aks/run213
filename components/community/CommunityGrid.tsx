@@ -27,6 +27,7 @@ export function CommunityGrid({ entries }: CommunityGridProps) {
           <article className="communityPost" key={entry.id}>
             <CommunityImageFrame src={entry.image} alt={entry.alt} sizes="(max-width: 339px) 50vw, (max-width: 767px) 33vw, (max-width: 1199px) 30vw, 200px" variant="grid" fit={entry.imageFit ?? "cover"} />
             <div className="communityPost__meta">
+              {entry.isWinner ? <b className="communityWinnerBadge">{entry.winnerPlacement ? `WINNER ${String(entry.winnerPlacement).padStart(2, "0")}` : "MONTHLY WINNER"}</b> : null}
               <strong>{entry.name}</strong>
               <small>{[entry.city, entry.approvedDate].filter(Boolean).join(" · ")}</small>
               {entry.caption ? <p>{entry.caption}</p> : null}
