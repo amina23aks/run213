@@ -28,6 +28,16 @@ function StatusBadge({ status }: { status: Status | Summary["status"] }) {
 }
 
 export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
+  return (
+    <AdminShell title="Run Club" description="Review monthly run proof submissions.">
+      <AdminAccessGate>
+        <AdminRunClubWorkspace defaultMonth={defaultMonth} />
+      </AdminAccessGate>
+    </AdminShell>
+  );
+}
+
+function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
   const [month, setMonth] = useState(defaultMonth);
   const [status, setStatus] = useState<Status>("pending");
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -39,25 +49,35 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [confirmDrawOpen, setConfirmDrawOpen] = useState(false);
-  const reviewButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastSelectedRowRef = useRef<HTMLDivElement | null>(null);
 
-  const token = useCallback(async () => {
+  const token = useCallback(async (forceRefresh = false) => {
     const [{ auth }] = await Promise.all([import("@/lib/firebase/client"), import("firebase/auth")]);
     const user = auth.currentUser;
     if (!user) throw new Error("Admin sign-in required.");
-    return user.getIdToken();
+    return user.getIdToken(forceRefresh);
   }, []);
+
+  const adminFetch = useCallback(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+    const makeRequest = async (forceRefresh: boolean) => {
+      const authToken = await token(forceRefresh);
+      const headers = new Headers(init.headers);
+      headers.set("Authorization", `Bearer ${authToken}`);
+      return fetch(input, { ...init, headers });
+    };
+    const response = await makeRequest(false);
+    return response.status === 401 ? makeRequest(true) : response;
+  }, [token]);
 
   const load = useCallback(async (append = false) => {
     setLoading(true);
     setMessage("");
     try {
-      const authToken = await token();
       const q = new URLSearchParams({ month, status, limit: "20" });
       if (append && cursor) q.set("cursor", cursor);
       const [summaryResponse, listResponse] = await Promise.all([
-        fetch(`/api/admin/run-club/summary?month=${month}`, { headers: { Authorization: `Bearer ${authToken}` } }),
-        fetch(`/api/admin/run-club/submissions?${q}`, { headers: { Authorization: `Bearer ${authToken}` } }),
+        adminFetch(`/api/admin/run-club/summary?month=${month}`),
+        adminFetch(`/api/admin/run-club/submissions?${q}`),
       ]);
       const summaryPayload = await summaryResponse.json();
       const listPayload = await listResponse.json();
@@ -76,23 +96,28 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
     } finally {
       setLoading(false);
     }
-  }, [cursor, month, status, token]);
+  }, [adminFetch, cursor, month, status]);
 
   useEffect(() => { const timer = window.setTimeout(() => { void load(false); }, 0); return () => window.clearTimeout(timer); }, [load]);
 
-  const closeDrawer = useCallback(() => {
+  const closeModal = useCallback(() => {
     setSelected(null);
     setIsRejecting(false);
     setRejectionReason("");
-    window.requestAnimationFrame(() => reviewButtonRef.current?.focus());
+    window.requestAnimationFrame(() => lastSelectedRowRef.current?.focus());
   }, []);
 
   useEffect(() => {
     if (!selected) return undefined;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") closeDrawer(); };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && !loading) closeModal(); };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [closeDrawer, selected]);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [closeModal, loading, selected]);
 
   async function moderate(action: "approve" | "reject") {
     if (!selected) return;
@@ -100,15 +125,14 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
     if (action === "reject" && selected.status === "approved" && !window.confirm("Reject this already approved entry? Existing moderation rules will handle the public feed update.")) return;
     setLoading(true);
     try {
-      const authToken = await token();
       const payload = action === "approve"
         ? { action, publicName: selected.publicName || selected.name, publicCaption: selected.publicCaption, publicWilaya: selected.publicWilaya }
         : { action, rejectionReason: rejectionReason || selected.rejectionReason || null };
-      const response = await fetch(`/api/admin/run-club/submissions/${selected.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` }, body: JSON.stringify(payload) });
+      const response = await adminFetch(`/api/admin/run-club/submissions/${selected.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Moderation failed.");
       setMessage(action === "approve" ? "Submission approved." : "Submission rejected.");
-      closeDrawer();
+      closeModal();
       await load(false);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Moderation failed.");
@@ -121,8 +145,7 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
     setLoading(true);
     setMessage("");
     try {
-      const authToken = await token();
-      const response = await fetch(`/api/admin/run-club/months/${month}/draw`, { method: "POST", headers: { Authorization: `Bearer ${authToken}` } });
+      const response = await adminFetch(`/api/admin/run-club/months/${month}/draw`, { method: "POST" });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Draw failed.");
       setMessage(result.message || "Winner saved.");
@@ -135,8 +158,8 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
     }
   }
 
-  function openDrawer(item: Submission, button: HTMLButtonElement) {
-    reviewButtonRef.current = button;
+  function openModal(item: Submission, row: HTMLDivElement) {
+    lastSelectedRowRef.current = row;
     setSelected(item);
     setIsRejecting(false);
     setRejectionReason(item.rejectionReason ?? "");
@@ -152,22 +175,20 @@ export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
   ] as const : [], [summary]);
 
   return (
-    <AdminShell title="Run Club" description="Review monthly run proof submissions.">
-      <AdminAccessGate>
-        <section className="adminCard adminRunClub">
+    <>
+      <section className="adminCard adminRunClub">
           <div className="adminCard__heading"><p>RUN CLUB MODERATION</p><h2>Submission queue</h2><span>Compact review table. Select a submission to moderate it.</span></div>
           {summary ? <div className="adminRunClubStats" aria-label="Run Club moderation summary">{summaryCards.map(([label, value, tone]) => <article className={`adminRunClubStat adminRunClubStat--${tone}`} key={label}><span>{label}</span><strong>{value}</strong></article>)}</div> : null}
           <div className="adminRunClubControls"><label htmlFor="run-club-month">Month<input id="run-club-month" type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label><label htmlFor="run-club-status">Status<select id="run-club-status" value={status} onChange={(event) => setStatus(event.target.value as Status)}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></label><button className="adminSecondary" disabled={loading} onClick={() => void load(false)} type="button">{loading ? "Refreshing..." : "Refresh"}</button></div>
           {message ? <p className="adminNotice" role="status">{message}</p> : null}
           {summary ? <section className="adminRunClubDraw" aria-labelledby="run-club-draw-title"><div><p>{summary.drawStatus === "drawn" ? "MONTHLY WINNER" : "MONTHLY DRAW"}</p><h3 id="run-club-draw-title">{summary.winner ? summary.winner.publicName : `${summary.eligibleDrawCount} eligible approved participants`}</h3><span>{summary.winner ? `Selected from ${summary.eligibleCountAtDraw ?? summary.eligibleDrawCount} approved participants` : "Winner not selected"}</span>{summary.approvedCountMismatch ? <strong className="adminRunClubDraw__warning">Counter mismatch: using {summary.eligibleDrawCount} actual eligible entries for draw.</strong> : null}</div>{summary.winner ? <article className="adminRunClubWinner"><Image src={summary.winner.proofImage.secureUrl} alt={`Winner proof from ${summary.winner.publicName}`} width={72} height={72} /><div><strong>WINNER SAVED</strong><span>{summary.winner.monthKey}</span><small>Draw completed on {formatSubmitted(summary.winner.winnerSelectedAt)}</small></div></article> : <button className="adminPrimary" type="button" disabled={loading || summary.eligibleDrawCount === 0} onClick={() => setConfirmDrawOpen(true)}>DRAW WINNER</button>}</section> : null}
-          <div className="adminRunClubTable" role="table" aria-label="Run Club submissions"><div className="adminRunClubTable__head" role="row"><span>Proof</span><span>Participant</span><span>Contact</span><span>Instagram</span><span>Submitted</span><span>Status</span><span>Action</span></div>{items.length ? items.map((item) => <div className="adminRunClubRow" key={item.id} role="row"><span>{item.proofImage ? <Image src={item.proofImage.secureUrl} alt={`Run proof thumbnail for ${item.name}`} width={64} height={64} /> : null}</span><strong>{item.name}</strong><span>{item.contactType}: {item.contactValue}</span><span>{item.instagram || "—"}</span><span>{formatSubmitted(item.createdAt)}</span><StatusBadge status={item.status} /><button className="adminRunClubReview" type="button" onClick={(event) => openDrawer(item, event.currentTarget)}>REVIEW</button></div>) : <p className="adminRunClubEmpty">No submissions found for this month and status.</p>}</div>
+          <div className="adminRunClubTable" role="table" aria-label="Run Club submissions"><div className="adminRunClubTable__head" role="row"><span>Proof</span><span>Participant</span><span>Contact</span><span>Instagram</span><span>Submitted</span><span>Status</span></div>{items.length ? items.map((item) => <div className="adminRunClubRow" key={item.id} role="row" tabIndex={0} onClick={(event) => { if ((event.target as HTMLElement).closest("button,a,input,select,textarea")) return; openModal(item, event.currentTarget); }} onKeyDown={(event) => { if (event.key !== "Enter" && event.key !== " ") return; event.preventDefault(); openModal(item, event.currentTarget); }}><span>{item.proofImage ? <Image src={item.proofImage.secureUrl} alt={`Run proof thumbnail for ${item.name}`} width={64} height={64} /> : null}</span><strong>{item.name}</strong><span>{item.contactType}: {item.contactValue}</span><span>{item.instagram || "—"}</span><span>{formatSubmitted(item.createdAt)}</span><StatusBadge status={item.status} /></div>) : <p className="adminRunClubEmpty">No submissions found for this month and status.</p>}</div>
           {cursor ? <button className="adminSecondary" disabled={loading} onClick={() => void load(true)} type="button">Load more</button> : null}
-        </section>
+      </section>
 
-        {confirmDrawOpen ? <div className="adminRunClubDrawerOverlay" role="presentation"><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="draw-confirm-title"><h2 id="draw-confirm-title">Draw a winner for {new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en", { month: "long", year: "numeric", timeZone: "UTC" })}?</h2><p>One winner will be selected randomly from all approved participants.<br />The result will be saved permanently.</p><div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void drawWinner()} type="button">{loading ? "Drawing..." : "CONFIRM DRAW"}</button><button className="adminSecondary" disabled={loading} onClick={() => setConfirmDrawOpen(false)} type="button">CANCEL</button></div></aside></div> : null}
+      {confirmDrawOpen ? <div className="adminRunClubModalOverlay" role="presentation"><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="draw-confirm-title"><h2 id="draw-confirm-title">Draw a winner for {new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en", { month: "long", year: "numeric", timeZone: "UTC" })}?</h2><p>One winner will be selected randomly from all approved participants.<br />The result will be saved permanently.</p><div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void drawWinner()} type="button">{loading ? "Drawing..." : "CONFIRM DRAW"}</button><button className="adminSecondary" disabled={loading} onClick={() => setConfirmDrawOpen(false)} type="button">CANCEL</button></div></aside></div> : null}
 
-        {selected ? <div className="adminRunClubDrawerOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDrawer(); }}><aside className="adminRunClubDrawer" role="dialog" aria-modal="true" aria-labelledby="submission-detail-title"><header className="adminRunClubDrawer__header"><div><p>SUBMISSION DETAIL</p><h2 id="submission-detail-title">{selected.name}</h2><span>{selected.monthKey}</span></div><StatusBadge status={selected.status} /><button className="adminRunClubDrawer__close" type="button" onClick={closeDrawer} autoFocus>Close</button></header><div className="adminRunClubDrawer__body"><div className="adminRunClubDetail__media">{selected.proofImage ? <Image className="adminRunClubDetail__image" src={selected.proofImage.secureUrl} alt={`Full run proof submitted by ${selected.name}`} width={720} height={720} /> : <p>No proof image.</p>}</div><section className="adminRunClubInfo"><h3>Submission information</h3><dl><dt>Name</dt><dd>{selected.name}</dd><dt>Contact</dt><dd>{selected.contactType}: {selected.contactValue}</dd><dt>Instagram</dt><dd>{selected.instagram || "—"}</dd><dt>Wilaya</dt><dd>{selected.wilaya || "—"}</dd><dt>Caption</dt><dd>{selected.caption || "—"}</dd><dt>Consent</dt><dd>{selected.consentAccepted ? "Accepted" : "Missing"}</dd><dt>Submitted</dt><dd>{formatSubmitted(selected.createdAt)}</dd><dt>Month</dt><dd>{selected.monthKey}</dd><dt>Current status</dt><dd><StatusBadge status={selected.status} /></dd><dt>Image</dt><dd>{selected.proofImage ? `${selected.proofImage.width}×${selected.proofImage.height} · ${selected.proofImage.format ?? "image"} · ${formatBytes(selected.proofImage.bytes)}` : "—"}</dd></dl></section></div>{(isRejecting || selected.status === "rejected") ? <label className="adminRunClubRejectReason" htmlFor="rejection-reason">Rejection reason<textarea id="rejection-reason" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Add the reason before confirming rejection." /></label> : null}<div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void moderate("approve")} type="button">{loading ? "Working..." : "APPROVE"}</button><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject")} type="button">{loading ? "Working..." : isRejecting || selected.status === "rejected" ? "CONFIRM REJECT" : "REJECT"}</button><button className="adminSecondary" disabled={loading} onClick={closeDrawer} type="button">CLOSE</button></div></aside></div> : null}
-      </AdminAccessGate>
-    </AdminShell>
+      {selected ? <div className="adminRunClubModalOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !loading) closeModal(); }}><aside className="adminRunClubModal" role="dialog" aria-modal="true" aria-labelledby="submission-detail-title"><header className="adminRunClubModal__header"><div><p>SUBMISSION DETAIL</p><h2 id="submission-detail-title">{selected.name}</h2><span>{selected.monthKey}</span></div><StatusBadge status={selected.status} /><button className="adminRunClubModal__close" type="button" onClick={closeModal} autoFocus>Close</button></header><div className="adminRunClubModal__body"><div className="adminRunClubDetail__media">{selected.proofImage ? <Image className="adminRunClubDetail__image" src={selected.proofImage.secureUrl} alt={`Full run proof submitted by ${selected.name}`} width={720} height={720} /> : <p>No proof image.</p>}</div><section className="adminRunClubInfo"><h3>Submission information</h3><dl><dt>Name</dt><dd>{selected.name}</dd><dt>Contact</dt><dd>{selected.contactType}: {selected.contactValue}</dd><dt>Instagram</dt><dd>{selected.instagram || "—"}</dd><dt>Wilaya</dt><dd>{selected.wilaya || "—"}</dd><dt>Caption</dt><dd>{selected.caption || "—"}</dd><dt>Consent</dt><dd>{selected.consentAccepted ? "Accepted" : "Missing"}</dd><dt>Submitted</dt><dd>{formatSubmitted(selected.createdAt)}</dd><dt>Month</dt><dd>{selected.monthKey}</dd><dt>Current status</dt><dd><StatusBadge status={selected.status} /></dd><dt>Image</dt><dd>{selected.proofImage ? `${selected.proofImage.width}×${selected.proofImage.height} · ${selected.proofImage.format ?? "image"} · ${formatBytes(selected.proofImage.bytes)}` : "—"}</dd></dl></section></div>{(isRejecting || selected.status === "rejected") ? <label className="adminRunClubRejectReason" htmlFor="rejection-reason">Rejection reason<textarea id="rejection-reason" value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Add the reason before confirming rejection." /></label> : null}<div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void moderate("approve")} type="button">{loading ? "Working..." : "APPROVE"}</button><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject")} type="button">{loading ? "Working..." : isRejecting || selected.status === "rejected" ? "CONFIRM REJECT" : "REJECT"}</button><button className="adminSecondary" disabled={loading} onClick={closeModal} type="button">CLOSE</button></div></aside></div> : null}
+    </>
   );
 }
