@@ -10,7 +10,7 @@ const phraseIcons = [
 ];
 
 export async function RunClub() {
-  const entries = (await getPublicRunClubEntries(6)).map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, label: "Approved run", approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, image: entry.proofImage.secureUrl, imagePublicId: entry.proofImage.publicId, isWinner: entry.isWinner, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
+  const entries = (await getPublicRunClubEntries(6)).map((entry) => ({ id: entry.id, name: entry.publicName, city: entry.publicWilaya ?? undefined, label: "Approved run", approvedDate: new Date(entry.approvedAt).toLocaleDateString("en", { month: "long", year: "numeric" }), caption: entry.publicCaption ?? undefined, isWinner: entry.isWinner, winnerPlacement: entry.winnerPlacement, image: entry.proofImage.secureUrl, imagePublicId: entry.proofImage.publicId, imageFit: "cover" as const, alt: `Approved 213 RUN Club proof from ${entry.publicName}` }));
   return (
     <section className="home-section run-club" id="run-club" aria-labelledby="club-title">
       <aside className="section-intro run-club__intro">

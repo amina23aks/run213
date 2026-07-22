@@ -16,6 +16,7 @@ export type CommunityEntry = {
   imageFit?: "cover" | "contain";
   imagePublicId?: string | null;
   isWinner?: boolean;
+  winnerPlacement?: number;
 };
 
 type CommunityMarqueeProps = {
@@ -33,18 +34,18 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
   const [canAnimate, setCanAnimate] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const uniqueEntries = useMemo(() => {
-    const seenIds = new Set<string>();
-    const seenPublicIds = new Set<string>();
-    return entries.filter((entry) => {
-      if (seenIds.has(entry.id)) return false;
-      const publicId = entry.imagePublicId?.trim();
-      if (publicId && seenPublicIds.has(publicId)) return false;
-      seenIds.add(entry.id);
-      if (publicId) seenPublicIds.add(publicId);
-      return true;
+    const byId = new Map<string, CommunityEntry>();
+    const byPublicId = new Map<string, CommunityEntry>();
+    const isNewer = (next: CommunityEntry, current?: CommunityEntry) => !current || new Date(next.approvedDate).getTime() >= new Date(current.approvedDate).getTime();
+    entries.forEach((entry) => {
+      if (isNewer(entry, byId.get(entry.id))) byId.set(entry.id, entry);
     });
+    byId.forEach((entry) => {
+      const publicId = entry.imagePublicId?.trim();
+      if (!publicId || isNewer(entry, byPublicId.get(publicId))) byPublicId.set(publicId || `id:${entry.id}`, entry);
+    });
+    return Array.from(byPublicId.values()).sort((a, b) => new Date(b.approvedDate).getTime() - new Date(a.approvedDate).getTime());
   }, [entries]);
-  const renderedEntries = useMemo(() => (canAnimate ? [...uniqueEntries, ...uniqueEntries] : uniqueEntries), [canAnimate, uniqueEntries]);
 
   useEffect(() => {
     const row = rowRef.current;
@@ -65,9 +66,9 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
     const tick = window.setInterval(() => {
       const row = rowRef.current;
       if (!row || document.hidden || isPausedRef.current || isDraggingRef.current || Date.now() < pauseUntilRef.current) return;
-      const resetPoint = row.scrollWidth / 2;
+      const maxScroll = row.scrollWidth - row.clientWidth;
       const step = window.innerWidth < 700 ? 0.35 : 0.55;
-      if (row.scrollLeft >= resetPoint) row.scrollLeft -= resetPoint;
+      if (row.scrollLeft >= maxScroll - 1) { row.scrollLeft = 0; pauseUntilRef.current = Date.now() + 1_200; }
       else row.scrollLeft += step;
     }, 24);
     return () => window.clearInterval(tick);
@@ -102,15 +103,12 @@ export function CommunityMarquee({ entries, compact = false }: CommunityMarqueeP
         onPointerUp={() => { isDraggingRef.current = false; pauseAfterInteraction(); }}
         onPointerCancel={() => { isDraggingRef.current = false; pauseAfterInteraction(); }}
       >
-        {renderedEntries.map((entry, index) => {
-          const isDuplicate = canAnimate && index >= uniqueEntries.length;
-          return (
-            <article className="communityCard" key={isDuplicate ? `${entry.id}-marquee-copy` : entry.id} aria-hidden={isDuplicate || undefined}>
-              <CommunityImageFrame src={entry.image} alt={isDuplicate ? "" : entry.alt} sizes={compact ? "220px" : "280px"} variant="marquee" fit={entry.imageFit ?? "cover"} />
-              <div className="communityCard__meta"><strong>{entry.name}</strong><span>{[entry.city, entry.isWinner ? "MONTHLY WINNER" : entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
-            </article>
-          );
-        })}
+        {uniqueEntries.map((entry) => (
+          <article className="communityCard" key={entry.id}>
+            <CommunityImageFrame src={entry.image} alt={entry.alt} sizes={compact ? "220px" : "280px"} variant="marquee" fit={entry.imageFit ?? "cover"} />
+            <div className="communityCard__meta">{entry.isWinner ? <b className="communityWinnerBadge">{entry.winnerPlacement ? `WINNER ${String(entry.winnerPlacement).padStart(2, "0")}` : "MONTHLY WINNER"}</b> : null}<strong>{entry.name}</strong><span>{[entry.city, entry.isWinner ? "MONTHLY WINNER" : entry.label].filter(Boolean).join(" · ")}</span><small>{entry.approvedDate}</small></div>
+          </article>
+        ))}
       </div>
     </div>
   );

@@ -31,7 +31,7 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
         authModule.getRedirectResult(client.auth)
           .catch((error: unknown) => setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error))));
 
-        unsubscribe = authModule.onAuthStateChanged(client.auth, (nextUser) => {
+        unsubscribe = authModule.onIdTokenChanged(client.auth, (nextUser) => {
           if (cancelled) return;
           setUser(nextUser);
           setIsAdmin(false);
@@ -45,6 +45,7 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
           setIsChecking(true);
           nextUser.getIdToken()
             .then((token) => fetch("/api/admin/me", { headers: { Authorization: `Bearer ${token}` } }))
+            .then((response) => response.status === 401 ? nextUser.getIdToken(true).then((freshToken) => fetch("/api/admin/me", { headers: { Authorization: `Bearer ${freshToken}` } })) : response)
             .then((response) => response.ok ? response.json() : Promise.reject(new Error("Access denied")))
             .then((data: { isAdmin?: boolean }) => {
               if (cancelled) return;
