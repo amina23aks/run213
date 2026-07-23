@@ -8,6 +8,7 @@ import { shippingCalculator } from "@/lib/orders/shipping";
 import { calculateLookGroupPrice } from "@/lib/lookPricing";
 import { normalizeProductColors } from "@/lib/productColors";
 import { normalizeEmail, normalizePhone } from "@/lib/orders/validation";
+import { buildAdminSearchTokens } from "@/lib/orders/admin";
 
 const ORDERS_COLLECTION = "orders";
 const PRODUCTS_COLLECTION = "products";
@@ -118,17 +119,20 @@ export async function createOrder(input: CreateOrderRequest): Promise<ExistingOr
       admin: {
         needsReview: true,
         notes: "Limited stock was validated and decremented in the order transaction where applicable.",
+        ...calculateOrderAdminTotals(items),
       },
       idempotencyKey: null,
       idempotencyKeyHash: idempotencyHash,
       createdAt: nowIso,
       updatedAt: nowIso,
     };
+    const adminSearchTokens = buildAdminSearchTokens(order);
 
     applyStockUpdates(items, products, productRefs, transaction, FieldValue.serverTimestamp());
 
     transaction.set(orderRef, {
       ...order,
+      adminSearchTokens,
       createdAtTimestamp: Timestamp.fromDate(now),
       updatedAtTimestamp: Timestamp.fromDate(now),
     });
@@ -252,6 +256,7 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById, looks
       lookSavingsDzd: null,
       displayPriceDzd: item.lookGroupId ? null : product.priceDzd * item.quantity,
       allocatedRevenueDzd: item.lookGroupId ? 0 : product.priceDzd * item.quantity,
+      admin: calculateItemAdminSnapshot(product.costPriceDzd, item.lookGroupId ? 0 : product.priceDzd * item.quantity, item.quantity),
     } satisfies OrderItem;
   });
 
@@ -285,10 +290,26 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById, looks
       item.lookCompareAtPriceDzd = canonicalLook.compareAtPriceDzd;
       item.lookDiscountPercent = canonicalLook.discountPercent;
       item.lookSavingsDzd = lookSavingsDzd;
+      item.admin = calculateItemAdminSnapshot(products.get(item.productId)?.costPriceDzd, item.lineTotalDzd, item.quantity);
       allocated += value;
     });
   });
   return baseItems;
+}
+
+function calculateItemAdminSnapshot(unitCostDzd: number | null | undefined, lineTotalDzd: number, quantity: number): NonNullable<OrderItem["admin"]> {
+  if (typeof unitCostDzd !== "number" || !Number.isFinite(unitCostDzd)) return { unitCostDzd: null, lineCostDzd: null, estimatedLineProfitDzd: null };
+  const lineCostDzd = unitCostDzd * quantity;
+  return { unitCostDzd, lineCostDzd, estimatedLineProfitDzd: lineTotalDzd - lineCostDzd };
+}
+
+function calculateOrderAdminTotals(items: OrderItem[]): { costOfGoodsDzd: number | null; estimatedProfitDzd: number | null } {
+  const lineCosts = items.map((item) => item.admin?.lineCostDzd);
+  if (!lineCosts.length || lineCosts.some((value) => typeof value !== "number" || !Number.isFinite(value))) return { costOfGoodsDzd: null, estimatedProfitDzd: null };
+  const knownLineCosts = lineCosts as number[];
+  const costOfGoodsDzd = knownLineCosts.reduce((total, value) => total + value, 0);
+  const itemsSubtotalDzd = items.reduce((total, item) => total + item.lineTotalDzd, 0);
+  return { costOfGoodsDzd, estimatedProfitDzd: itemsSubtotalDzd - costOfGoodsDzd };
 }
 
 function validateLookGroups(input: CreateOrderRequest, products: ProductById, looks: LookPriceById): void {
@@ -366,6 +387,7 @@ function parseActiveProduct(id: string, data: FirebaseFirestore.DocumentData): P
     status: "active",
     priceDzd: data.priceDzd,
     compareAtPriceDzd: isNumber(data.compareAtPriceDzd) ? data.compareAtPriceDzd : null,
+    costPriceDzd: isNumber(data.costPriceDzd) ? data.costPriceDzd : null,
     images,
     colors,
     sizes,
