@@ -92,7 +92,8 @@ export type OrderShippingAddress = {
   notes?: string | null;
 };
 
-export type Run213Order = {
+/** @deprecated Use OrderRecord from types/order.ts for all new order code. Kept only for legacy document compatibility. */
+export type DeprecatedLegacyRun213Order = {
   id: string;
   status: OrderStatus;
   userId?: string | null;

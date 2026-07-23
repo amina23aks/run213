@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createOrder } from "@/lib/orders/createOrder";
+import { createOrder, OrderCreationError } from "@/lib/orders/createOrder";
 import { checkRateLimit } from "@/lib/orders/rateLimit";
 import { createOrderRequestSchema } from "@/lib/orders/validation";
+import type { OrderErrorResponse } from "@/types/order";
 
 const CHECKOUT_RATE_LIMIT = 5;
 const CHECKOUT_RATE_WINDOW_MS = 60 * 60 * 1000;
@@ -11,23 +12,32 @@ export async function POST(request: NextRequest) {
   const rateLimit = checkRateLimit(`orders:${ip}`, CHECKOUT_RATE_LIMIT, CHECKOUT_RATE_WINDOW_MS);
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many checkout attempts. Please try again later." }, { status: 429 });
+    return orderError("rate_limited", "Too many checkout attempts. Please try again later.", 429);
   }
 
   const body: unknown = await request.json().catch(() => null);
   const parsed = createOrderRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid order details." }, { status: 400 });
+    return orderError("invalid_request", "Invalid order details.", 400, Object.fromEntries(parsed.error.issues.slice(0, 8).map((issue) => [issue.path.join(".") || "form", issue.message])));
   }
 
   try {
     const order = await createOrder(parsed.data);
-    return NextResponse.json(order, { status: 201 });
+    return NextResponse.json({ ok: true, ...order }, { status: order.idempotent ? 200 : 201 });
   } catch (error) {
+    if (error instanceof OrderCreationError) {
+      console.warn("Order creation rejected", { code: error.code, status: error.status, message: error.message });
+      return orderError(error.code, error.message, error.status);
+    }
     console.error("Order creation failed", error);
-    return NextResponse.json({ error: "Could not create order." }, { status: 400 });
+    return orderError("order_failed", "Could not create order. Please try again.", 503);
   }
+}
+
+function orderError(code: string, message: string, status: number, fieldErrors?: Record<string, string>) {
+  const body: OrderErrorResponse = { ok: false, code, message, ...(fieldErrors ? { fieldErrors } : {}) };
+  return NextResponse.json(body, { status });
 }
 
 function getClientIp(request: NextRequest): string {

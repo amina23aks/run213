@@ -49,9 +49,20 @@ export type OrderItem = {
   lookSlug?: string | null;
   lookName?: string | null;
   lookImage?: string | null;
+  lookOriginalProductIds?: string[] | null;
+  lookSelectedProductIds?: string[] | null;
+  lookPricingMode?: "complete_look" | "partial_products" | null;
   lookPriceDzd?: number | null;
+  lookCompareAtPriceDzd?: number | null;
+  lookDiscountPercent?: number | null;
+  lookSavingsDzd?: number | null;
   displayPriceDzd?: number | null;
   allocatedRevenueDzd?: number | null;
+  admin?: {
+    unitCostDzd: number | null;
+    lineCostDzd: number | null;
+    estimatedLineProfitDzd: number | null;
+  };
 };
 
 export type OrderTotals = {
@@ -86,8 +97,15 @@ export type OrderRecord = {
   admin: {
     needsReview: boolean;
     notes: string | null;
+    costOfGoodsDzd?: number | null;
+    estimatedProfitDzd?: number | null;
   };
+  /** @deprecated New orders store idempotencyKeyHash only; this remains nullable for old document compatibility. */
   idempotencyKey: string | null;
+  idempotencyKeyHash?: string | null;
+  inventoryRestoredAt?: string | null;
+  inventoryRestoredBy?: string | null;
+  inventoryRestorationReason?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -121,9 +139,18 @@ export type CreateOrderRequest = {
 };
 
 export type CreateOrderResponse = {
+  ok?: true;
   orderId: string;
   orderNumber: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   totals: OrderTotals;
+  idempotent?: boolean;
+};
+
+export type OrderErrorResponse = {
+  ok: false;
+  code: string;
+  message: string;
+  fieldErrors?: Record<string, string>;
 };
