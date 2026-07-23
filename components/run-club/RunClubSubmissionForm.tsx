@@ -18,13 +18,15 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
   const [message, setMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function updateField(name: keyof typeof initialFields, value: string | boolean) { setFields((current) => ({ ...current, [name]: value })); setErrors((current) => ({ ...current, [name]: "" })); }
+  function focusFirstError(nextErrors: FieldErrors) { window.requestAnimationFrame(() => { const firstKey = Object.keys(nextErrors).find((key) => nextErrors[key]); if (!firstKey) return; document.getElementById(firstKey === "proofImage" ? "run-club-proof" : firstKey === "consentAccepted" ? "run-club-consent" : `run-club-${firstKey}`)?.focus(); }); }
+  function setFieldErrors(nextErrors: FieldErrors) { setErrors(nextErrors); focusFirstError(nextErrors); }
+  function updateField(name: keyof typeof initialFields, value: string | boolean) { setFields((current) => ({ ...current, [name]: value })); setErrors((current) => ({ ...current, [name]: "" })); if (status === "error") { setStatus("idle"); setMessage(""); } }
   function selectFile(nextFile: File | null) {
     if (preview) URL.revokeObjectURL(preview);
-    setFile(null); setPreview(null); setErrors((current) => ({ ...current, proofImage: "" }));
+    setFile(null); setPreview(null); setErrors((current) => ({ ...current, proofImage: "" })); if (status === "error") { setStatus("idle"); setMessage(""); }
     if (!nextFile) return;
-    if (!RUN_CLUB_ALLOWED_MIME_TYPES.includes(nextFile.type as typeof RUN_CLUB_ALLOWED_MIME_TYPES[number])) { setErrors((current) => ({ ...current, proofImage: "Upload a JPG, PNG, or WEBP image." })); return; }
-    if (nextFile.size > RUN_CLUB_MAX_IMAGE_BYTES) { setErrors((current) => ({ ...current, proofImage: "Image must be 5MB or smaller." })); return; }
+    if (!RUN_CLUB_ALLOWED_MIME_TYPES.includes(nextFile.type as typeof RUN_CLUB_ALLOWED_MIME_TYPES[number])) { const nextErrors = { ...errors, proofImage: "The selected image type is not supported." }; setFieldErrors(nextErrors); return; }
+    if (nextFile.size > RUN_CLUB_MAX_IMAGE_BYTES) { const nextErrors = { ...errors, proofImage: "The selected image is larger than 5 MB." }; setFieldErrors(nextErrors); return; }
     setFile(nextFile); setPreview(URL.createObjectURL(nextFile));
   }
   async function uploadProof(selectedFile: File): Promise<UploadProof> {
@@ -44,17 +46,17 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
   }
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (isClosed || status === "uploading" || status === "submitting") return;
-    if (!file) { setErrors({ proofImage: "Run proof image is required." }); return; }
+    if (!file) { setStatus("error"); setMessage("Run proof image is required."); setFieldErrors({ proofImage: "Run proof image is required." }); return; }
     setStatus("uploading"); setMessage(""); setErrors({});
     try {
       const proofImage = await uploadProof(file);
       const payload = { ...fields, proofImage };
       const parsed = runClubSubmissionSchema.safeParse(payload);
-      if (!parsed.success) { setErrors(Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value."]))); setStatus("idle"); return; }
+      if (!parsed.success) { const nextErrors = Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value."])); setStatus("error"); setMessage("Check the highlighted fields and try again."); setFieldErrors(nextErrors); return; }
       setStatus("submitting");
       const response = await fetch("/api/run-club/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
       const result = await response.json();
-      if (!response.ok || !result.ok) { setErrors(result.fieldErrors ?? {}); throw new Error(result.message || "Submission failed."); }
+      if (!response.ok || !result.ok) { const nextErrors = result.fieldErrors ?? {}; if (Object.keys(nextErrors).length) setFieldErrors(nextErrors); throw new Error(result.message || "Submission could not be completed. Please try again."); }
       setFields(initialFields); setFile(null); if (preview) URL.revokeObjectURL(preview); setPreview(null); setStatus("success"); setMessage("Your entry is pending review. It will only appear publicly after approval.");
     } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Submission failed. Try again."); }
   }
@@ -69,13 +71,13 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     <div className="runClubDropzone" onDrop={(event) => { event.preventDefault(); selectFile(event.dataTransfer.files[0] ?? null); }} onDragOver={(event) => event.preventDefault()}>
       <div className="runClubDropzone__copy"><strong>Proof image</strong><p>Drag your proof image here, or choose a file.</p><small>JPG, PNG, WEBP · Maximum 5 MB</small></div>
       {preview ? <Image src={preview} alt="Selected run proof preview" width={420} height={280} unoptimized /> : null}
-      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} aria-invalid={Boolean(errors.proofImage)} aria-describedby={errors.proofImage ? errorId("proofImage") : undefined} />
+      <input id="run-club-proof" ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} aria-invalid={Boolean(errors.proofImage)} aria-describedby={errors.proofImage ? errorId("proofImage") : undefined} />
       <div><button type="button" className="button" onClick={() => fileInputRef.current?.click()}>{file ? "REPLACE" : "CHOOSE IMAGE"}</button>{file && <button type="button" className="button" onClick={() => selectFile(null)}>REMOVE</button>}</div>
       {errors.proofImage && <span className="runClubFieldError" id={errorId("proofImage")}>{errors.proofImage}</span>}
     </div>
-    <label className="runClubConsent"><input type="checkbox" checked={fields.consentAccepted} onChange={(event) => updateField("consentAccepted", event.target.checked)} aria-invalid={Boolean(errors.consentAccepted)} aria-describedby={errors.consentAccepted ? errorId("consentAccepted") : undefined} /><span>I confirm that I own this content and allow 213 RUN to display it if my submission is approved.</span>{errors.consentAccepted && <span className="runClubFieldError runClubConsent__error" id={errorId("consentAccepted")}>{errors.consentAccepted}</span>}</label>
+    <label className="runClubConsent"><input id="run-club-consent" type="checkbox" checked={fields.consentAccepted} onChange={(event) => updateField("consentAccepted", event.target.checked)} aria-invalid={Boolean(errors.consentAccepted)} aria-describedby={errors.consentAccepted ? errorId("consentAccepted") : undefined} /><span>I confirm that I own this content and allow 213 RUN to display it if my submission is approved.</span>{errors.consentAccepted && <span className="runClubFieldError runClubConsent__error" id={errorId("consentAccepted")}>{errors.consentAccepted}</span>}</label>
+    {status === "error" && message ? <div className="runClubFormMessage is-error" role="alert" aria-live="assertive"><strong>CHECK YOUR RUN.</strong><p>{message}</p></div> : null}
+    {status === "success" && <div className="runClubFormMessage is-success" role="status" aria-live="polite"><strong>RUN SUBMITTED.</strong><p>{message}</p></div>}
     <button className="button button--lime" type="submit" disabled={isClosed || processing}>{isClosed ? "SUBMISSIONS CLOSED" : processing ? (status === "uploading" ? "UPLOADING PROOF..." : "SUBMITTING...") : "SUBMIT RUN →"}</button>
-    {status === "success" && <div className="runClubFormMessage is-success"><strong>RUN SUBMITTED.</strong><p>{message}</p></div>}
-    {status === "error" && <div className="runClubFormMessage is-error"><p>{message}</p></div>}
   </form>;
 }
