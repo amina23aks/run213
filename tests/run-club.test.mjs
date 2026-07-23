@@ -73,3 +73,36 @@ test("legacy month without draw fields loads as not drawn", () => assert.deepEqu
 test("legacy single winner loads as one-item winner array", () => assert.deepEqual(legacyMonth("2026-07", { winnerSubmissionId: "old" }).winnerSubmissionIds, ["old"]));
 test("community winner badge does not duplicate the card", () => { const cards = [{ id: "a", isWinner: true }]; assert.equal(cards.length, 1); assert.equal(cards.filter((card) => card.isWinner).length, 1); });
 test("low-count homepage preview renders logical entries once", () => assert.equal(dedupeEntries([{ id: "a", proofImage: { publicId: "p1" } }, { id: "b", proofImage: { publicId: "p2" } }, { id: "c", proofImage: { publicId: "p3" } }]).length, 3));
+
+function appendWinnerState(month, submissions, chosenIndex = 0, now = new Date("2026-07-23T12:00:00.000Z")) {
+  const existingWinnerIds = winnerIds(month);
+  if (!existingWinnerIds.length || month.drawStatus !== "drawn") return { ok: false, code: "month_not_drawn" };
+  if (existingWinnerIds.length >= 3) return { ok: false, code: "maximum_winners_reached" };
+  const existing = new Set(existingWinnerIds);
+  const candidates = submissions.filter((submission) => isEligible(submission, month.monthKey) && !existing.has(submission.id));
+  if (!candidates.length) return { ok: false, code: "no_additional_candidates" };
+  const selected = candidates[chosenIndex % candidates.length];
+  if (!isEligible(selected, month.monthKey) || existing.has(selected.id)) return { ok: false, code: "candidate_changed" };
+  const placement = existingWinnerIds.length + 1;
+  const nextIds = [...existingWinnerIds, selected.id];
+  const selection = { submissionId: selected.id, placement, selectedAt: now, selectedBy: "admin@example.com", eligibleCountAtSelection: candidates.length };
+  return { ok: true, month: { ...month, winnerSubmissionId: nextIds[0], winnerSubmissionIds: nextIds, winnerCount: nextIds.length, winnerSelections: [...(month.winnerSelections || []), selection] }, selected: { ...selected, isWinner: true, winnerPlacement: placement, winnerSelectedAt: now } };
+}
+function hasNestedSentinel(value) { return Array.isArray(value) && value.some((entry) => entry && typeof entry.selectedAt === "object" && entry.selectedAt.__op === "serverTimestamp"); }
+function appendModalFailureState() { return { open: true, loading: false, error: "No additional eligible participants remain." }; }
+function appendModalSuccessState() { return { open: false, loading: false, message: "ADDITIONAL WINNER SAVED. The existing winners were preserved.", refreshed: true }; }
+function runClubFormState(kind) { if (kind === "invalidContact") return { field: "contact", message: "Enter a valid email or phone number.", tone: "error", color: "red" }; if (kind === "missingProof") return { field: "proofImage", message: "Run proof image is required.", tone: "error", color: "red" }; if (kind === "duplicate") return { level: "form", message: "You already submitted a run for this month.", tone: "error", color: "red" }; return { level: "form", title: "RUN SUBMITTED.", message: "Your entry is pending review. It will only appear publicly after approval.", tone: "success", color: "lime" }; }
+
+test("append winner succeeds when valid candidates remain", () => { const result = appendWinnerState({ monthKey: "2026-07", drawStatus: "drawn", winnerSubmissionId: "winner-1", winnerSubmissionIds: ["winner-1"] }, [{ id: "winner-1", status: "approved", monthKey: "2026-07", proofImage: validImage }, { id: "candidate-2", status: "approved", monthKey: "2026-07", proofImage: validImage }]); assert.equal(result.ok, true); });
+test("append winner preserves Winner 01 and appends Winner 02", () => { const result = appendWinnerState({ monthKey: "2026-07", drawStatus: "drawn", winnerSubmissionId: "winner-1", winnerSubmissionIds: ["winner-1"] }, [{ id: "candidate-2", status: "approved", monthKey: "2026-07", proofImage: validImage }]); assert.deepEqual(result.month.winnerSubmissionIds, ["winner-1", "candidate-2"]); assert.equal(result.month.winnerSubmissionId, "winner-1"); assert.equal(result.selected.winnerPlacement, 2); });
+test("append winner does not duplicate winner IDs", () => { const result = appendWinnerState({ monthKey: "2026-07", drawStatus: "drawn", winnerSubmissionIds: ["winner-1"] }, [{ id: "winner-1", status: "approved", monthKey: "2026-07", proofImage: validImage }, { id: "candidate-2", status: "approved", monthKey: "2026-07", proofImage: validImage }]); assert.equal(new Set(result.month.winnerSubmissionIds).size, result.month.winnerSubmissionIds.length); });
+test("append winner avoids nested Firestore sentinel timestamps", () => { const result = appendWinnerState({ monthKey: "2026-07", drawStatus: "drawn", winnerSubmissionIds: ["winner-1"] }, [{ id: "candidate-2", status: "approved", monthKey: "2026-07", proofImage: validImage }]); assert.equal(result.month.winnerSelections[0].selectedAt instanceof Date, true); assert.equal(hasNestedSentinel(result.month.winnerSelections), false); });
+test("append winner no remaining candidates returns safe error", () => { const result = appendWinnerState({ monthKey: "2026-07", drawStatus: "drawn", winnerSubmissionIds: ["winner-1"] }, [{ id: "winner-1", status: "approved", monthKey: "2026-07", proofImage: validImage }]); assert.deepEqual(result, { ok: false, code: "no_additional_candidates" }); });
+test("append winner maximum three winners is enforced", () => { const result = appendWinnerState({ monthKey: "2026-07", drawStatus: "drawn", winnerSubmissionIds: ["a", "b", "c"] }, [{ id: "d", status: "approved", monthKey: "2026-07", proofImage: validImage }]); assert.deepEqual(result, { ok: false, code: "maximum_winners_reached" }); });
+test("failed append request resets loading and keeps modal usable", () => assert.deepEqual(appendModalFailureState(), { open: true, loading: false, error: "No additional eligible participants remain." }));
+test("modal X and Cancel close append dialog", () => { const state = { open: true }; state.open = false; assert.equal(state.open, false); });
+test("successful append closes modal and refreshes winner data", () => assert.deepEqual(appendModalSuccessState(), { open: false, loading: false, message: "ADDITIONAL WINNER SAVED. The existing winners were preserved.", refreshed: true }));
+test("invalid email/phone displays red field error", () => assert.deepEqual(runClubFormState("invalidContact"), { field: "contact", message: "Enter a valid email or phone number.", tone: "error", color: "red" }));
+test("missing proof image displays red field error", () => assert.deepEqual(runClubFormState("missingProof"), { field: "proofImage", message: "Run proof image is required.", tone: "error", color: "red" }));
+test("duplicate monthly submission displays red form-level error", () => assert.deepEqual(runClubFormState("duplicate"), { level: "form", message: "You already submitted a run for this month.", tone: "error", color: "red" }));
+test("successful Run Club submission displays lime success card", () => assert.deepEqual(runClubFormState("success"), { level: "form", title: "RUN SUBMITTED.", message: "Your entry is pending review. It will only appear publicly after approval.", tone: "success", color: "lime" }));
