@@ -49,7 +49,13 @@ export type OrderItem = {
   lookSlug?: string | null;
   lookName?: string | null;
   lookImage?: string | null;
+  lookOriginalProductIds?: string[] | null;
+  lookSelectedProductIds?: string[] | null;
+  lookPricingMode?: "complete_look" | "partial_products" | null;
   lookPriceDzd?: number | null;
+  lookCompareAtPriceDzd?: number | null;
+  lookDiscountPercent?: number | null;
+  lookSavingsDzd?: number | null;
   displayPriceDzd?: number | null;
   allocatedRevenueDzd?: number | null;
 };
@@ -88,6 +94,7 @@ export type OrderRecord = {
     notes: string | null;
   };
   idempotencyKey: string | null;
+  idempotencyKeyHash?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -121,9 +128,18 @@ export type CreateOrderRequest = {
 };
 
 export type CreateOrderResponse = {
+  ok?: true;
   orderId: string;
   orderNumber: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   totals: OrderTotals;
+  idempotent?: boolean;
+};
+
+export type OrderErrorResponse = {
+  ok: false;
+  code: string;
+  message: string;
+  fieldErrors?: Record<string, string>;
 };

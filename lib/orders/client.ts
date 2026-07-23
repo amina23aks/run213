@@ -78,8 +78,9 @@ export async function submitOrderToApi(payload: CreateOrderRequest): Promise<Cre
 }
 
 function getErrorMessage(body: unknown, status: number): string {
-  if (typeof body === "object" && body !== null && "error" in body && typeof body.error === "string") {
-    return body.error;
+  if (typeof body === "object" && body !== null) {
+    if ("message" in body && typeof body.message === "string") return body.message;
+    if ("error" in body && typeof body.error === "string") return body.error;
   }
 
   if (status === 429) return "Too many checkout attempts. Please try again later.";
