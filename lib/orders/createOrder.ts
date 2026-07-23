@@ -119,7 +119,7 @@ export async function createOrder(input: CreateOrderRequest): Promise<ExistingOr
         needsReview: true,
         notes: "Limited stock was validated and decremented in the order transaction where applicable.",
       },
-      idempotencyKey: input.idempotencyKey ?? null,
+      idempotencyKey: null,
       idempotencyKeyHash: idempotencyHash,
       createdAt: nowIso,
       updatedAt: nowIso,
@@ -136,6 +136,7 @@ export async function createOrder(input: CreateOrderRequest): Promise<ExistingOr
       orderId: order.id,
       orderNumber: order.orderNumber,
       keyHash: idempotencyHash,
+      phoneHash: createHash("sha256").update(normalizedPhone).digest("hex"),
       createdAt: Timestamp.fromDate(now),
       createdAtIso: nowIso,
     });

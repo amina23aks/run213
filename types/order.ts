@@ -93,6 +93,7 @@ export type OrderRecord = {
     needsReview: boolean;
     notes: string | null;
   };
+  /** @deprecated New orders store idempotencyKeyHash only; this remains nullable for old document compatibility. */
   idempotencyKey: string | null;
   idempotencyKeyHash?: string | null;
   createdAt: string;

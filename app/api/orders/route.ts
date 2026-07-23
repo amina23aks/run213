@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const order = await createOrder(parsed.data);
-    return NextResponse.json({ ok: true, ...order }, { status: 201 });
+    return NextResponse.json({ ok: true, ...order }, { status: order.idempotent ? 200 : 201 });
   } catch (error) {
     if (error instanceof OrderCreationError) {
       console.warn("Order creation rejected", { code: error.code, status: error.status, message: error.message });
