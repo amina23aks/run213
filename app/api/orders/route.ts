@@ -3,6 +3,7 @@ import { createOrder, OrderCreationError } from "@/lib/orders/createOrder";
 import { checkRateLimit } from "@/lib/orders/rateLimit";
 import { createOrderRequestSchema } from "@/lib/orders/validation";
 import type { OrderErrorResponse } from "@/types/order";
+import { verifyOptionalCustomerRequest } from "@/lib/customer-auth";
 
 const CHECKOUT_RATE_LIMIT = 5;
 const CHECKOUT_RATE_WINDOW_MS = 60 * 60 * 1000;
@@ -23,7 +24,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const order = await createOrder(parsed.data);
+    const customer = await verifyOptionalCustomerRequest(request);
+    const order = await createOrder(parsed.data, customer?.uid ?? null);
     return NextResponse.json({ ok: true, ...order }, { status: order.idempotent ? 200 : 201 });
   } catch (error) {
     if (error instanceof OrderCreationError) {

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { formatAdminDate, formatDzdValue, STATUS_OPTIONS, statusClass } from "@/components/admin/orders/adminOrderUtils";
+import { formatAdminDate, formatDzdValue, STATUS_OPTIONS } from "@/components/admin/orders/adminOrderUtils";
+import { AdminStatusMenu } from "@/components/admin/orders/AdminStatusMenu";
+import type { AdminOrderStatus } from "@/components/admin/orders/types";
 import type { AdminOrderSummary } from "@/components/admin/orders/types";
 
 type ListResponse = { orders: AdminOrderSummary[]; nextCursor: string | null };
@@ -16,6 +18,7 @@ export function AdminOrdersClient() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   async function getToken() { const [{ auth }] = await Promise.all([import("@/lib/firebase/client")]); return auth.currentUser?.getIdToken(); }
   const load = useCallback(async (nextCursor: string | null, mode: "replace" | "append") => {
@@ -34,6 +37,7 @@ export function AdminOrdersClient() {
     finally { setLoading(false); }
   }, [search, status]);
   useEffect(() => { const timer = window.setTimeout(() => { void load(null, "replace"); }, 0); return () => window.clearTimeout(timer); }, [load]);
+  async function updateOrderStatus(orderId: string, next: AdminOrderStatus, note?: string | null) { setUpdatingId(orderId); setMessage(null); try { const token = await getToken(); const response = await fetch(`/api/admin/orders/${orderId}/status`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ status: next, note }) }); const data = await response.json() as { order?: AdminOrderSummary; error?: string }; if (!response.ok || !data.order) throw new Error(data.error ?? "Status could not be updated."); setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status: data.order!.status } : order)); setMessage("Status updated."); } catch (error) { setMessage(error instanceof Error ? error.message : "Status could not be updated."); } finally { setUpdatingId(null); } }
 
   return <AdminShell title="Orders" description="Review real pending COD orders, customer details, totals, and fulfillment status."><AdminAccessGate>
     <section className="adminOrdersWorkspace">
@@ -49,7 +53,7 @@ export function AdminOrdersClient() {
           <strong>{order.orderNumber}<small>{formatAdminDate(order.createdAt)}</small></strong>
           <span>{order.customer.fullName ?? "No name"}<small>{order.customer.phone ?? "No phone"}{order.customer.email ? ` · ${order.customer.email}` : ""}</small></span>
           <span>{order.wilaya ?? "No wilaya"}<small>{order.itemCount} item{order.itemCount === 1 ? "" : "s"}</small></span>
-          <b>{formatDzdValue(order.totalDzd)}</b><em className={statusClass(order.status)}>{order.status}</em><i>→</i>
+          <b>{formatDzdValue(order.totalDzd)}</b><AdminStatusMenu status={order.status} disabled={updatingId === order.id} onChange={(next, note) => updateOrderStatus(order.id, next, note)} /><i>→</i>
         </Link>)}
         {!orders.length && !loading ? <p className="adminNotice">No orders found.</p> : null}
       </section>

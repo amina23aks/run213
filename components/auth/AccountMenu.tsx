@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { Auth, User } from "firebase/auth";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -175,10 +176,16 @@ export function AccountMenu() {
           {user ? (
             <div className="accountPopover__signedIn">
               <span>{user.email ?? "Signed in"}</span>
-              <button type="button" onClick={signOutUser} disabled={busy}>Logout</button>
+              <Link href="/orders">My Orders</Link>
+              <Link href="/favorites">Favorites</Link>
+              <button type="button" onClick={signOutUser} disabled={busy}>Sign out</button>
             </div>
           ) : (
-            <button className="accountPopover__login" type="button" onClick={openAuth}>Login / Sign up</button>
+            <>
+              <Link href="/orders">My Orders</Link>
+              <Link href="/favorites">Favorites</Link>
+              <button className="accountPopover__login" type="button" onClick={openAuth}>Sign in / Sign up</button>
+            </>
           )}
         </div>
       ) : null}
