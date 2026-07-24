@@ -17,8 +17,8 @@ const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   preparing: ["shipped", "cancelled"],
   shipped: ["delivered", "returned"],
   delivered: ["returned"],
-  cancelled: [],
-  returned: [],
+  cancelled: ["pending"],
+  returned: ["delivered"],
 };
 
 type AdminOrderCursor = { createdAtMillis: number; id: string };
@@ -67,8 +67,20 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
       status: nextStatus,
       updatedAt: new Date().toISOString(),
       updatedAtTimestamp: FieldValue.serverTimestamp(),
-      statusHistory: FieldValue.arrayUnion({ previousStatus: currentStatus, status: nextStatus, at: new Date().toISOString(), actor: "admin", adminUid: admin.uid, adminEmail: admin.email, note: note?.trim() || null }),
+      statusHistory: FieldValue.arrayUnion({ previousStatus: currentStatus, status: nextStatus, at: new Date().toISOString(), actor: "admin", adminUid: admin.uid, adminEmail: admin.email, note: correctionNote(currentStatus, nextStatus, note) }),
     };
+
+    if (currentStatus === "cancelled" && nextStatus === "pending") {
+      if (!isRestored(data.inventoryRestoredAt) && !isRestored(data.inventoryRestoredAtIso)) throw new AdminOrderError("already_reserved", "Inventory is already reserved for this order.", 409);
+      await reserveLimitedStock(transaction, data);
+      updates.inventoryRestoredAt = null;
+      updates.inventoryRestoredAtIso = null;
+      updates.inventoryRestoredBy = null;
+      updates.inventoryRestorationReason = null;
+      updates.inventoryReservedAgainAt = FieldValue.serverTimestamp();
+      updates.inventoryReservedAgainAtIso = new Date().toISOString();
+      updates.inventoryReservedAgainBy = admin.email;
+    }
 
     if (nextStatus === "cancelled" && (currentStatus === "pending" || currentStatus === "confirmed")) {
       if (!isRestored(data.inventoryRestoredAt)) {
@@ -85,6 +97,34 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
   const updated = await getAdminOrder(orderId);
   if (!updated) throw new AdminOrderError("not_found", "Order not found.", 404);
   return updated;
+}
+
+async function reserveLimitedStock(transaction: FirebaseFirestore.Transaction, data: FirebaseFirestore.DocumentData): Promise<void> {
+  const quantities = new Map<string, number>();
+  const items = Array.isArray(data.items) ? data.items : [];
+  for (const item of items) {
+    if (!isRecord(item) || item.stockMode !== "limited" || !isString(item.productId)) continue;
+    const quantity = isNumber(item.quantity) ? Math.max(1, Math.trunc(item.quantity)) : 1;
+    quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + quantity);
+  }
+  const db = getAdminDb();
+  for (const [productId, quantity] of quantities) {
+    const productRef = db.collection(PRODUCTS_COLLECTION).doc(productId);
+    const snapshot = await transaction.get(productRef);
+    if (!snapshot.exists) throw new AdminOrderError("product_unavailable", "A product in this order is no longer available.", 409);
+    const currentStock = snapshot.get("stockQty");
+    const stockQty = typeof currentStock === "number" && Number.isFinite(currentStock) ? currentStock : 0;
+    if (stockQty < quantity) throw new AdminOrderError("insufficient_stock", "Not enough stock is available to restore this order to pending.", 409);
+    const nextStock = stockQty - quantity;
+    transaction.update(productRef, { stockQty: nextStock, inStock: nextStock > 0, updatedAt: FieldValue.serverTimestamp() });
+  }
+}
+
+function correctionNote(currentStatus: OrderStatus, nextStatus: OrderStatus, note?: string | null) {
+  const trimmed = note?.trim() || null;
+  if (currentStatus === "cancelled" && nextStatus === "pending") return trimmed ? `Admin correction: ${trimmed}` : "Admin correction";
+  if (currentStatus === "returned" && nextStatus === "delivered") return trimmed ? `Admin correction: ${trimmed}` : "Admin correction";
+  return trimmed;
 }
 
 async function restoreLimitedStock(transaction: FirebaseFirestore.Transaction, data: FirebaseFirestore.DocumentData): Promise<void> {
@@ -152,7 +192,7 @@ function toAdminOrderItem(item: unknown) {
   const admin = isRecord(record.admin) ? record.admin : {};
   return {
     productId: stringOrNull(record.productId), slug: stringOrNull(record.slug), name: stringOrNull(record.name) ?? "Product", category: stringOrNull(record.category), image: stringOrNull(record.image),
-    selectedSize: stringOrNull(record.selectedSize), selectedColor: stringOrNull(record.selectedColor), quantity: numberOrNull(record.quantity) ?? 0,
+    selectedSize: stringOrNull(record.selectedSize), selectedColor: stringOrNull(record.selectedColor), selectedColorHex: stringOrNull(record.selectedColorHex), quantity: numberOrNull(record.quantity) ?? 0,
     unitPriceDzd: numberOrNull(record.unitPriceDzd), lineTotalDzd: numberOrNull(record.lineTotalDzd), stockMode: stringOrNull(record.stockMode),
     lookName: stringOrNull(record.lookName), lookPricingMode: stringOrNull(record.lookPricingMode),
     unitCostDzd: numberOrNull(admin.unitCostDzd), lineCostDzd: numberOrNull(admin.lineCostDzd), estimatedLineProfitDzd: numberOrNull(admin.estimatedLineProfitDzd),

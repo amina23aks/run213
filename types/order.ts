@@ -40,6 +40,7 @@ export type OrderItem = {
   image: string;
   selectedSize: string | null;
   selectedColor: string | null;
+  selectedColorHex?: string | null;
   quantity: number;
   unitPriceDzd: number;
   lineTotalDzd: number;

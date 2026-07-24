@@ -243,6 +243,7 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById, looks
       image: product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
       selectedSize,
       selectedColor,
+      selectedColorHex: selectedColor ? product.colors.find((color) => color.name === selectedColor)?.hex ?? null : null,
       quantity: item.quantity,
       unitPriceDzd: product.priceDzd,
       lineTotalDzd: item.lookGroupId ? 0 : product.priceDzd * item.quantity,
