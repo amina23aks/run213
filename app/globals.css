@@ -5701,6 +5701,9 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .orderNotice--warning { border-color: rgba(217,119,6,.4); background: rgba(254,243,199,.9); color: #78350f; }
 .orderNotice--info { border-color: var(--border); background: rgba(255,250,240,.84); color: var(--text); }
 .orderEmpty { max-width: 34rem; margin-top: 1rem; } .orderEmpty a { color: #050505; font-weight: 950; text-decoration: underline; text-decoration-color: var(--lime); }
+.orderClaimNotice { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-top: 1rem; border: 1px solid rgba(5,5,5,.7); border-left: .45rem solid #050505; border-radius: .85rem; background: var(--lime); color: #050505; padding: .75rem .8rem; }
+.orderClaimNotice strong, .orderClaimNotice span { display: block; font-weight: 950; } .orderClaimNotice span { margin-top: .15rem; font-size: .72rem; text-transform: uppercase; } .orderClaimNotice p { max-width: 52rem; margin: .2rem 0 0; font-size: .78rem; font-weight: 750; } .orderClaimNotice button { flex: 0 0 auto; width: 1.7rem; height: 1.7rem; border: 1px solid rgba(5,5,5,.35); border-radius: 999px; background: #fbf8f0; color: #050505; font-weight: 950; }
+.orderEmpty__actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; } .orderEmpty__actions button { border: 1px solid #050505; border-radius: .82rem; background: transparent; color: #050505; padding: .72rem 1rem; font-size: .75rem; font-weight: 950; line-height: 1; }
 .orderDetail { display: grid; gap: 1rem; } .orderBack { font-size: .72rem; font-weight: 950; }
 .orderDetailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .orderDetailGrid { display: grid; grid-template-columns: minmax(0,1.35fr) minmax(18rem,.65fr); gap: 1rem; align-items: start; }

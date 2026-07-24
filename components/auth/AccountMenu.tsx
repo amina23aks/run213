@@ -176,15 +176,14 @@ export function AccountMenu() {
           {user ? (
             <div className="accountPopover__signedIn">
               <span>{user.email ?? "Signed in"}</span>
-              <Link href="/orders">My Orders</Link>
-              <Link href="/favorites">Favorites</Link>
-              <button type="button" onClick={signOutUser} disabled={busy}>Sign out</button>
+              <Link href="/orders">MY ORDERS</Link>
+              <Link href="/favorites">FAVORITES</Link>
+              <button type="button" onClick={signOutUser} disabled={busy}>SIGN OUT</button>
             </div>
           ) : (
             <>
-              <Link href="/orders">My Orders</Link>
-              <Link href="/favorites">Favorites</Link>
-              <button className="accountPopover__login" type="button" onClick={openAuth}>Sign in / Sign up</button>
+              <button className="accountPopover__login" type="button" onClick={openAuth}>SIGN IN</button>
+              <Link href="/orders">MY ORDERS</Link>
             </>
           )}
         </div>

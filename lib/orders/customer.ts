@@ -35,21 +35,28 @@ export async function listCustomerOrders(auth: VerifiedCustomer | null, guest: G
 
 export async function claimGuestOrders(auth: VerifiedCustomer, pairs: ClaimInput[]) {
   const db = getAdminDb();
-  const sanitized = pairs.flatMap((pair) => typeof pair.orderId === "string" && typeof pair.token === "string" ? [{ orderId: pair.orderId, token: pair.token }] : []).slice(0, 12);
-  const claimed: string[] = [];
-  await Promise.all(sanitized.map(async ({ orderId, token }) => {
+  const seen = new Set<string>();
+  const sanitized = pairs.flatMap((pair) => {
+    if (typeof pair.orderId !== "string" || typeof pair.token !== "string" || seen.has(pair.orderId)) return [];
+    seen.add(pair.orderId);
+    return [{ orderId: pair.orderId, token: pair.token }];
+  }).slice(0, 12);
+  const results = await Promise.all(sanitized.map(async ({ orderId, token }) => {
     const ref = db.collection(ORDERS).doc(orderId);
-    await db.runTransaction(async (transaction) => {
+    return db.runTransaction(async (transaction): Promise<"claimed" | "stale"> => {
       const snap = await transaction.get(ref);
-      if (!snap.exists) return;
+      if (!snap.exists) return "stale";
       const data = snap.data() ?? {};
-      if (typeof data.customerUserId === "string" && data.customerUserId.length > 0) return;
-      if (!verifyCustomerAccessToken(token, typeof data.customerAccessTokenHash === "string" ? data.customerAccessTokenHash : null)) return;
+      if (typeof data.customerUserId === "string" && data.customerUserId.length > 0) return "stale";
+      if (!verifyCustomerAccessToken(token, typeof data.customerAccessTokenHash === "string" ? data.customerAccessTokenHash : null)) return "stale";
       transaction.update(ref, { customerUserId: auth.uid, customerAccessTokenHash: null, updatedAt: new Date().toISOString(), updatedAtTimestamp: FieldValue.serverTimestamp() });
-      claimed.push(orderId);
+      return "claimed";
     });
   }));
-  return claimed;
+  return {
+    claimedOrderIds: sanitized.flatMap(({ orderId }, index) => results[index] === "claimed" ? [orderId] : []),
+    staleOrderIds: sanitized.flatMap(({ orderId }, index) => results[index] === "stale" ? [orderId] : []),
+  };
 }
 
 export async function getCustomerOrder(orderId: string, auth: VerifiedCustomer | null, token: string | null) {
