@@ -13,6 +13,7 @@ const LIMIT = 10;
 const STATUSES: OrderStatus[] = ["pending", "confirmed", "preparing", "shipped", "delivered", "cancelled", "returned"];
 
 type GuestAccess = { orderId: string; token: string };
+type ClaimInput = { orderId?: unknown; token?: unknown };
 type Cursor = { createdAtMillis: number; id: string };
 export type CustomerOrderSafe = ReturnType<typeof toCustomerOrder>;
 
@@ -29,6 +30,25 @@ export async function listCustomerOrders(auth: VerifiedCustomer | null, guest: G
   const orders = reads.flatMap(({ access, snap }) => snap.exists && verifyCustomerAccessToken(access.token, snap.get("customerAccessTokenHash")) ? [toCustomerOrder(snap.id, snap.data() ?? {})] : []);
   orders.sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
   return { orders, nextCursor: null };
+}
+
+export async function claimGuestOrders(auth: VerifiedCustomer, pairs: ClaimInput[]) {
+  const db = getAdminDb();
+  const sanitized = pairs.flatMap((pair) => typeof pair.orderId === "string" && typeof pair.token === "string" ? [{ orderId: pair.orderId, token: pair.token }] : []).slice(0, 12);
+  const claimed: string[] = [];
+  await Promise.all(sanitized.map(async ({ orderId, token }) => {
+    const ref = db.collection(ORDERS).doc(orderId);
+    await db.runTransaction(async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists) return;
+      const data = snap.data() ?? {};
+      if (typeof data.customerUserId === "string" && data.customerUserId.length > 0) return;
+      if (!verifyCustomerAccessToken(token, typeof data.customerAccessTokenHash === "string" ? data.customerAccessTokenHash : null)) return;
+      transaction.update(ref, { customerUserId: auth.uid, customerAccessTokenHash: null, updatedAt: new Date().toISOString(), updatedAtTimestamp: FieldValue.serverTimestamp() });
+      claimed.push(orderId);
+    });
+  }));
+  return claimed;
 }
 
 export async function getCustomerOrder(orderId: string, auth: VerifiedCustomer | null, token: string | null) {
@@ -71,7 +91,7 @@ export async function editCustomerDelivery(orderId: string, auth: VerifiedCustom
 
 function authorize(data: FirebaseFirestore.DocumentData, auth: VerifiedCustomer | null, token: string | null) { if (auth && data.customerUserId === auth.uid) return; if (!auth && token && verifyCustomerAccessToken(token, typeof data.customerAccessTokenHash === "string" ? data.customerAccessTokenHash : null)) return; throw new CustomerOrderError("not_found", "Order not found.", 404); }
 async function restoreStock(transaction: FirebaseFirestore.Transaction, data: FirebaseFirestore.DocumentData) { const quantities = new Map<string, number>(); for (const item of Array.isArray(data.items) ? data.items : []) if (item?.stockMode === "limited" && typeof item.productId === "string") quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + Math.max(1, Math.trunc(Number(item.quantity) || 1))); for (const [id, qty] of quantities) { const ref = getAdminDb().collection(PRODUCTS).doc(id); const snap = await transaction.get(ref); if (snap.exists) { const next = (Number(snap.get("stockQty")) || 0) + qty; transaction.update(ref, { stockQty: next, inStock: next > 0, updatedAt: FieldValue.serverTimestamp() }); } } }
-function toCustomerOrder(id: string, data: FirebaseFirestore.DocumentData) { const customer = obj(data.customer), delivery = obj(data.delivery), totals = obj(data.totals); const items = (Array.isArray(data.items) ? data.items : []).map((raw) => { const item = obj(raw); return { productId: opt(item.productId), slug: opt(item.slug), name: opt(item.name) ?? "Product", image: opt(item.lookImage) ?? opt(item.image), selectedSize: opt(item.selectedSize), selectedColor: opt(item.selectedColor), selectedColorHex: colorHex(opt(item.selectedColor)), quantity: num(item.quantity) ?? 0, unitPriceDzd: num(item.unitPriceDzd), lineTotalDzd: num(item.lineTotalDzd), lookName: opt(item.lookName), lookGroupId: opt(item.lookGroupId), lookId: opt(item.lookId), lookImage: opt(item.lookImage), lookPricingMode: opt(item.lookPricingMode), lookPriceDzd: num(item.lookPriceDzd), lookSavingsDzd: num(item.lookSavingsDzd), allocatedRevenueDzd: num(item.allocatedRevenueDzd) }; }); return { id, orderNumber: opt(data.orderNumber) ?? id, status: parseStatus(data.status), statusExplanation: explanation(data.status), createdAt: iso(data.createdAtTimestamp) ?? iso(data.createdAt), paymentMethod: opt(data.paymentMethod) ?? "cash_on_delivery", paymentStatus: opt(data.paymentStatus) ?? "cod_pending", customer: { fullName: opt(customer.fullName), phone: opt(customer.phone), email: opt(customer.email) }, delivery: { wilaya: opt(delivery.wilaya), commune: opt(delivery.commune), address: opt(delivery.address), deliveryMode: opt(delivery.deliveryMode), notes: opt(delivery.notes) }, items, itemCount: items.reduce((t, i) => t + i.quantity, 0), thumbnail: items[0]?.image ?? null, totals: { itemsSubtotalDzd: num(totals.itemsSubtotalDzd), shippingDzd: num(totals.shippingDzd), totalDzd: num(totals.totalDzd) }, statusHistory: (Array.isArray(data.statusHistory) ? data.statusHistory : []).flatMap(history) }; }
+function toCustomerOrder(id: string, data: FirebaseFirestore.DocumentData) { const customer = obj(data.customer), delivery = obj(data.delivery), totals = obj(data.totals); const items = (Array.isArray(data.items) ? data.items : []).map((raw) => { const item = obj(raw); return { productId: opt(item.productId), slug: opt(item.slug), name: opt(item.name) ?? "Product", image: opt(item.image), selectedSize: opt(item.selectedSize), selectedColor: opt(item.selectedColor), selectedColorHex: colorHex(opt(item.selectedColor)), quantity: num(item.quantity) ?? 0, unitPriceDzd: num(item.unitPriceDzd), lineTotalDzd: num(item.lineTotalDzd), lookName: opt(item.lookName), lookGroupId: opt(item.lookGroupId), lookId: opt(item.lookId), lookSlug: opt(item.lookSlug), lookImage: opt(item.lookImage), lookPricingMode: opt(item.lookPricingMode), lookPriceDzd: num(item.lookPriceDzd), lookSavingsDzd: num(item.lookSavingsDzd), allocatedRevenueDzd: num(item.allocatedRevenueDzd) }; }); return { id, orderNumber: opt(data.orderNumber) ?? id, status: parseStatus(data.status), statusExplanation: explanation(data.status), createdAt: iso(data.createdAtTimestamp) ?? iso(data.createdAt), paymentMethod: opt(data.paymentMethod) ?? "cash_on_delivery", paymentStatus: opt(data.paymentStatus) ?? "cod_pending", customer: { fullName: opt(customer.fullName), phone: opt(customer.phone), email: opt(customer.email) }, delivery: { wilaya: opt(delivery.wilaya), commune: opt(delivery.commune), address: opt(delivery.address), deliveryMode: opt(delivery.deliveryMode), notes: opt(delivery.notes) }, items, itemCount: items.reduce((t, i) => t + i.quantity, 0), thumbnail: items[0]?.image ?? null, totals: { itemsSubtotalDzd: num(totals.itemsSubtotalDzd), shippingDzd: num(totals.shippingDzd), totalDzd: num(totals.totalDzd) }, statusHistory: (Array.isArray(data.statusHistory) ? data.statusHistory : []).flatMap(history) }; }
 function history(raw: unknown) { const e = obj(raw); const note = opt(e.note); if (note === "Order created by server API." || opt(e.actor) === "system" && !note) return []; return [{ status: parseStatus(e.status), at: iso(e.at), note: note && !/server API|system|admin@|firebase|idempotency/i.test(note) ? note : null }]; }
 function parseStatus(value: unknown): OrderStatus { return typeof value === "string" && STATUSES.includes(value as OrderStatus) ? value as OrderStatus : "pending"; }
 function explanation(status: unknown) { return status === "pending" ? "We received your order and will confirm it before shipping." : status === "confirmed" ? "Your order is confirmed and being prepared." : status === "shipped" ? "Your order is on the way." : status === "delivered" ? "Your order was delivered." : status === "cancelled" ? "This order was cancelled." : status === "returned" ? "This order was returned." : "Order status updated."; }

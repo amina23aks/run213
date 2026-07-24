@@ -46,7 +46,7 @@ export function AdminOrdersClient() {
         <label><span>Status</span><select value={status} onChange={(event) => setStatus(event.target.value)}>{STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
         <button className="adminPrimary" type="submit">Search</button>
       </form>
-      {message ? <p className="adminNotice adminNotice--error">{message}</p> : null}
+      {message ? <p className={`adminNotice ${message === "Status updated." ? "adminNotice--success" : "adminNotice--error"}`}>{message}</p> : null}
       <section className="adminOrderTable adminCard" aria-label="Admin orders list">
         <div className="adminOrderTable__head"><span>Order</span><span>Customer</span><span>Details</span><span>Total</span><span>Status</span><span>Open</span></div>
         {orders.map((order) => <Link className="adminOrderRow" href={`/admin/orders/${order.id}`} key={order.id}>

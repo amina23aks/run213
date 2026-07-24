@@ -24,7 +24,7 @@ export function AdminOrderDetailClient({ orderId }: { orderId: string }) {
 
   return <AdminShell title={order?.orderNumber ?? "Order"} description="Manage one order with secure server-side status transitions."><AdminAccessGate>
     {loading ? <section className="adminCard"><p className="adminNotice">Loading order…</p></section> : null}
-    {message ? <p className="adminNotice adminNotice--error">{message}</p> : null}
+    {message ? <p className={`adminNotice ${message === "Status updated." ? "adminNotice--success" : "adminNotice--error"}`}>{message}</p> : null}
     {order ? <section className="adminOrderDetailWorkspace">
       <header className="adminOrderDetailHeader adminCard"><div><Link href="/admin/orders">← Back to Orders</Link><h2>{order.orderNumber}</h2><span>{formatAdminDate(order.createdAt)}</span></div><AdminStatusMenu status={order.status} disabled={saving} onChange={updateStatus} />{!options.length ? <span className="adminNotice">Terminal status</span> : null}</header>
       <section className="adminOrderCardsGrid">

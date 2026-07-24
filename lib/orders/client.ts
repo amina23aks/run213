@@ -60,10 +60,11 @@ export function validateOrderFormValues(values: OrderFormValues, cartItems: Cart
   return null;
 }
 
-export async function submitOrderToApi(payload: CreateOrderRequest): Promise<CreateOrderResponse> {
+export async function submitOrderToApi(payload: CreateOrderRequest, idToken?: string | null): Promise<CreateOrderResponse> {
   const response = await fetch("/api/orders", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}) },
+    cache: "no-store",
     body: JSON.stringify(payload),
   });
 
