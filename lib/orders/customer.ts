@@ -90,6 +90,25 @@ export async function editCustomerDelivery(orderId: string, auth: VerifiedCustom
   return getCustomerOrder(orderId, auth, token);
 }
 
+export async function getCustomerOrderItemOptions(orderId: string, auth: VerifiedCustomer | null, token: string | null, itemIndexRaw: number) {
+  const db = getAdminDb(); const snap = await db.collection(ORDERS).doc(orderId).get();
+  if (!snap.exists) throw new CustomerOrderError("not_found", "Order not found.", 404);
+  const data = snap.data() ?? {}; authorize(data, auth, token);
+  const itemIndex = Math.trunc(itemIndexRaw); const items = Array.isArray(data.items) ? data.items : []; const item = obj(items[itemIndex]); const productId = opt(item.productId);
+  if (itemIndex < 0 || !productId) throw new CustomerOrderError("not_found", "Order item not found.", 404);
+  const productSnap = await db.collection(PRODUCTS).doc(productId).get();
+  if (!productSnap.exists) throw new CustomerOrderError("product_unavailable", "This product is no longer available for option edits.", 409);
+  const product = productSnap.data() ?? {};
+  return {
+    itemIndex,
+    productId,
+    sizes: (Array.isArray(product.sizes) ? product.sizes : []).flatMap((size) => { const label = opt(obj(size).label); return label ? [{ label, available: true }] : []; }),
+    colors: normalizeProductColors(product.colors).map((color) => ({ id: color.id, name: color.name, hex: color.hex, available: true })),
+    selectedSize: opt(item.selectedSize),
+    selectedColor: opt(item.selectedColor),
+  };
+}
+
 export async function editCustomerOrderItemOptions(orderId: string, auth: VerifiedCustomer | null, token: string | null, input: Record<string, unknown>) {
   const db = getAdminDb(); const ref = db.collection(ORDERS).doc(orderId);
   const itemIndex = typeof input.itemIndex === "number" ? Math.trunc(input.itemIndex) : -1;
