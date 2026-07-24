@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CartVariantDisplay } from "@/components/cart/CartVariantDisplay";
 import { groupCartItems, getGroupSubtotal } from "@/components/cart/cartGrouping";
 import { formatDzd } from "@/constants/products";
 import { getShippingQuote } from "@/lib/orders/shipping";
@@ -41,7 +40,7 @@ export function CheckoutSummary() {
                   <div><span>LOOK</span><h3>{firstItem.lookName ?? "Selected Look"}</h3><strong>{formatDzd(getGroupSubtotal(group.items))}</strong></div>
                 </header>
                 <div>
-                  {group.items.map((item) => <p key={`${item.productId}-${item.selectedSize ?? "no-size"}-${item.selectedColor ?? "no-color"}`}><span>{item.name} · {item.selectedColor ?? "Color"} / {item.selectedSize ?? "Size"} · Qty {item.quantity}</span></p>)}
+                  {group.items.map((item) => <p key={`${item.productId}-${item.selectedSize ?? "no-size"}-${item.selectedColor ?? "no-color"}`}><span>{item.name}</span><CheckoutVariantMeta selectedSize={item.selectedSize} selectedColor={item.selectedColor} quantity={item.quantity} /></p>)}
                 </div>
               </article>
             );
@@ -55,7 +54,7 @@ export function CheckoutSummary() {
               </div>
               <section>
                 <h3>{item.name}</h3>
-                <CartVariantDisplay item={item} />
+                <CheckoutVariantMeta selectedSize={item.selectedSize} selectedColor={item.selectedColor} quantity={item.quantity} />
                 <span>Qty {item.quantity}</span>
               </section>
               <strong>{formatDzd(item.priceDzd * item.quantity)}</strong>
@@ -77,4 +76,10 @@ export function CheckoutSummary() {
       <p className="checkoutSummaryNote">Cash on delivery. The server verifies product, Look, and delivery totals when the order is created.</p>
     </aside>
   );
+}
+
+function CheckoutVariantMeta({ selectedSize, selectedColor, quantity }: { selectedSize?: string | null; selectedColor?: string | null; quantity: number }) {
+  return <small className="checkoutVariantMeta">{selectedSize ? <span>SIZE {selectedSize}</span> : null}{selectedColor ? <i className="inlineSwatch" style={{ background: checkoutColorHex(selectedColor) }} aria-label={`Color ${selectedColor}`} title={selectedColor} /> : null}<span>Qty {quantity}</span></small>;
+}
+function checkoutColorHex(name: string) { const key = name.toLowerCase(); return key.includes("black") ? "#050505" : key.includes("white") ? "#f7f2e8" : key.includes("grey") || key.includes("gray") ? "#8a8a84" : key.includes("lime") ? "#c8ff00" : name;
 }

@@ -1,9 +1,9 @@
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { getGuestOrderToken, guestAccessHeader } from "@/components/orders/orderAccessStorage";
 
-type AccessHeadersResult = { headers: Record<string, string>; authed: boolean; ready: boolean };
+type AccessHeadersResult = { headers: Record<string, string>; authed: boolean; ready: boolean; user: User | null };
 
-async function waitForAuthHydration(): Promise<User | null> {
+export async function waitForAuthHydration(): Promise<User | null> {
   const { auth } = await import("@/lib/firebase/client");
   if (auth.currentUser) return auth.currentUser;
   return new Promise((resolve) => {
@@ -11,18 +11,23 @@ async function waitForAuthHydration(): Promise<User | null> {
   });
 }
 
-export async function getCustomerListHeaders(): Promise<AccessHeadersResult> {
+async function authHeaders(forceRefresh = false): Promise<AccessHeadersResult> {
   const user = await waitForAuthHydration();
-  const token = await user?.getIdToken();
-  if (token) return { headers: { Authorization: `Bearer ${token}` }, authed: true, ready: true };
-  const access = guestAccessHeader();
-  return { headers: access ? { "x-run213-order-access": access } : {}, authed: false, ready: true };
+  const token = await user?.getIdToken(forceRefresh);
+  if (token) return { headers: { Authorization: `Bearer ${token}` }, authed: true, ready: true, user };
+  return { headers: {}, authed: false, ready: true, user: null };
 }
 
-export async function getCustomerDetailHeaders(orderId: string): Promise<AccessHeadersResult> {
-  const user = await waitForAuthHydration();
-  const token = await user?.getIdToken();
-  if (token) return { headers: { Authorization: `Bearer ${token}` }, authed: true, ready: true };
+export async function getCustomerListHeaders(forceRefresh = false): Promise<AccessHeadersResult> {
+  const access = await authHeaders(forceRefresh);
+  if (access.authed) return access;
+  const guest = guestAccessHeader();
+  return { ...access, headers: guest ? { "x-run213-order-access": guest } : {} };
+}
+
+export async function getCustomerDetailHeaders(orderId: string, forceRefresh = false): Promise<AccessHeadersResult> {
+  const access = await authHeaders(forceRefresh);
+  if (access.authed) return access;
   const accessToken = getGuestOrderToken(orderId);
-  return { headers: accessToken ? { "x-run213-order-token": accessToken } : {}, authed: false, ready: Boolean(accessToken) };
+  return { ...access, headers: accessToken ? { "x-run213-order-token": accessToken } : {}, ready: Boolean(accessToken) };
 }

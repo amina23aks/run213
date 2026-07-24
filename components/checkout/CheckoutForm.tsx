@@ -8,6 +8,7 @@ import { useCart } from "@/context/cart";
 import { buildCreateOrderRequest, resetCheckoutAttemptKey, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
 import type { DeliveryMode } from "@/types/order";
 import { saveGuestOrderAccess } from "@/components/orders/orderAccessStorage";
+import { waitForAuthHydration } from "@/components/orders/customerOrderAccess";
 
 export function CheckoutForm() {
   function notifyDeliveryChange(event: ChangeEvent<HTMLFormElement>) {
@@ -43,7 +44,9 @@ export function CheckoutForm() {
     setMessage(null);
 
     try {
-      const order = await submitOrderToApi(buildCreateOrderRequest(values, items));
+      const user = await waitForAuthHydration();
+      const idToken = user ? await user.getIdToken() : null;
+      const order = await submitOrderToApi(buildCreateOrderRequest(values, items), idToken);
       if (order.customerAccessToken) saveGuestOrderAccess({ orderId: order.orderId, orderNumber: order.orderNumber, token: order.customerAccessToken });
       resetCheckoutAttemptKey();
       clearCart();
