@@ -46,7 +46,7 @@ export function buildCreateOrderRequest(values: OrderFormValues, cartItems: Cart
       lookImage: item.lookImage ?? null,
       lookOriginalProductIds: item.lookOriginalProductIds ?? null,
     })),
-    idempotencyKey: crypto.randomUUID(),
+    idempotencyKey: getCheckoutAttemptKey(cartItems),
   };
 }
 
@@ -77,13 +77,30 @@ export async function submitOrderToApi(payload: CreateOrderRequest): Promise<Cre
   return body as CreateOrderResponse;
 }
 
+export function getCheckoutCartSignature(cartItems: CartItem[]): string {
+  return cartItems.map((item) => [item.productId, item.selectedSize ?? "", item.selectedColor ?? "", item.quantity, item.lookGroupId ?? ""].join(":"))
+    .sort()
+    .join("|");
+}
+
+let checkoutAttemptKey: { signature: string; key: string } | null = null;
+
+export function getCheckoutAttemptKey(cartItems: CartItem[]): string {
+  const signature = getCheckoutCartSignature(cartItems);
+  if (!checkoutAttemptKey || checkoutAttemptKey.signature !== signature) checkoutAttemptKey = { signature, key: crypto.randomUUID() };
+  return checkoutAttemptKey.key;
+}
+
+export function resetCheckoutAttemptKey() { checkoutAttemptKey = null; }
+
+
 function getErrorMessage(body: unknown, status: number): string {
   if (typeof body === "object" && body !== null) {
     if ("message" in body && typeof body.message === "string") return body.message;
     if ("error" in body && typeof body.error === "string") return body.error;
   }
 
-  if (status === 429) return "Too many checkout attempts. Please try again later.";
+  if (status === 429) { const retryAfter = typeof body === "object" && body !== null && "retryAfterSeconds" in body && typeof body.retryAfterSeconds === "number" ? ` Please wait about ${Math.ceil(body.retryAfterSeconds / 60)} minute(s).` : ""; return `Too many checkout attempts.${retryAfter}`; }
   if (status === 400) return "Please check your order details and try again.";
   return "Could not create order. Please try again.";
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import { useCart } from "@/context/cart";
-import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
+import { buildCreateOrderRequest, resetCheckoutAttemptKey, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
 import type { DeliveryMode } from "@/types/order";
 import { saveGuestOrderAccess } from "@/components/orders/orderAccessStorage";
 
@@ -45,8 +45,9 @@ export function CheckoutForm() {
     try {
       const order = await submitOrderToApi(buildCreateOrderRequest(values, items));
       if (order.customerAccessToken) saveGuestOrderAccess({ orderId: order.orderId, orderNumber: order.orderNumber, token: order.customerAccessToken });
+      resetCheckoutAttemptKey();
       clearCart();
-      router.push(`/order-success/${encodeURIComponent(order.orderId)}`);
+      router.push(`/orders/${encodeURIComponent(order.orderId)}?status=success`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not create order. Please try again.");
     } finally {

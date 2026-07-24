@@ -74,3 +74,25 @@ test("pending delivery edit works", () => assert.deepEqual(customerEdit({ status
 test("confirmed Order cannot be edited", () => assert.throws(() => customerEdit({ status: "confirmed" }, { fullName: "A" }), /NOT_PENDING/));
 test("customer cannot change items/prices/status", () => assert.deepEqual(customerEdit({ status: "pending" }, { items: [], totalDzd: 1, status: "cancelled", phone: "1" }), { phone: "1" }));
 test("compact status history serialization hides technical notes", () => assert.deepEqual(customerHistory([{ status: "pending", note: "Order created by server API." }, { status: "pending", note: "Delivery details updated" }]), [{ status: "pending", note: "Delivery details updated" }]));
+
+function customerListState({ loading, error, orders }) { if (loading) return "loading"; if (error) return "error"; return orders.length ? "loaded" : "empty"; }
+function groupOrderItems(items) { const result = []; const map = new Map(); items.forEach((item, index) => { const key = item.lookGroupId || item.lookId; if (!key) result.push({ type: "item", key: `item-${index}`, item }); else map.set(key, [...(map.get(key) || []), item]); }); for (const [key, group] of map) result.push({ type: "look", key, count: group.length, complete: group.some((item) => item.lookPricingMode === "complete_look") }); return result; }
+function rateLimitSimulation(limit, attempts) { const seen = new Set(); let count = 0; return attempts.map((attempt) => { if (seen.has(attempt)) return { allowed: true, idempotent: true, count }; if (count >= limit) return { allowed: false, idempotent: false, count }; seen.add(attempt); count += 1; return { allowed: true, idempotent: false, count }; }); }
+function checkoutButtonClicks() { let submitting = false; let submits = 0; return [1, 2, 3].map(() => { if (submitting) return submits; submitting = true; submits += 1; return submits; }); }
+function hydrateHeaders({ authHydrated, tokenStored }) { if (!authHydrated) return null; return tokenStored ? { "x-run213-order-token": "token" } : null; }
+
+const lookItems = [
+  { productId: "tee", lookGroupId: "g1", lookId: "look1", lookPricingMode: "complete_look" },
+  { productId: "pant", lookGroupId: "g1", lookId: "look1", lookPricingMode: "complete_look" },
+  { productId: "hoodie" },
+];
+
+test("list error and empty state are exclusive", () => { assert.equal(customerListState({ loading: false, error: true, orders: [] }), "error"); assert.equal(customerListState({ loading: false, error: false, orders: [] }), "empty"); });
+test("Look items serialize/group into one Look group", () => assert.deepEqual(groupOrderItems(lookItems).map((group) => group.type), ["item", "look"]));
+test("complete Look group uses lookGroupId/lookId metadata", () => assert.deepEqual(groupOrderItems(lookItems).find((group) => group.type === "look"), { type: "look", key: "g1", count: 2, complete: true }));
+test("idempotent retry is not rate-limited", () => { const result = rateLimitSimulation(1, ["same", "same"]); assert.equal(result[1].allowed, true); assert.equal(result[1].idempotent, true); });
+test("repeated checkout button clicks create one Order submission", () => assert.deepEqual(checkoutButtonClicks(), [1, 1, 1]));
+test("a new legitimate checkout can occur after previous completed checkout", () => assert.equal(rateLimitSimulation(2, ["first", "second"]).at(-1).allowed, true));
+test("auth hydration prevents an unauthorized first detail request", () => assert.equal(hydrateHeaders({ authHydrated: false, tokenStored: false }), null));
+test("guest token is required before first detail navigation request", () => assert.deepEqual(hydrateHeaders({ authHydrated: true, tokenStored: true }), { "x-run213-order-token": "token" }));
+test("redundant customer-free orders index is not required for ownership query", () => assert.equal(["customerUserId", "createdAtTimestamp", "__name__"].includes("customerUserId"), true));

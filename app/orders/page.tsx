@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { CustomerOrdersClient } from "@/components/orders/CustomerOrdersClient";
