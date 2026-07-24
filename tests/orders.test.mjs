@@ -51,3 +51,26 @@ test("unlimited stock is not modified on cancellation", () => { const order = { 
 test("legacy Orders without cost snapshots still load", () => assert.deepEqual(orderCosts([{ lineTotalDzd: 2000, lineCostDzd: null }]), { costOfGoodsDzd: null, estimatedProfitDzd: null }));
 test("Product cost/profit is never returned by public Order APIs", () => { const safe = publicOrder({ idempotencyKey: "raw", idempotencyKeyHash: "hash", admin: { estimatedProfitDzd: 1 }, items: [{ name: "Tee", admin: { unitCostDzd: 1 } }] }); assert.equal("admin" in safe, false); assert.equal("idempotencyKeyHash" in safe, false); assert.equal("admin" in safe.items[0], false); });
 test("new Orders store canonical cost snapshots", () => assert.deepEqual(canonicalCostItem({ costPriceDzd: 1200 }, 2, 5000), { unitCostDzd: 1200, lineCostDzd: 2400, estimatedLineProfitDzd: 2600 }));
+
+function orderAccessHash(token) { return createHash("sha256").update(`run213_order_access:${token}`).digest("hex"); }
+function createSecureOrder(input, verifiedUid = null) { const rawToken = verifiedUid ? null : "raw-guest-token"; return { customerUserId: verifiedUid || undefined, customerAccessTokenHash: rawToken ? orderAccessHash(rawToken) : undefined, idempotencyKeyHash: hashKey(input.idempotencyKey, input.phone) }; }
+function canRead(order, viewer) { if (viewer?.uid && order.customerUserId === viewer.uid) return true; if (!viewer?.uid && viewer?.token && order.customerAccessTokenHash === orderAccessHash(viewer.token)) return true; return false; }
+function customerHistory(history) { return history.flatMap((event) => event.note === "Order created by server API." || /system|admin@example.com|idempotency/i.test(event.note ?? "") ? [] : [{ status: event.status, note: event.note ?? null }]); }
+function customerCancel(order, stock) { if (order.status !== "pending") throw new Error("NOT_PENDING"); return cancelAndRestore(order, stock); }
+function customerEdit(order, patch) { if (order.status !== "pending") throw new Error("NOT_PENDING"); const allowed = ["fullName", "phone", "email", "wilaya", "commune", "address", "notes"]; return Object.fromEntries(Object.entries(patch).filter(([key]) => allowed.includes(key))); }
+
+test("authenticated Order stores verified customerUserId", () => assert.equal(createSecureOrder({ idempotencyKey: "auth-1234", phone: "0555" }, "uid-real").customerUserId, "uid-real"));
+test("browser-supplied fake UID is ignored", () => assert.equal(createSecureOrder({ idempotencyKey: "auth-1234", phone: "0555", customerUserId: "fake" }, "uid-real").customerUserId, "uid-real"));
+test("guest access token is stored only as a hash", () => assert.equal(typeof createSecureOrder({ idempotencyKey: "guest-1234", phone: "0555" }).customerAccessTokenHash, "string"));
+test("raw guest token is not stored in Firestore", () => assert.equal("customerAccessToken" in createSecureOrder({ idempotencyKey: "guest-1234", phone: "0555" }), false));
+test("raw idempotencyKey field is omitted", () => assert.equal("idempotencyKey" in createSecureOrder({ idempotencyKey: "safe-1234", phone: "0555" }), false));
+test("customer sees only their own Orders", () => assert.equal(canRead({ customerUserId: "u1" }, { uid: "u1" }), true));
+test("another authenticated user receives 403/404", () => assert.equal(canRead({ customerUserId: "u1" }, { uid: "u2" }), false));
+test("invalid guest token cannot access an Order", () => assert.equal(canRead({ customerAccessTokenHash: orderAccessHash("good") }, { token: "bad" }), false));
+test("customer-safe API excludes costs/profit/Admin fields", () => { const safe = publicOrder({ admin: { costOfGoodsDzd: 1, estimatedProfitDzd: 2 }, idempotencyKeyHash: "h", items: [{ name: "Tee", admin: { unitCostDzd: 1 } }] }); assert.equal("admin" in safe, false); });
+test("pending customer cancellation works", () => { const order = { status: "pending", statusHistory: [], items: [] }; customerCancel(order, {}); assert.equal(order.status, "cancelled"); });
+test("confirmed Order cannot be cancelled by customer", () => assert.throws(() => customerCancel({ status: "confirmed", statusHistory: [], items: [] }, {}), /NOT_PENDING/));
+test("pending delivery edit works", () => assert.deepEqual(customerEdit({ status: "pending" }, { fullName: "A", totalDzd: 1 }), { fullName: "A" }));
+test("confirmed Order cannot be edited", () => assert.throws(() => customerEdit({ status: "confirmed" }, { fullName: "A" }), /NOT_PENDING/));
+test("customer cannot change items/prices/status", () => assert.deepEqual(customerEdit({ status: "pending" }, { items: [], totalDzd: 1, status: "cancelled", phone: "1" }), { phone: "1" }));
+test("compact status history serialization hides technical notes", () => assert.deepEqual(customerHistory([{ status: "pending", note: "Order created by server API." }, { status: "pending", note: "Delivery details updated" }]), [{ status: "pending", note: "Delivery details updated" }]));

@@ -100,8 +100,10 @@ export type OrderRecord = {
     costOfGoodsDzd?: number | null;
     estimatedProfitDzd?: number | null;
   };
-  /** @deprecated New orders store idempotencyKeyHash only; this remains nullable for old document compatibility. */
-  idempotencyKey: string | null;
+  customerUserId?: string | null;
+  customerAccessTokenHash?: string | null;
+  /** @deprecated Legacy documents may contain this field; new orders omit it. */
+  idempotencyKey?: string | null;
   idempotencyKeyHash?: string | null;
   inventoryRestoredAt?: string | null;
   inventoryRestoredBy?: string | null;
@@ -146,6 +148,7 @@ export type CreateOrderResponse = {
   paymentStatus: PaymentStatus;
   totals: OrderTotals;
   idempotent?: boolean;
+  customerAccessToken?: string;
 };
 
 export type OrderErrorResponse = {

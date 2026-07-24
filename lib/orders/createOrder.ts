@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { createCustomerAccessToken, hashCustomerAccessToken } from "@/lib/orders/accessToken";
 import type { Product, ProductCategory, ProductImage, ProductSize, ProductStockMode } from "@/types/product";
 import type { CreateOrderRequest, CreateOrderResponse, DeliveryInfo, OrderItem, OrderRecord } from "@/types/order";
 import { createOrderNumber } from "@/lib/orders/orderNumber";
@@ -40,7 +41,7 @@ export class OrderCreationError extends Error {
 type ExistingOrderResult = CreateOrderResponse & { idempotent: true };
 type NewOrderResult = CreateOrderResponse & { idempotent: false };
 
-export async function createOrder(input: CreateOrderRequest): Promise<ExistingOrderResult | NewOrderResult> {
+export async function createOrder(input: CreateOrderRequest, verifiedCustomerUid?: string | null): Promise<ExistingOrderResult | NewOrderResult> {
   const [{ getAdminDb }, { FieldValue, Timestamp }] = await Promise.all([
     import("@/lib/firebase/admin"),
     import("firebase-admin/firestore"),
@@ -54,6 +55,8 @@ export async function createOrder(input: CreateOrderRequest): Promise<ExistingOr
   const lockRef = adminDb.collection(IDEMPOTENCY_COLLECTION).doc(idempotencyHash);
   const orderRef = adminDb.collection(ORDERS_COLLECTION).doc();
   const orderNumber = createOrderNumber(now);
+  const guestAccessToken = verifiedCustomerUid ? null : createCustomerAccessToken();
+  const customerAccessTokenHash = guestAccessToken ? hashCustomerAccessToken(guestAccessToken) : null;
 
   const record = await adminDb.runTransaction(async (transaction) => {
     const lockSnapshot = await transaction.get(lockRef);
@@ -121,7 +124,7 @@ export async function createOrder(input: CreateOrderRequest): Promise<ExistingOr
         notes: "Limited stock was validated and decremented in the order transaction where applicable.",
         ...calculateOrderAdminTotals(items),
       },
-      idempotencyKey: null,
+      ...(verifiedCustomerUid ? { customerUserId: verifiedCustomerUid } : { customerAccessTokenHash }),
       idempotencyKeyHash: idempotencyHash,
       createdAt: nowIso,
       updatedAt: nowIso,
@@ -152,6 +155,7 @@ export async function createOrder(input: CreateOrderRequest): Promise<ExistingOr
       paymentStatus: order.paymentStatus,
       totals: order.totals,
       idempotent: false as const,
+      ...(guestAccessToken ? { customerAccessToken: guestAccessToken } : {}),
     };
   });
 

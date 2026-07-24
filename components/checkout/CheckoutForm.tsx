@@ -7,6 +7,7 @@ import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import { useCart } from "@/context/cart";
 import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
 import type { DeliveryMode } from "@/types/order";
+import { saveGuestOrderAccess } from "@/components/orders/orderAccessStorage";
 
 export function CheckoutForm() {
   function notifyDeliveryChange(event: ChangeEvent<HTMLFormElement>) {
@@ -43,8 +44,9 @@ export function CheckoutForm() {
 
     try {
       const order = await submitOrderToApi(buildCreateOrderRequest(values, items));
+      if (order.customerAccessToken) saveGuestOrderAccess({ orderId: order.orderId, orderNumber: order.orderNumber, token: order.customerAccessToken });
       clearCart();
-      router.push(`/checkout?status=success&orderNumber=${encodeURIComponent(order.orderNumber)}`);
+      router.push(`/order-success/${encodeURIComponent(order.orderId)}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not create order. Please try again.");
     } finally {
