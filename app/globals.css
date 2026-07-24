@@ -5714,3 +5714,34 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .adminOrderStatus { display: inline-flex; align-items: center; gap: .34rem; border-radius: 999px; background: rgba(255,255,255,.08); color: #f4f4f0; padding: .32rem .5rem; font-size: .62rem; font-style: normal; font-weight: 950; text-transform: uppercase; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 @media (max-width: 760px) { .orderCard { grid-template-columns: 4.4rem minmax(0,1fr); } .orderCard .customerStatus, .orderCard b, .orderCard a { justify-self: start; grid-column: 2; } .orderDetailHeader { display: grid; } .orderDetailGrid { grid-template-columns: 1fr; } .customerOrderItem { grid-template-columns: 4.4rem minmax(0,1fr); } .customerOrderItem dl { grid-column: 2; flex-wrap: wrap; } }
+.orderBack { display: inline-flex; width: fit-content; align-items: center; gap: .35rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); padding: .55rem .8rem; text-decoration: none; }
+.orderDetailHeader--compact { align-items: center; padding: .9rem 1rem; }
+.orderDetailHeader--compact h1 { max-width: 100%; font-size: clamp(1.6rem, 3.4vw, 3rem); line-height: 1; white-space: nowrap; }
+.orderDetailHeader--compact small { display: block; margin-top: .35rem; color: var(--muted); font-weight: 800; }
+.orderSuccessNotice { position: relative; border: 1px solid rgba(199,244,0,.65); border-radius: 1rem; background: rgba(199,244,0,.18); color: #050505; padding: .8rem 2.4rem .8rem 1rem; }
+.orderSuccessNotice strong { display: block; font-weight: 950; letter-spacing: .04em; }
+.orderSuccessNotice p { margin: .15rem 0 0; font-weight: 750; }
+.orderSuccessNotice button { position: absolute; right: .65rem; top: .45rem; border: 1px solid rgba(0,0,0,.14); border-radius: 999px; background: #fbf8f0; width: 1.55rem; height: 1.55rem; font-weight: 950; }
+.inlineSwatch { display: inline-block; width: .8rem; height: .8rem; border-radius: 999px; border: 1px solid rgba(0,0,0,.22); vertical-align: middle; }
+.customerOrderItem small, .adminOrderItem small { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
+.lookOrderGroup { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: .8rem; border: 1px solid var(--border); border-radius: 1rem; background: rgba(255,250,240,.62); padding: .75rem; margin: .65rem 0; }
+.lookOrderGroup > img, .lookOrderGroup > span { width: 5rem; height: 5rem; border-radius: .85rem; object-fit: cover; background: var(--surface-soft); }
+.lookOrderGroup > div:first-of-type { display: grid; align-content: center; gap: .2rem; }
+.lookOrderGroup strong { font-weight: 950; text-transform: uppercase; }
+.lookOrderGroup small { color: var(--muted); font-weight: 900; }
+.lookOrderChildren { grid-column: 1 / -1; display: grid; gap: .2rem; margin-top: .25rem; }
+.customerOrderItem--child { border-top: 0; border-radius: .75rem; background: rgba(255,255,255,.42); padding: .45rem; grid-template-columns: 3.25rem minmax(0,1fr) auto; }
+.customerOrderItem--child img, .customerOrderItem--child > span { width: 3.2rem; height: 3.2rem; }
+.orderProgress { display: grid; gap: .35rem; margin-top: .8rem; }
+.orderProgress p { display: grid; grid-template-columns: 7rem minmax(0,1fr); gap: .6rem; margin: 0; align-items: baseline; }
+.orderProgress strong { font-size: .72rem; font-weight: 950; }
+.orderProgress small { color: var(--muted); font-weight: 800; }
+.adminStatusModal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(0,0,0,.56); padding: 1rem; }
+.adminStatusModal__card { width: min(28rem, 100%); border: 1px solid rgba(199,244,0,.22); border-radius: 1.2rem; background: #111211; color: #f4f4f0; box-shadow: 0 1.5rem 4rem rgba(0,0,0,.45); padding: 1.1rem; }
+.adminStatusModal__card > span { color: var(--lime); font-size: .7rem; font-weight: 950; letter-spacing: .12em; }
+.adminStatusModal__card h3 { margin: .35rem 0; font-size: 1.35rem; text-transform: uppercase; }
+.adminStatusModal__card p { color: #b5b5ae; font-weight: 750; }
+.adminStatusModal__card label { display: grid; gap: .35rem; font-size: .72rem; font-weight: 950; letter-spacing: .08em; }
+.adminStatusModal__card textarea { border: 1px solid rgba(255,255,255,.16); border-radius: .8rem; background: #070807; color: #f4f4f0; padding: .75rem; }
+.adminStatusModal__card > div { display: flex; gap: .5rem; margin-top: .8rem; }
+@media (max-width: 760px) { .orderDetailHeader--compact h1 { white-space: normal; overflow-wrap: anywhere; } .lookOrderGroup { grid-template-columns: 1fr; } .lookOrderChildren { grid-column: auto; } }

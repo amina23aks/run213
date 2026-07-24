@@ -5,22 +5,23 @@ import { createOrderRequestSchema } from "@/lib/orders/validation";
 import type { OrderErrorResponse } from "@/types/order";
 import { verifyOptionalCustomerRequest } from "@/lib/customer-auth";
 
-const CHECKOUT_RATE_LIMIT = 5;
-const CHECKOUT_RATE_WINDOW_MS = 60 * 60 * 1000;
+const CHECKOUT_RATE_LIMIT = 8;
+const CHECKOUT_RATE_WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
-  const ip = getClientIp(request);
-  const rateLimit = checkRateLimit(`orders:${ip}`, CHECKOUT_RATE_LIMIT, CHECKOUT_RATE_WINDOW_MS);
-
-  if (!rateLimit.allowed) {
-    return orderError("rate_limited", "Too many checkout attempts. Please try again later.", 429);
-  }
-
   const body: unknown = await request.json().catch(() => null);
   const parsed = createOrderRequestSchema.safeParse(body);
 
   if (!parsed.success) {
     return orderError("invalid_request", "Invalid order details.", 400, Object.fromEntries(parsed.error.issues.slice(0, 8).map((issue) => [issue.path.join(".") || "form", issue.message])));
+  }
+
+  const ip = getClientIp(request);
+  const customerKey = parsed.data.customer.phone.replace(/[^0-9+]/g, "") || "unknown-phone";
+  const rateLimit = checkRateLimit(`orders:${ip}:${customerKey}`, CHECKOUT_RATE_LIMIT, CHECKOUT_RATE_WINDOW_MS, parsed.data.idempotencyKey);
+
+  if (!rateLimit.allowed) {
+    return orderError("rate_limited", "Too many checkout attempts. Please try again later.", 429, undefined, rateLimit.retryAfterSeconds);
   }
 
   try {
@@ -37,9 +38,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function orderError(code: string, message: string, status: number, fieldErrors?: Record<string, string>) {
-  const body: OrderErrorResponse = { ok: false, code, message, ...(fieldErrors ? { fieldErrors } : {}) };
-  return NextResponse.json(body, { status });
+function orderError(code: string, message: string, status: number, fieldErrors?: Record<string, string>, retryAfterSeconds?: number) {
+  const body: OrderErrorResponse & { retryAfterSeconds?: number } = { ok: false, code, message, ...(fieldErrors ? { fieldErrors } : {}), ...(retryAfterSeconds ? { retryAfterSeconds } : {}) };
+  return NextResponse.json(body, { status, headers: retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : undefined });
 }
 
 function getClientIp(request: NextRequest): string {
