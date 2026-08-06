@@ -78,6 +78,10 @@ export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, chil
           ))}
         </nav>
 
+        <div className="adminSidebar__store">
+          <Link href="/" onClick={closeNav}>VIEW STORE <span aria-hidden="true">↗</span></Link>
+        </div>
+
         <div className="adminSidebar__footer">
           <p className="adminSidebar__note">BUILT. NOT FOUND. Keep the operations clean, focused, and ready for every drop.</p>
         </div>
