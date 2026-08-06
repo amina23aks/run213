@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createRunClubPublicId, getCloudinaryEnv, signCloudinaryParams } from "@/lib/run-club/cloudinary";
 import { getAlgiersMonthKey, safeApiError } from "@/lib/run-club/security";
 import { RUN_CLUB_ALLOWED_MIME_TYPES, RUN_CLUB_MAX_IMAGE_BYTES } from "@/lib/run-club/validation";
+import { CustomerAuthError, requireCustomerRequest } from "@/lib/customer-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -10,6 +11,8 @@ export const runtime = "nodejs";
 const requestSchema = z.object({ fileType: z.enum(RUN_CLUB_ALLOWED_MIME_TYPES), fileSize: z.number().int().positive().max(RUN_CLUB_MAX_IMAGE_BYTES) }).strict();
 
 export async function POST(request: NextRequest) {
+  try { await requireCustomerRequest(request); }
+  catch (error) { return safeApiError("validation_failed", error instanceof CustomerAuthError ? error.message : "Sign in to submit a run.", 401); }
   const body: unknown = await request.json().catch(() => null);
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) return safeApiError("invalid_image", "Upload a JPG, PNG, or WEBP image up to 5MB.", 400);
