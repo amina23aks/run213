@@ -9,9 +9,9 @@ test("fake UID and cross-account access are impossible",()=>{assert.match(accoun
 test("authenticated submission snapshots verified UID",()=>{assert.match(submit,/requireCustomerRequest/);assert.match(submit,/customerUserId = .*\.uid/);assert.doesNotMatch(submit,/parsed\.data\.customerUserId/)});
 test("old submissions are never identity matched",()=>assert.doesNotMatch(accountRuns,/contactValue|normalizedContact|instagramHash|phone/));
 test("owned query is limited and never loads full collection",()=>{assert.match(accountRuns,/where\(\"customerUserId\",\"==\",customer\.uid\)/);assert.match(accountRuns,/limit\(9\)/)});
-test("pending direct edit and cancellation are ownership scoped",()=>{assert.match(accountRuns,/d\.status===\"pending\"/);assert.match(accountRuns,/customer_cancelled/)});
+test("customer edit and removal are ownership scoped",()=>{assert.match(accountRuns,/d\.status!=="pending"&&d\.status!=="approved"/);assert.match(accountRuns,/customer_removed/)});
 test("approved edit keeps public content until moderation",()=>{assert.match(accountRuns,/pendingRevision:values/);assert.doesNotMatch(accountRuns,/pendingRevision:values,publicCaption/);assert.match(admin,/edit_approved/)});
-test("approved removal hides immediately and requires moderation",()=>{assert.match(accountRuns,/moderationState:\"removal_requested\",publicVisible:false/);assert.match(admin,/removal_approved/);assert.match(admin,/removal_rejected/)});
+test("customer removal hides immediately without deleting history",()=>{assert.match(accountRuns,/status:"removed",moderationState:"removed",publicVisible:false/);assert.doesNotMatch(accountRuns,/winnerSubmissionIds|winnerSelectedAt/)});
 test("private contact fields are absent from customer serializer",()=>{for(const field of ["contactValue","normalizedContact","instagram"])assert.doesNotMatch(accountRuns,new RegExp(field))});
 test("sign-out clears private rendered state",()=>assert.match(account,/setProfile\(null\);setRuns\(\[\]\);setCursor\(null\)/));
 test("account has no saved delivery details and checkout has no prefill",()=>{assert.doesNotMatch(account,/SAVED DELIVERY|phone|deliveryMode|photoURL/);assert.doesNotMatch(checkout,/loadProfile|SAVE THESE DETAILS/)});

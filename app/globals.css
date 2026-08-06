@@ -5795,3 +5795,261 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 /* Customer account */
 .accountPage{width:min(100%,72rem);margin:0 auto;padding:6rem clamp(1rem,4vw,2.5rem) 2.5rem}.accountPage__head span,.accountIdentity>small{color:var(--muted);font-size:.68rem;font-weight:950;letter-spacing:.14em}.accountPage__head h1{margin:.3rem 0 1rem;font-size:clamp(2rem,5vw,3.6rem);font-weight:950;letter-spacing:-.055em;line-height:.9}.accountGrid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:1rem;align-items:start}.accountColumn{display:grid;gap:1rem}.accountCard{min-width:0;border:1px solid var(--border);border-radius:1rem;background:rgba(255,250,240,.82);padding:1rem}.accountCard h2{margin:0;font-size:.85rem;font-weight:950;letter-spacing:.04em}.accountCard p{color:var(--muted);font-size:.75rem;font-weight:750}.accountIdentity p{margin:.2rem 0;overflow-wrap:anywhere}.accountNameLine{display:flex;align-items:center;gap:.4rem;margin:.3rem 0}.accountNameLine h2{font-size:1.15rem;overflow-wrap:anywhere}.accountNameLine button{display:grid;width:1.8rem;height:1.8rem;place-items:center;border:1px solid var(--border);border-radius:999px;background:transparent;color:#050505;font-size:1rem}.accountNameEdit{display:grid;gap:.55rem;margin-top:.8rem;border-top:1px solid var(--border);padding-top:.8rem}.accountNameEdit label{display:grid;gap:.3rem;font-size:.65rem;font-weight:950}.accountNameEdit input,.accountRunCard input{min-width:0;border:1px solid var(--border);border-radius:.6rem;background:var(--surface);padding:.65rem}.accountNameEdit div,.accountRunActions,.accountRunCard form{display:flex;flex-wrap:wrap;gap:.4rem}.accountNameEdit button,.accountRunActions button,.accountRunCard form button,.accountLoadMore,.accountSignout button,.accountState button{border:1px solid #050505;border-radius:.6rem;background:var(--lime);color:#050505;padding:.58rem .7rem;font-size:.64rem;font-weight:950}.accountActivity{display:grid;margin-top:.55rem}.accountActivity a{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-top:1px solid var(--border);color:var(--text);padding:.68rem 0;font-size:.7rem;font-weight:950;text-decoration:none}.accountActivity a>span{display:flex;align-items:center;gap:.55rem}.accountActivity picture{display:block;width:2.25rem;height:2.25rem;flex:0 0 auto}.accountActivity img{display:block;width:2.25rem;height:2.25rem;object-fit:contain}.accountActivity b{color:#050505;text-align:right}.accountFeedback{border-radius:.75rem;padding:.75rem;font-size:.75rem;font-weight:950}.accountFeedback--success{background:var(--lime);color:#050505}.accountFeedback--error{color:#b91c1c!important}.accountSignout{display:flex;justify-content:space-between;align-items:center;gap:1rem}.accountSignout p{margin:.25rem 0 0}.accountSignout button{background:transparent}.accountRuns{display:grid;gap:.65rem}.accountRuns__heading{display:flex;align-items:center;justify-content:space-between;gap:.75rem}.accountRuns__heading button,.accountRuns__error button{border:0;background:transparent;color:#050505;font-size:.62rem;font-weight:950;text-decoration:underline;text-underline-offset:.2rem}.accountRuns__error{display:flex;align-items:center;justify-content:space-between;gap:.75rem;border-top:1px solid var(--border);padding-top:.7rem}.accountRuns__error p{margin:0}.accountRunCard{display:grid;grid-template-columns:5rem minmax(0,1fr);gap:.7rem;border-top:1px solid var(--border);padding-top:.7rem}.accountRunCard>img{width:5rem;height:5rem;border-radius:.7rem;object-fit:cover}.accountRunCard p{margin:.25rem 0}.accountRunCard small{font-size:.6rem;font-weight:950}.accountRunMeta{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem}.accountRunMeta span,.accountRunMeta b,.accountRunMeta em{border:1px solid var(--border);border-radius:999px;padding:.2rem .35rem;font-size:.56rem;font-style:normal;font-weight:950}.accountRunMeta em{background:var(--lime);color:#050505}.accountRunActions{margin-top:.5rem}.accountRunCard form{margin-top:.5rem}.accountRunCard form input{flex:1 1 8rem}.accountState{min-height:55svh;display:grid;place-content:center;justify-items:center;gap:.8rem;font-weight:950}
 @media(max-width:700px){.accountGrid{grid-template-columns:1fr}.accountSignout{align-items:flex-start;flex-direction:column}.accountRunCard{grid-template-columns:4rem minmax(0,1fr)}.accountRunCard>img{width:4rem;height:4rem}}
+
+/* Account Run Club polish and clean authentication UX */
+.adminRunClubLinked{display:inline-flex;border:1px solid rgba(199,244,0,.45);border-radius:999px;background:rgba(199,244,0,.12);color:#f4f4f0;padding:.32rem .55rem;font-size:.65rem;font-weight:950;letter-spacing:.06em}
+.adminSidebar__store{margin-top:auto;padding:1rem 1.1rem 0}.adminSidebar__store a{display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,.16);border-bottom:1px solid rgba(255,255,255,.16);color:#c7f400;padding:.85rem 0;font-size:.72rem;font-weight:950;letter-spacing:.08em;text-decoration:none}.adminSidebar__store a:focus-visible{outline:2px solid #c7f400;outline-offset:4px}
+.accountPopover{padding:.35rem!important;min-width:12rem!important}.accountPopover>a,.accountPopover>button,.accountPopover__signedIn>a,.accountPopover__signedIn>button{display:flex;align-items:center;width:100%;height:2.75rem;border:0;border-radius:.55rem;background:transparent;color:#050505;padding:0 .8rem;font-family:inherit;font-size:.72rem;font-weight:900;letter-spacing:.06em;text-decoration:none}.accountPopover>a:hover,.accountPopover>button:hover,.accountPopover__signedIn>a:hover,.accountPopover__signedIn>button:hover,.accountPopover a:focus-visible,.accountPopover button:focus-visible{background:#eee8dc;outline:2px solid #050505;outline-offset:-2px}.accountPopover__signedIn{gap:0!important}.accountPopover__signedIn>span{padding:.55rem .8rem!important;font-size:.62rem!important}
+.accountAuthModal{align-items:center!important;padding:1rem!important}.accountAuthModal__card{width:min(100%,25rem)!important;max-height:calc(100svh - 2rem);overflow:auto;padding:1.3rem!important;gap:.75rem!important;border-radius:1.25rem!important}.accountAuthModal__card h2{font-size:clamp(2rem,8vw,2.8rem)!important}.accountAuthModal__switch{border:0;background:transparent;color:#050505;font-size:.68rem;font-weight:900;text-decoration:underline;text-underline-offset:.2rem}.accountMenu__google{background:#fff!important;border:1px solid #dadce0!important;border-radius:999px!important;color:#050505!important;text-transform:none!important}.accountMenu__googleIcon{width:1.25rem;height:1.25rem;flex:0 0 auto}.accountDivider{text-align:center}.accountMenu__form{gap:.65rem!important}
+.accountRunDetails{display:grid;gap:.36rem;margin:.6rem 0 0}.accountRunDetails div{display:grid;grid-template-columns:6.2rem minmax(0,1fr);gap:.55rem}.accountRunDetails dt{color:#5f5f5f;font-size:.56rem;font-weight:950;letter-spacing:.08em}.accountRunDetails dd{color:#050505;font-size:.72rem;font-weight:800;margin:0;overflow-wrap:anywhere}.accountRunVisibility{border:1px solid var(--border);border-radius:999px;color:#050505;padding:.2rem .35rem;font-size:.56rem;font-weight:950}.accountRunVisibility--public{background:#dff5df}.accountRunVisibility--private{background:#eee8dc}.accountRunCard__noImage{width:5rem;height:5rem;border-radius:.7rem;background:#eee8dc}.accountRunActions__remove{background:transparent!important;border-color:#8f1d1d!important;color:#8f1d1d!important}
+.accountRunModal{position:fixed;z-index:150;inset:0;display:grid;place-items:center;padding:1rem;background:rgba(5,5,5,.72)}.accountRunModal>section{width:min(100%,28rem);border:1px solid rgba(0,0,0,.12);border-radius:1.25rem;background:#fbf8f0;color:#050505;box-shadow:0 2rem 5rem rgba(0,0,0,.35);padding:1.2rem}.accountRunModal header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}.accountRunModal h2{margin:0;font-size:1.25rem;font-weight:950}.accountRunModal header button{width:2rem;height:2rem;border:1px solid rgba(0,0,0,.14);border-radius:999px;background:transparent;color:#050505;font-size:1.2rem}.accountRunModal form{display:grid;gap:.75rem;margin-top:1rem}.accountRunModal label{display:grid;gap:.35rem;font-size:.68rem;font-weight:950;letter-spacing:.08em}.accountRunModal input,.accountRunModal textarea{width:100%;border:1px solid rgba(0,0,0,.16);border-radius:.7rem;background:#fffdf7;color:#050505;padding:.7rem;font:inherit}.accountRunModal textarea{min-height:6rem;resize:vertical}.accountRunModal form>div,.accountRunModal__actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.85rem}.accountRunModal__primary,.accountRunModal__neutral,.accountRunModal__danger{min-height:2.65rem;border-radius:.65rem;padding:0 .85rem;font-size:.68rem;font-weight:950}.accountRunModal__primary{border:1px solid #c7f400;background:#c7f400;color:#050505}.accountRunModal__neutral{border:1px solid rgba(0,0,0,.3);background:transparent;color:#050505}.accountRunModal__danger{border:1px solid #751b1b;background:#751b1b;color:#fff}.accountFeedback--success{width:max-content;max-width:100%;background:#dff5df!important;color:#14532d!important}
+@media(max-width:700px){.accountRunCard__noImage{width:4rem;height:4rem}.accountRunDetails div{grid-template-columns:1fr}.accountRunModal form>div,.accountRunModal__actions{display:grid}.accountRunModal form>div button,.accountRunModal__actions button{width:100%}}
+
+/* Auth modal complete rebuild */
+.accountAuthModal {
+  align-items: center !important;
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  overflow: hidden;
+  padding: 5vh 4vw !important;
+  position: fixed;
+  z-index: 150;
+}
+.accountAuthModal__backdrop {
+  appearance: none;
+  background: rgba(5, 5, 5, 0.7) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  inset: 0;
+  padding: 0 !important;
+  position: absolute;
+}
+.accountAuthModal__card {
+  background: #fbf8f0 !important;
+  border: 1px solid rgba(31, 31, 31, 0.12) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.28) !important;
+  color: #050505 !important;
+  display: grid !important;
+  gap: 0.85rem !important;
+  max-height: 90vh !important;
+  max-width: 480px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 1.4rem !important;
+  position: relative;
+  width: min(92vw, 480px) !important;
+  z-index: 1;
+}
+.accountAuthModal__close {
+  appearance: none;
+  align-items: center;
+  background: #eee8dc !important;
+  border: 1px solid rgba(31, 31, 31, 0.14) !important;
+  border-radius: 999px !important;
+  color: #1f1f1f !important;
+  display: inline-flex;
+  font: inherit;
+  font-size: 1.25rem;
+  height: 2.25rem;
+  justify-content: center;
+  padding: 0 !important;
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  width: 2.25rem;
+}
+.accountAuthModal__close:hover { background: #e3ddcf !important; }
+.accountAuthModal__close:active { background: #d8d1c3 !important; transform: none !important; }
+.accountAuthModal__close:focus-visible { outline: 3px solid rgba(199, 244, 0, 0.65); outline-offset: 2px; }
+.accountAuthModal__close:disabled { cursor: not-allowed; opacity: 0.55; }
+.accountAuthModal__card .accountMenu__eyebrow {
+  color: #53534d !important;
+  font-size: 0.68rem !important;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  margin: 0;
+  padding-right: 3rem;
+}
+.accountAuthModal__card h2 {
+  color: #050505 !important;
+  font-size: clamp(2.625rem, 5vw, 3.25rem) !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.055em !important;
+  line-height: 0.94 !important;
+  margin: 0 !important;
+  max-width: calc(100% - 2.5rem);
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+.accountAuthModal__card .accountTabs {
+  background: #eee8dc !important;
+  border: 1px solid rgba(31, 31, 31, 0.1) !important;
+  border-radius: 999px !important;
+  display: grid !important;
+  gap: 0.25rem !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  margin: 0 !important;
+  padding: 0.25rem !important;
+  width: 100%;
+}
+.accountAuthModal__card .accountTabs button {
+  appearance: none;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  color: #1f1f1f !important;
+  font: inherit;
+  font-size: 0.75rem !important;
+  font-weight: 950 !important;
+  height: 2.4rem !important;
+  min-height: 0 !important;
+  padding: 0 0.75rem !important;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+.accountAuthModal__card .accountTabs button.isActive,
+.accountAuthModal__card .accountTabs button.isActive:hover,
+.accountAuthModal__card .accountTabs button.isActive:active {
+  background: #c7f400 !important;
+  box-shadow: 0 0.3rem 0.8rem rgba(31, 31, 31, 0.1) !important;
+  color: #050505 !important;
+}
+.accountAuthModal__card .accountTabs button:not(.isActive):hover { background: #f6f1e7 !important; }
+.accountAuthModal__card .accountTabs button:not(.isActive):active { background: #e5ded1 !important; }
+.accountAuthModal__card .accountTabs button:focus-visible { outline: 2px solid #050505 !important; outline-offset: -2px; }
+.accountAuthModal__card .accountTabs button:disabled { cursor: not-allowed; opacity: 0.58; }
+.accountAuthModal__card .accountMenu__form { display: grid !important; gap: 0.75rem !important; }
+.accountAuthModal__card .accountMenu__form label { display: grid; gap: 0.35rem; }
+.accountAuthModal__card .accountMenu__form label > span {
+  color: #353531 !important;
+  font-size: 0.7rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.12em;
+}
+.accountAuthModal__card .accountMenu__form input {
+  appearance: none;
+  background: #fffdf7 !important;
+  border: 1px solid rgba(31, 31, 31, 0.18) !important;
+  border-radius: 0.75rem !important;
+  color: #1f1f1f !important;
+  font: inherit;
+  font-size: 0.9rem;
+  height: 3rem !important;
+  min-height: 0 !important;
+  padding: 0 0.85rem !important;
+  width: 100%;
+}
+.accountAuthModal__card .accountMenu__form input:focus {
+  border-color: #4d5d00 !important;
+  box-shadow: 0 0 0 3px rgba(199, 244, 0, 0.3) !important;
+  outline: 0;
+}
+.accountAuthModal__card .accountMenu__form input[aria-invalid="true"] { border-color: #b42318 !important; }
+.accountAuthModal__card .accountMenu__form small,
+.accountAuthModal__card .accountMenu__message {
+  color: #b42318 !important;
+  display: block;
+  font-size: 0.75rem !important;
+  font-weight: 750;
+  line-height: 1.35;
+  margin: 0;
+}
+.accountAuthModal__card .accountMenu__primary {
+  appearance: none;
+  background: #c7f400 !important;
+  border: 1px solid #b6df00 !important;
+  border-radius: 0.75rem !important;
+  color: #050505 !important;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem !important;
+  font-weight: 950 !important;
+  height: 3.125rem !important;
+  justify-content: center;
+  margin-top: 0.1rem;
+  min-height: 3.125rem !important;
+  padding: 0 1rem !important;
+  text-decoration: none !important;
+  width: 100%;
+}
+.accountAuthModal__card .accountMenu__primary:hover { background: #bff000 !important; box-shadow: 0 0.4rem 1rem rgba(31, 31, 31, 0.1); transform: none !important; }
+.accountAuthModal__card .accountMenu__primary:active { background: #b6e300 !important; transform: translateY(1px) !important; }
+.accountAuthModal__card .accountMenu__primary:focus-visible { outline: 3px solid rgba(5, 5, 5, 0.75); outline-offset: 2px; }
+.accountAuthModal__card .accountMenu__primary:disabled { background: #c7f400 !important; cursor: not-allowed; opacity: 0.55; }
+.accountAuthModal__card .accountDivider {
+  align-items: center;
+  color: #5f5f59 !important;
+  display: grid !important;
+  font-size: 0.7rem !important;
+  font-weight: 900;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+  margin: 0.05rem 0 !important;
+  min-height: 1rem;
+}
+.accountAuthModal__card .accountDivider::before,
+.accountAuthModal__card .accountDivider::after { background: rgba(31, 31, 31, 0.16) !important; content: ""; height: 1px; }
+.accountAuthModal__card .accountMenu__google {
+  appearance: none;
+  align-items: center !important;
+  background: #fff !important;
+  border: 1px solid #dadce0 !important;
+  border-radius: 0.75rem !important;
+  color: #1f1f1f !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  font: inherit;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  gap: 0.75rem !important;
+  height: 3.125rem !important;
+  justify-content: center !important;
+  min-height: 3.125rem !important;
+  overflow: hidden;
+  padding: 0 1rem !important;
+  text-decoration: none !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  width: 100% !important;
+}
+.accountAuthModal__card .accountMenu__google:hover { background: #f8f9fa !important; box-shadow: 0 1px 3px rgba(60, 64, 67, 0.22); transform: none !important; }
+.accountAuthModal__card .accountMenu__google:active { background: #eee !important; box-shadow: none; transform: none !important; }
+.accountAuthModal__card .accountMenu__google:focus-visible { outline: 3px solid rgba(66, 133, 244, 0.32); outline-offset: 2px; }
+.accountAuthModal__card .accountMenu__google:disabled { background: #fff !important; cursor: not-allowed; opacity: 0.55; }
+.accountAuthModal__card .accountMenu__googleIcon,
+.accountAuthModal__card .accountMenu__googleSpinner { flex: 0 0 20px; height: 20px !important; width: 20px !important; }
+.accountAuthModal__card .accountMenu__googleSpinner {
+  animation: accountGoogleSpin 700ms linear infinite;
+  border: 2px solid #dadce0;
+  border-radius: 999px;
+  border-top-color: #4285f4;
+}
+@keyframes accountGoogleSpin { to { transform: rotate(360deg); } }
+.accountPopover > .accountPopover__login {
+  appearance: none;
+  background: #c7f400 !important;
+  border: 1px solid #b6df00 !important;
+  border-radius: 0.65rem !important;
+  color: #050505 !important;
+  justify-content: center;
+  margin-bottom: 0.2rem;
+  text-decoration: none !important;
+}
+.accountPopover > .accountPopover__login:hover { background: #bff000 !important; outline: 0 !important; }
+.accountPopover > .accountPopover__login:active { background: #b6e300 !important; }
+.accountPopover > .accountPopover__login:focus-visible { outline: 2px solid #050505 !important; outline-offset: 2px !important; }
+.accountPopover > .accountPopover__login:disabled { background: #c7f400 !important; opacity: 0.55; }
+@media (max-width: 560px) {
+  .accountAuthModal { align-items: center !important; padding: 12px !important; }
+  .accountAuthModal__card {
+    border-radius: 1rem !important;
+    max-height: 90vh !important;
+    padding: 1.1rem !important;
+    width: calc(100vw - 24px) !important;
+  }
+  .accountAuthModal__card h2 { font-size: clamp(2.125rem, 10vw, 2.5rem) !important; }
+  .accountAuthModal__card .accountMenu__primary,
+  .accountAuthModal__card .accountMenu__google,
+  .accountAuthModal__card .accountMenu__form input { width: 100% !important; }
+}

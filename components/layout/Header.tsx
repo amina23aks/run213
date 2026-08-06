@@ -9,9 +9,9 @@ import { useCart } from "@/context/cart";
 import { useFavorites } from "@/context/favorites";
 
 const navItems = [
+  { label: "HOME", href: "/" },
   { label: "SHOP", href: "/shop" },
   { label: "ORDERS", href: "/orders" },
-  { label: "DROP_001", href: "/#drop-001" },
   { label: "RUN CLUB", href: "/run-club" },
 ];
 
