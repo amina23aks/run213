@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import type { Auth, User } from "firebase/auth";
-import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getAuthErrorMessage, extractFirebaseAuthCode, shouldFallbackToRedirect } from "@/lib/auth-errors";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 
@@ -21,6 +21,9 @@ export function AccountMenu() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState<"email" | "google" | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [message, setMessage] = useState<string | null>(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : null);
 
@@ -40,7 +43,7 @@ export function AccountMenu() {
           setUser(nextUser);
           setMessage(null);
           setFormErrors({});
-          if (nextUser) setIsAuthOpen(false);
+          if (nextUser) { setIsAuthOpen(false); window.requestAnimationFrame(() => triggerRef.current?.focus()); }
         });
       })
       .catch(() => setMessage("Firebase Auth could not be initialized."));
@@ -60,7 +63,12 @@ export function AccountMenu() {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !busy) {
         setIsMenuOpen(false);
-        setIsAuthOpen(false);
+        if (isAuthOpen) {
+          setIsAuthOpen(false);
+          setFormErrors({});
+          setPassword("");
+          window.requestAnimationFrame(() => triggerRef.current?.focus());
+        }
       }
     };
 
@@ -68,7 +76,23 @@ export function AccountMenu() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [busy, isAuthOpen, isMenuOpen]);
 
+  useEffect(() => {
+    if (!isAuthOpen) return;
+    const frame = window.requestAnimationFrame(() => dialogRef.current?.querySelector<HTMLElement>("button, input")?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [isAuthOpen]);
+
+  function trapDialogFocus(event: ReactKeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])'));
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+
   function openAuth() {
+    setMode("login");
     setIsMenuOpen(false);
     setIsAuthOpen(true);
     setMessage(null);
@@ -80,6 +104,7 @@ export function AccountMenu() {
     setIsAuthOpen(false);
     setFormErrors({});
     setPassword("");
+    window.requestAnimationFrame(() => triggerRef.current?.focus());
   }
 
   function switchMode(nextMode: AuthMode) {
@@ -100,6 +125,7 @@ export function AccountMenu() {
   async function signInWithGoogle() {
     if (!auth) return;
     setBusy(true);
+    setBusyAction("google");
     setMessage(null);
     setFormErrors({});
 
@@ -121,6 +147,7 @@ export function AccountMenu() {
       }
     } finally {
       setBusy(false);
+      setBusyAction(null);
     }
   }
 
@@ -129,6 +156,7 @@ export function AccountMenu() {
     if (!auth || !validateForm()) return;
 
     setBusy(true);
+    setBusyAction("email");
     setMessage(null);
 
     try {
@@ -144,6 +172,7 @@ export function AccountMenu() {
       setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error)));
     } finally {
       setBusy(false);
+      setBusyAction(null);
     }
   }
 
@@ -165,6 +194,7 @@ export function AccountMenu() {
         className="accountMenu__trigger"
         type="button"
         aria-label="Open account menu"
+        ref={triggerRef}
         aria-expanded={isMenuOpen}
         onClick={() => setIsMenuOpen((current) => !current)}
       >
@@ -191,12 +221,16 @@ export function AccountMenu() {
       ) : null}
 
       {isAuthOpen ? (
-        <div className="accountAuthModal" role="dialog" aria-modal="true" aria-label="Login or sign up">
+        <div className="accountAuthModal" role="presentation">
           <button className="accountAuthModal__backdrop" type="button" aria-label="Close login" onClick={closeAuth} />
-          <section className="accountAuthModal__card">
+          <section ref={dialogRef} className="accountAuthModal__card" role="dialog" aria-modal="true" aria-labelledby="account-auth-title" onKeyDown={trapDialogFocus} onClick={(event) => event.stopPropagation()}>
             <button className="accountAuthModal__close" type="button" aria-label="Close login" onClick={closeAuth} disabled={busy}>×</button>
             <p className="accountMenu__eyebrow">RUN213 ACCOUNT</p>
-            <h2>{authTitle}</h2>
+            <h2 id="account-auth-title">{authTitle}</h2>
+            <div className="accountTabs" role="tablist" aria-label="Authentication mode">
+              <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "isActive" : undefined} disabled={busy} onClick={() => switchMode("login")}>LOGIN</button>
+              <button type="button" role="tab" aria-selected={mode === "signup"} className={mode === "signup" ? "isActive" : undefined} disabled={busy} onClick={() => switchMode("signup")}>SIGN UP</button>
+            </div>
             <form className="accountMenu__form" onSubmit={submitEmailAuth} noValidate>
               <label>
                 <span>Email</span>
@@ -208,15 +242,12 @@ export function AccountMenu() {
                 <input type="password" placeholder="Minimum 6 characters" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === "login" ? "current-password" : "new-password"} aria-invalid={Boolean(formErrors.password)} />
                 {formErrors.password ? <small>{formErrors.password}</small> : null}
               </label>
-              <button className="accountMenu__primary" type="submit" disabled={!auth || busy || Boolean(missingClientEnv.length)}>{busy ? "PLEASE WAIT…" : mode === "login" ? "SIGN IN →" : "CREATE ACCOUNT →"}</button>
+              <button className="accountMenu__primary" type="submit" disabled={!auth || busy || Boolean(missingClientEnv.length)}>{busyAction === "email" ? "PLEASE WAIT…" : mode === "login" ? "SIGN IN →" : "CREATE ACCOUNT →"}</button>
             </form>
-            <button className="accountAuthModal__switch" type="button" onClick={() => switchMode(mode === "login" ? "signup" : "login")}>
-              {mode === "login" ? "DON’T HAVE AN ACCOUNT? CREATE ONE" : "ALREADY HAVE AN ACCOUNT? SIGN IN"}
-            </button>
             <div className="accountDivider"><span>OR</span></div>
-            <button className="accountMenu__secondary accountMenu__google" type="button" onClick={signInWithGoogle} disabled={!auth || busy || Boolean(missingClientEnv.length)} aria-label="Sign in with Google">
-              <GoogleIcon />
-              <span>Sign in with Google</span>
+            <button className="accountMenu__secondary accountMenu__google" type="button" onClick={signInWithGoogle} disabled={!auth || busy || Boolean(missingClientEnv.length)} aria-label={mode === "login" ? "Sign in with Google" : "Sign up with Google"}>
+              {busyAction === "google" ? <span className="accountMenu__googleSpinner" aria-hidden="true" /> : <GoogleIcon />}
+              <span>{mode === "login" ? "Sign in with Google" : "Sign up with Google"}</span>
             </button>
             {message ? <p className="accountMenu__message" role="alert">{message}</p> : null}
           </section>
