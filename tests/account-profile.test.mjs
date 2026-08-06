@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-const profileApi=readFileSync("app/api/account/profile/route.ts","utf8"),profile=readFileSync("lib/profile/server.ts","utf8"),accountRuns=readFileSync("lib/run-club/customer.ts","utf8"),submit=readFileSync("app/api/run-club/submissions/route.ts","utf8"),account=readFileSync("components/account/AccountPageClient.tsx","utf8"),checkout=readFileSync("components/checkout/CheckoutForm.tsx","utf8"),admin=readFileSync("app/api/admin/run-club/submissions/[id]/route.ts","utf8");
+const profileApi=readFileSync("app/api/account/profile/route.ts","utf8"),profile=readFileSync("lib/profile/server.ts","utf8"),accountRuns=readFileSync("lib/run-club/customer.ts","utf8"),submit=readFileSync("app/api/run-club/submissions/route.ts","utf8"),form=readFileSync("components/run-club/RunClubSubmissionForm.tsx","utf8"),account=readFileSync("components/account/AccountPageClient.tsx","utf8"),checkout=readFileSync("components/checkout/CheckoutForm.tsx","utf8"),admin=readFileSync("app/api/admin/run-club/submissions/[id]/route.ts","utf8"),publicFeed=readFileSync("lib/run-club/public.ts","utf8");
 test("unauthenticated account API is rejected",()=>assert.equal((profileApi.match(/requireCustomerRequest\(request\)/g)||[]).length,2));
 test("profile update derives verified UID and edits display name only",()=>{assert.match(profile,/doc\(customer\.uid\)/);assert.match(profile,/displayNameSchema/);assert.doesNotMatch(profile,/input\.uid|checkoutDefaults|phone:/)});
 test("email cannot be edited",()=>{assert.match(profile,/authUser\.email/);assert.doesNotMatch(profile,/updateUser\([^)]*email/)});
@@ -15,3 +15,9 @@ test("approved removal hides immediately and requires moderation",()=>{assert.ma
 test("private contact fields are absent from customer serializer",()=>{for(const field of ["contactValue","normalizedContact","instagram"])assert.doesNotMatch(accountRuns,new RegExp(field))});
 test("sign-out clears private rendered state",()=>assert.match(account,/setProfile\(null\);setRuns\(\[\]\);setCursor\(null\)/));
 test("account has no saved delivery details and checkout has no prefill",()=>{assert.doesNotMatch(account,/SAVED DELIVERY|phone|deliveryMode|photoURL/);assert.doesNotMatch(checkout,/loadProfile|SAVE THESE DETAILS/)});
+test("signed-in submission waits for auth hydration",()=>{assert.match(form,/waitForAuthHydration\(\)/);assert.match(form,/disabled=\{!authHydrated \|\| isClosed \|\| processing\}/)});
+test("signed-in submission sends a fresh bearer token",()=>{assert.match(form,/getIdToken\(true\)/);assert.match(form,/Authorization: `Bearer \$\{token\}`/)});
+test("invalid supplied token never silently becomes a guest submission",()=>{assert.match(submit,/verifyOptionalCustomerRequest/);assert.match(submit,/CustomerAuthError/);assert.match(form,/Your session could not be verified/)});
+test("duplicate form submission is blocked",()=>assert.match(form,/status === "uploading" \|\| status === "submitting"/));
+test("owned activity includes every status because query has no status filter",()=>{assert.doesNotMatch(accountRuns,/where\("status"/);assert.match(accountRuns,/moderation\?\?String\(d\.status/)});
+test("public community remains approved-only",()=>assert.match(publicFeed,/data\.status !== "approved"/));

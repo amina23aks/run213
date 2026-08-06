@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RUN_CLUB_ALLOWED_MIME_TYPES, RUN_CLUB_MAX_IMAGE_BYTES, runClubSubmissionSchema } from "@/lib/run-club/validation";
+import { waitForAuthHydration } from "@/components/orders/customerOrderAccess";
 
 type FieldErrors = Record<string, string>;
 type UploadProof = { publicId: string; secureUrl: string; width: number; height: number; format: string; bytes: number; version: string; signature?: string };
@@ -16,7 +17,14 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<"idle" | "uploading" | "submitting" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [authHydrated, setAuthHydrated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    waitForAuthHydration().finally(() => { if (active) setAuthHydrated(true); });
+    return () => { active = false; };
+  }, []);
 
   function focusFirstError(nextErrors: FieldErrors) { window.requestAnimationFrame(() => { const firstKey = Object.keys(nextErrors).find((key) => nextErrors[key]); if (!firstKey) return; document.getElementById(firstKey === "proofImage" ? "run-club-proof" : firstKey === "consentAccepted" ? "run-club-consent" : `run-club-${firstKey}`)?.focus(); }); }
   function setFieldErrors(nextErrors: FieldErrors) { setErrors(nextErrors); focusFirstError(nextErrors); }
@@ -45,7 +53,7 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     return { publicId: upload.public_id, secureUrl: upload.secure_url, width: upload.width, height: upload.height, format: upload.format, bytes: upload.bytes, version: String(upload.version), signature: upload.signature };
   }
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); if (isClosed || status === "uploading" || status === "submitting") return;
+    event.preventDefault(); if (!authHydrated || isClosed || status === "uploading" || status === "submitting") return;
     if (!file) { setStatus("error"); setMessage("Run proof image is required."); setFieldErrors({ proofImage: "Run proof image is required." }); return; }
     setStatus("uploading"); setMessage(""); setErrors({});
     try {
@@ -54,8 +62,12 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
       const parsed = runClubSubmissionSchema.safeParse(payload);
       if (!parsed.success) { const nextErrors = Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value."])); setStatus("error"); setMessage("Check the highlighted fields and try again."); setFieldErrors(nextErrors); return; }
       setStatus("submitting");
-      const { auth } = await import("@/lib/firebase/client");
-      const token = await auth.currentUser?.getIdToken();
+      const user = await waitForAuthHydration();
+      let token: string | null = null;
+      if (user) {
+        try { token = await user.getIdToken(true); }
+        catch { throw new Error("Your session could not be verified. Please sign in again and retry."); }
+      }
       const response = await fetch("/api/run-club/submissions", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(parsed.data) });
       const result = await response.json();
       if (!response.ok || !result.ok) { const nextErrors = result.fieldErrors ?? {}; if (Object.keys(nextErrors).length) setFieldErrors(nextErrors); throw new Error(result.message || "Submission could not be completed. Please try again."); }
@@ -80,6 +92,6 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     <label className="runClubConsent"><input id="run-club-consent" type="checkbox" checked={fields.consentAccepted} onChange={(event) => updateField("consentAccepted", event.target.checked)} aria-invalid={Boolean(errors.consentAccepted)} aria-describedby={errors.consentAccepted ? errorId("consentAccepted") : undefined} /><span>I confirm that I own this content and allow 213 RUN to display it if my submission is approved.</span>{errors.consentAccepted && <span className="runClubFieldError runClubConsent__error" id={errorId("consentAccepted")}>{errors.consentAccepted}</span>}</label>
     {status === "error" && message ? <div className="runClubFormMessage is-error" role="alert" aria-live="assertive"><strong>CHECK YOUR RUN.</strong><p>{message}</p></div> : null}
     {status === "success" && <div className="runClubFormMessage is-success" role="status" aria-live="polite"><strong>RUN SUBMITTED.</strong><p>{message}</p></div>}
-    <button className="button button--lime" type="submit" disabled={isClosed || processing}>{isClosed ? "SUBMISSIONS CLOSED" : processing ? (status === "uploading" ? "UPLOADING PROOF..." : "SUBMITTING...") : "SUBMIT RUN →"}</button>
+    <button className="button button--lime" type="submit" disabled={!authHydrated || isClosed || processing}>{isClosed ? "SUBMISSIONS CLOSED" : !authHydrated ? "CHECKING SESSION..." : processing ? (status === "uploading" ? "UPLOADING PROOF..." : "SUBMITTING...") : "SUBMIT RUN →"}</button>
   </form>;
 }
