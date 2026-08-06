@@ -36,7 +36,7 @@ export const getPublicRunClubWinner = unstable_cache(async (monthKey = getAlgier
 
 export function serializePublicEntry(doc: FirebaseFirestore.QueryDocumentSnapshot): PublicRunClubEntry | null {
   const data = doc.data();
-  if (data.status !== "approved") return null;
+  if (data.status !== "approved" || data.publicVisible === false) return null;
   const proof = data.proofImage;
   if (!proof || typeof proof.secureUrl !== "string") return null;
   const approvedAt = data.approvedAt as Timestamp | undefined;
