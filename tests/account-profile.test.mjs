@@ -6,7 +6,7 @@ test("unauthenticated account API is rejected",()=>assert.equal((profileApi.matc
 test("profile update derives verified UID and edits display name only",()=>{assert.match(profile,/doc\(customer\.uid\)/);assert.match(profile,/displayNameSchema/);assert.doesNotMatch(profile,/input\.uid|checkoutDefaults|phone:/)});
 test("email cannot be edited",()=>{assert.match(profile,/authUser\.email/);assert.doesNotMatch(profile,/updateUser\([^)]*email/)});
 test("fake UID and cross-account access are impossible",()=>{assert.match(accountRuns,/customerUserId\"\)===customer\.uid|customerUserId\"\)!==customer\.uid/);assert.doesNotMatch(accountRuns,/input\.uid/)});
-test("authenticated submission snapshots verified UID and guest remains null",()=>{assert.match(submit,/verifyOptionalCustomerRequest/);assert.match(submit,/customerUserId.*\?\.uid \?\? null/);assert.doesNotMatch(submit,/parsed\.data\.customerUserId/)});
+test("authenticated submission snapshots verified UID",()=>{assert.match(submit,/requireCustomerRequest/);assert.match(submit,/customerUserId = .*\.uid/);assert.doesNotMatch(submit,/parsed\.data\.customerUserId/)});
 test("old submissions are never identity matched",()=>assert.doesNotMatch(accountRuns,/contactValue|normalizedContact|instagramHash|phone/));
 test("owned query is limited and never loads full collection",()=>{assert.match(accountRuns,/where\(\"customerUserId\",\"==\",customer\.uid\)/);assert.match(accountRuns,/limit\(9\)/)});
 test("pending direct edit and cancellation are ownership scoped",()=>{assert.match(accountRuns,/d\.status===\"pending\"/);assert.match(accountRuns,/customer_cancelled/)});
@@ -17,7 +17,7 @@ test("sign-out clears private rendered state",()=>assert.match(account,/setProfi
 test("account has no saved delivery details and checkout has no prefill",()=>{assert.doesNotMatch(account,/SAVED DELIVERY|phone|deliveryMode|photoURL/);assert.doesNotMatch(checkout,/loadProfile|SAVE THESE DETAILS/)});
 test("signed-in submission waits for auth hydration",()=>{assert.match(form,/waitForAuthHydration\(\)/);assert.match(form,/disabled=\{!authHydrated \|\| isClosed \|\| processing\}/)});
 test("signed-in submission sends a fresh bearer token",()=>{assert.match(form,/getIdToken\(true\)/);assert.match(form,/Authorization: `Bearer \$\{token\}`/)});
-test("invalid supplied token never silently becomes a guest submission",()=>{assert.match(submit,/verifyOptionalCustomerRequest/);assert.match(submit,/CustomerAuthError/);assert.match(form,/Your session could not be verified/)});
+test("invalid supplied token never silently becomes a guest submission",()=>{assert.match(submit,/requireCustomerRequest/);assert.match(submit,/CustomerAuthError/);assert.match(form,/Your session could not be verified/)});
 test("duplicate form submission is blocked",()=>assert.match(form,/status === "uploading" \|\| status === "submitting"/));
 test("owned activity includes every status because query has no status filter",()=>{assert.doesNotMatch(accountRuns,/where\("status"/);assert.match(accountRuns,/moderation\?\?String\(d\.status/)});
 test("public community remains approved-only",()=>assert.match(publicFeed,/data\.status !== "approved"/));

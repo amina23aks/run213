@@ -37,8 +37,8 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     if (nextFile.size > RUN_CLUB_MAX_IMAGE_BYTES) { const nextErrors = { ...errors, proofImage: "The selected image is larger than 5 MB." }; setFieldErrors(nextErrors); return; }
     setFile(nextFile); setPreview(URL.createObjectURL(nextFile));
   }
-  async function uploadProof(selectedFile: File): Promise<UploadProof> {
-    const signatureResponse = await fetch("/api/run-club/upload-signature", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileType: selectedFile.type, fileSize: selectedFile.size }) });
+  async function uploadProof(selectedFile: File, token: string): Promise<UploadProof> {
+    const signatureResponse = await fetch("/api/run-club/upload-signature", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ fileType: selectedFile.type, fileSize: selectedFile.size }) });
     const signaturePayload = await signatureResponse.json();
     if (!signatureResponse.ok || !signaturePayload.ok) throw new Error(signaturePayload.message || "Upload failed.");
     const formData = new FormData();
@@ -54,21 +54,20 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
   }
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!authHydrated || isClosed || status === "uploading" || status === "submitting") return;
+    const user = await waitForAuthHydration();
+    if (!user) { setStatus("error"); setMessage("Sign in is required to submit your run."); window.dispatchEvent(new Event("run213:open-auth")); return; }
     if (!file) { setStatus("error"); setMessage("Run proof image is required."); setFieldErrors({ proofImage: "Run proof image is required." }); return; }
     setStatus("uploading"); setMessage(""); setErrors({});
     try {
-      const proofImage = await uploadProof(file);
+      let token: string;
+      try { token = await user.getIdToken(true); }
+      catch { throw new Error("Your session could not be verified. Please sign in again and retry."); }
+      const proofImage = await uploadProof(file, token);
       const payload = { ...fields, proofImage };
       const parsed = runClubSubmissionSchema.safeParse(payload);
       if (!parsed.success) { const nextErrors = Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value."])); setStatus("error"); setMessage("Check the highlighted fields and try again."); setFieldErrors(nextErrors); return; }
       setStatus("submitting");
-      const user = await waitForAuthHydration();
-      let token: string | null = null;
-      if (user) {
-        try { token = await user.getIdToken(true); }
-        catch { throw new Error("Your session could not be verified. Please sign in again and retry."); }
-      }
-      const response = await fetch("/api/run-club/submissions", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(parsed.data) });
+      const response = await fetch("/api/run-club/submissions", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(parsed.data) });
       const result = await response.json();
       if (!response.ok || !result.ok) { const nextErrors = result.fieldErrors ?? {}; if (Object.keys(nextErrors).length) setFieldErrors(nextErrors); throw new Error(result.message || "Submission could not be completed. Please try again."); }
       setFields(initialFields); setFile(null); if (preview) URL.revokeObjectURL(preview); setPreview(null); setStatus("success"); setMessage("Your entry is pending review. It will only appear publicly after approval.");

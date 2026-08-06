@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { CustomerAuthError, verifyOptionalCustomerRequest } from "@/lib/customer-auth";
+import { CustomerAuthError, requireCustomerRequest } from "@/lib/customer-auth";
 import { createRunClubPendingFolder, getCloudinaryEnv, verifyUploadSignature } from "@/lib/run-club/cloudinary";
 import { checkRunClubRateLimit, createIdentityHash, createSubmitterHash, getAlgiersMonthKey, safeApiError } from "@/lib/run-club/security";
 import { normalizeInstagram } from "@/lib/run-club/instagram";
@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     return safeApiError("cloudinary_verification_failed", "Proof image could not be verified. Upload it again.", 503);
   }
 
-  let customerUserId: string | null;
-  try { customerUserId = (await verifyOptionalCustomerRequest(request))?.uid ?? null; }
+  let customerUserId: string;
+  try { customerUserId = (await requireCustomerRequest(request)).uid; }
   catch (error) { if (error instanceof CustomerAuthError) return safeApiError("validation_failed", error.message, error.status); throw error; }
   const normalizedContact = normalizeContact(parsed.data.contact);
   const contactType = getContactType(normalizedContact);

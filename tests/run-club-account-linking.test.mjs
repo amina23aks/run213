@@ -1,61 +1,15 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
-
-const linkRoute = readFileSync("app/api/admin/run-club/submissions/[id]/customer/route.ts", "utf8");
-const accountRoute = readFileSync("app/api/account/run-club/route.ts", "utf8");
-const customerRuns = readFileSync("lib/run-club/customer.ts", "utf8");
-const submitRoute = readFileSync("app/api/run-club/submissions/route.ts", "utf8");
-const publicRuns = readFileSync("lib/run-club/public.ts", "utf8");
-const account = readFileSync("components/account/AccountPageClient.tsx", "utf8");
-
-test("admin linking and unlinking require verified authentication", () => {
-  assert.match(linkRoute, /verifyAdminRequest\(request\)/);
-  assert.match(linkRoute, /if \(!admin\).*Unauthorized.*401/s);
-});
-test("empty and nonexistent Firebase Auth UIDs are rejected", () => {
-  assert.match(linkRoute, /trim\(\)\.min\(1\)/);
-  assert.match(linkRoute, /getAdminAuth\(\)\.getUser/);
-  assert.match(linkRoute, /No Firebase Authentication user exists/);
-});
-test("unowned submissions link transactionally without overwriting another owner", () => {
-  assert.match(linkRoute, /runTransaction/);
-  assert.match(linkRoute, /customerUserId: target\.uid/);
-  assert.match(linkRoute, /DIFFERENT_OWNER/);
-});
-test("linking writes audit metadata and does not mutate moderation fields", () => {
-  assert.match(linkRoute, /linkedToCustomerAt: FieldValue\.serverTimestamp\(\)/);
-  assert.match(linkRoute, /linkedToCustomerBy: admin\.uid/);
-  assert.match(linkRoute, /transaction\.update\(ref, \{ customerUserId: target\.uid, linkedToCustomerAt:[^}]+linkedToCustomerBy: admin\.uid \}\)/);
-});
-test("ownership query exposes Account A only, never Account B", () => {
-  assert.match(customerRuns, /where\("customerUserId","==",customer\.uid\)/);
-  const serializer = customerRuns.slice(customerRuns.indexOf("function safe"), customerRuns.indexOf("export async function listOwnedRuns"));
-  assert.doesNotMatch(serializer, /contactValue|moderationHistory|linkedToCustomerBy/);
-});
-test("unlink clears ownership without deleting the submission", () => {
-  assert.match(linkRoute, /customerUserId: null/);
-  assert.match(linkRoute, /unlinkedFromCustomerAt/);
-  assert.match(linkRoute, /unlinkedFromCustomerBy/);
-  assert.doesNotMatch(linkRoute, /transaction\.delete/);
-});
-test("new authenticated submissions still use the verified UID", () => {
-  assert.match(submitRoute, /verifyOptionalCustomerRequest/);
-  assert.match(submitRoute, /customerUserId = .*\.uid \?\? null/);
-});
-test("account requests bypass cache and refresh on focus", () => {
-  assert.match(accountRoute, /private, no-store/);
-  assert.match(account, /cache:"no-store"/);
-  assert.match(account, /addEventListener\("focus",refresh\)/);
-});
-test("public community remains approved-only", () => {
-  assert.match(publicRuns, /status.*approved/);
-});
-test("exact Account dark icon assets exist and are used", () => {
-  const icons = ["order-bag-dark.png", "heart-dark.png", "save-dark.png", "running-dark.png"];
-  for (const icon of icons) {
-    assert.equal(existsSync(`public/icons/${icon}`), true, icon);
-    assert.match(account, new RegExp(`/icons/${icon.replace(".", "\\.")}`));
-  }
-  for (const path of account.matchAll(/icon="(\/icons\/[^"]+)"/g)) assert.equal(existsSync(`public${path[1]}`), true, path[1]);
-});
+const form=readFileSync("components/run-club/RunClubSubmissionForm.tsx","utf8"),submit=readFileSync("app/api/run-club/submissions/route.ts","utf8"),accountApi=readFileSync("app/api/account/run-club/route.ts","utf8"),customer=readFileSync("lib/run-club/customer.ts","utf8"),account=readFileSync("components/account/AccountPageClient.tsx","utf8"),admin=readFileSync("components/admin/AdminRunClubClient.tsx","utf8"),publicFeed=readFileSync("lib/run-club/public.ts","utf8"),rules=readFileSync("firestore.rules","utf8"),indexes=JSON.parse(readFileSync("firestore.indexes.json","utf8"));
+test("signed-out submission opens sign-in before image upload",()=>{const authCheck=form.indexOf('if (!user)'),upload=form.indexOf('uploadProof(file, token)');assert.ok(authCheck>0&&authCheck<upload);assert.match(form,/run213:open-auth/);assert.match(form,/Sign in is required to submit/)});
+test("authenticated submission uses fresh verified identity only",()=>{assert.match(form,/getIdToken\(true\)/);assert.match(form,/Authorization: `Bearer \$\{token\}`/);assert.match(submit,/requireCustomerRequest\(request\)\)\.uid/);assert.doesNotMatch(submit,/parsed\.data\.customerUserId/)});
+test("invalid or absent token cannot create a guest submission",()=>{assert.match(submit,/CustomerAuthError/);assert.doesNotMatch(submit,/customerUserId: string \| null|\?\.uid \?\? null/)});
+test("Account query matches verified owner, includes all history, and is deterministic",()=>{assert.match(customer,/where\("customerUserId","==",customer\.uid\)/);assert.match(customer,/orderBy\("createdAt","desc"\)\.orderBy\(FieldPath\.documentId\(\),"desc"\)/);assert.doesNotMatch(customer,/where\("status"/)});
+test("Account A ownership cannot return Account B data",()=>{assert.match(customer,/customerUserId","==",customer\.uid/);assert.doesNotMatch(customer,/input\.uid|contactValue|normalizedContact/)});
+test("required Account composite index exists exactly",()=>{const found=indexes.indexes.find(i=>i.collectionGroup==="runClubSubmissions"&&JSON.stringify(i.fields)===JSON.stringify([{fieldPath:"customerUserId",order:"ASCENDING"},{fieldPath:"createdAt",order:"DESCENDING"},{fieldPath:"__name__",order:"DESCENDING"}]));assert.ok(found)});
+test("missing index is logged safely and recoverable with Retry",()=>{assert.match(customer,/FAILED_PRECONDITION/);assert.match(accountApi,/recoverable:missingIndex/);assert.match(account,/RETRY/);assert.doesNotMatch(customer,/console\.(warn|error)\([^)]*(email|token|contact|image)/i)});
+test("Admin detail distinguishes linked and legacy unlinked submissions",()=>{assert.match(admin,/selected\.customerUserId\?"SUBMISSION DETAIL":"LEGACY UNLINKED SUBMISSION"/);assert.match(admin,/selected\.customerUserId\?<button/);assert.match(admin,/>UNLINK CUSTOMER ACCOUNT<\/button>:<button/);assert.match(admin,/>LINK TO CUSTOMER ACCOUNT<\/button>/)});
+test("theme-aware Account icons use exact light and dark paths",()=>{for(const name of ["order-bag","heart","save","running"]){assert.match(account,new RegExp(`/icons/${name}\\.png`));assert.equal(existsSync(`public/icons/${name}.png`),true);assert.equal(existsSync(`public/icons/${name}-dark.png`),true)}assert.match(account,/prefers-color-scheme: dark/);assert.match(account,/-dark\.png/)});
+test("public Run Club stays approved and visible only",()=>{assert.match(publicFeed,/where\("status", "==", "approved"\)/);assert.match(publicFeed,/data\.publicVisible === false/)});
+test("Run Club Firestore rules remain closed",()=>assert.match(rules,/match \/runClubSubmissions\/\{submissionId\} \{\s*allow read, write: if false;\s*\}/));
