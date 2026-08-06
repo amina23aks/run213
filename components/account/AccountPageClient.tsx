@@ -2,76 +2,34 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import type { User } from "firebase/auth";
-import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import { useFavorites } from "@/context/favorites";
 import { loadProfile, saveProfile, type ProfileResponse } from "@/lib/profile/client";
-import { EMPTY_CUSTOMER_PROFILE, type CustomerProfile } from "@/types/profile";
+
+type RunItem = { id:string; monthKey:string; caption:string|null; wilaya:string|null; status:string; publicState:"public"|"private"; isWinner:boolean; proofImage:{secureUrl:string;width:number;height:number}|null };
 
 export function AccountPageClient() {
   const { totalFavoriteCount } = useFavorites();
-  const [user, setUser] = useState<User | null>(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [profile, setProfile] = useState<ProfileResponse | null>(null);
-  const [values, setValues] = useState<CustomerProfile>(EMPTY_CUSTOMER_PROFILE);
-  const [state, setState] = useState<"loading" | "loaded" | "saving" | "success" | "error">("loading");
-  const [message, setMessage] = useState("");
-  const [phoneError, setPhoneError] = useState("");
+  const [user, setUser] = useState<User | null>(null), [authReady,setAuthReady]=useState(false);
+  const [profile,setProfile]=useState<ProfileResponse|null>(null), [editing,setEditing]=useState(false), [name,setName]=useState("");
+  const [state,setState]=useState<"loading"|"loaded"|"saving"|"success"|"error">("loading"), [message,setMessage]=useState("");
+  const [runs,setRuns]=useState<RunItem[]>([]), [cursor,setCursor]=useState<string|null>(null), [runsLoading,setRunsLoading]=useState(false);
 
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    import("@/lib/firebase/client").then(async ({ auth }) => {
-      const { onAuthStateChanged } = await import("firebase/auth");
-      unsubscribe = onAuthStateChanged(auth, (next) => { setUser(next); setAuthReady(true); });
-    });
-    return () => unsubscribe?.();
-  }, []);
-  useEffect(() => {
-    if (!user) { setProfile(null); return; }
-    setState("loading");
-    loadProfile(user).then((next) => { setProfile(next); setValues(next.defaults); setState("loaded"); }).catch((error) => { setMessage(error.message); setState("error"); });
-  }, [user]);
-
-  const update = (field: keyof CustomerProfile, value: string) => setValues((current) => ({ ...current, [field]: value }));
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (!user) return;
-    setPhoneError(""); setMessage("");
-    const normalizedPhone = values.phone.replace(/[^0-9+]/g, "");
-    if (!/^(?:\+213|0)[5-7][0-9]{8}$/.test(normalizedPhone)) { setPhoneError("Enter a valid Algerian phone number."); setState("loaded"); return; }
-    setState("saving");
-    try { const next = await saveProfile(user, values); setProfile(next); setValues(next.defaults); setState("success"); }
-    catch (error) { const text = error instanceof Error ? error.message : "Could not save account details."; if (/phone/i.test(text)) setPhoneError(text); setMessage(text); setState("error"); }
-  }
-  async function signOut() { const { auth } = await import("@/lib/firebase/client"); const { signOut } = await import("firebase/auth"); await signOut(auth); }
-
-  if (!authReady) return <AccountState label="CHECKING YOUR ACCOUNT…" />;
-  if (!user) return <AccountState label="SIGN IN TO VIEW YOUR ACCOUNT." action />;
-  if (state === "loading") return <AccountState label="LOADING ACCOUNT DETAILS…" />;
-
-  return <div className="accountPage">
-    <header className="accountPage__head"><span>ACCOUNT</span><h1>MY ACCOUNT</h1></header>
-    {state === "success" ? <p className="accountFeedback accountFeedback--success" role="status">ACCOUNT DETAILS SAVED.</p> : null}
-    {state === "error" ? <p className="accountFeedback accountFeedback--error" role="alert">{message}</p> : null}
-    <div className="accountGrid">
-      <section className="accountCard accountIdentity">
-        {profile?.identity.photoURL ? <Image src={profile.identity.photoURL} alt="" width={64} height={64} referrerPolicy="no-referrer" /> : <span className="accountIdentity__avatar">{(profile?.identity.displayName || profile?.identity.email || "R")[0].toUpperCase()}</span>}
-        <div><small>CUSTOMER</small><h2>{profile?.identity.displayName || "RUN213 CUSTOMER"}</h2><p>{profile?.identity.email}</p>{profile?.identity.createdAt ? <p>Member since {new Date(profile.identity.createdAt).toLocaleDateString()}</p> : null}</div>
-      </section>
-      <section className="accountCard"><h2>ACCOUNT ACTIVITY</h2><nav className="accountActivity"><Link href="/orders"><span>MY ORDERS</span><b>VIEW →</b></Link><Link href="/favorites"><span>FAVORITES</span><b>{totalFavoriteCount} SAVED →</b></Link><Link href="/run-club"><span>RUN CLUB</span><b>EXPLORE →</b></Link></nav><p className="accountMuted">Run Club profile summaries will follow once submissions are reliably linked to your account.</p></section>
-      <form className="accountCard accountDefaults" onSubmit={submit} noValidate>
-        <div><h2>SAVED DELIVERY DETAILS</h2><p>Used only to prefill future checkouts. Existing orders never change.</p></div>
-        <div className="accountFields accountFields--two"><label><span>Full name</span><input value={values.fullName} onChange={(e) => update("fullName", e.target.value)} required /></label><label><span>Phone</span><input type="tel" value={values.phone} onChange={(e) => update("phone", e.target.value)} aria-invalid={Boolean(phoneError)} required />{phoneError ? <small className="accountFieldError">{phoneError}</small> : null}</label></div>
-        <div className="accountFields accountFields--two"><label><span>Email (read only)</span><input value={profile?.identity.email ?? ""} readOnly /></label><label><span>Wilaya</span><select value={values.wilaya} onChange={(e) => update("wilaya", e.target.value)}><option value="">Choose wilaya</option>{ALGERIA_WILAYAS.map((w) => <option key={w.code} value={w.name}>{w.label}</option>)}</select></label></div>
-        <label><span>Address</span><input value={values.address} onChange={(e) => update("address", e.target.value)} /></label>
-        <fieldset><legend>Delivery mode</legend><label><input type="radio" checked={values.deliveryMode === "home"} onChange={() => update("deliveryMode", "home")} /> Home</label><label><input type="radio" checked={values.deliveryMode === "desk"} onChange={() => update("deliveryMode", "desk")} /> Desk</label></fieldset>
-        <label><span>Delivery notes optional</span><textarea rows={3} value={values.notes} onChange={(e) => update("notes", e.target.value)} /></label>
-        <button className="accountSave" disabled={state === "saving"}>{state === "saving" ? "SAVING…" : "SAVE DETAILS"}</button>
-      </form>
-      <section className="accountCard accountSignout"><div><h2>SIGN OUT</h2><p>Your guest-order access stays on this device.</p></div><button onClick={signOut}>SIGN OUT</button></section>
-    </div>
-  </div>;
+  const authFetch=useCallback(async(nextUser:User,url:string,init?:RequestInit)=>fetch(url,{...init,cache:"no-store",headers:{"Content-Type":"application/json",Authorization:`Bearer ${await nextUser.getIdToken()}`,...init?.headers}}),[]);
+  const loadRuns=useCallback(async(nextUser:User,append=false,nextCursor?:string|null)=>{setRunsLoading(true);try{const url=new URL("/api/account/run-club",location.origin);if(append&&nextCursor)url.searchParams.set("cursor",nextCursor);const response=await authFetch(nextUser,url.pathname+url.search);const body=await response.json();if(!response.ok)throw new Error(body.error||"Run Club activity is unavailable.");setRuns(current=>append?[...current,...body.submissions]:body.submissions);setCursor(body.nextCursor);}catch(error){setMessage(error instanceof Error?error.message:"Run Club activity is unavailable.");}finally{setRunsLoading(false);}},[authFetch]);
+  useEffect(()=>{let unsubscribe:(()=>void)|undefined;import("@/lib/firebase/client").then(async({auth})=>{const {onAuthStateChanged}=await import("firebase/auth");unsubscribe=onAuthStateChanged(auth,next=>{setUser(next);setAuthReady(true);if(!next){setProfile(null);setRuns([]);setCursor(null);setEditing(false);setMessage("");}});});return()=>unsubscribe?.();},[]);
+  useEffect(()=>{if(!user)return;setState("loading");Promise.all([loadProfile(user),loadRuns(user)]).then(([next])=>{setProfile(next);setName(next.identity.displayName??"");setState("loaded");}).catch(error=>{setMessage(error.message);setState("error");});},[user,loadRuns]);
+  async function saveName(event:FormEvent){event.preventDefault();if(!user)return;const trimmed=name.trim();if(trimmed.length<2){setMessage("Enter your display name.");setState("error");return;}setState("saving");setMessage("");try{const next=await saveProfile(user,trimmed);setProfile(next);setName(next.identity.displayName??"");setEditing(false);setState("success");}catch(error){setMessage(error instanceof Error?error.message:"Could not save your name.");setState("error");}}
+  async function runAction(id:string,action:"edit"|"remove",values?:{caption:string;wilaya:string}){if(!user)return;const response=await authFetch(user,`/api/account/run-club/${encodeURIComponent(id)}`,{method:action==="remove"?"DELETE":"PATCH",body:action==="edit"?JSON.stringify(values):undefined});const body=await response.json();if(!response.ok){setMessage(body.error||"Run Club request failed.");return;}await loadRuns(user);}
+  async function signOut(){const {auth}=await import("@/lib/firebase/client");const {signOut}=await import("firebase/auth");await signOut(auth);}
+  if(!authReady)return <AccountState label="CHECKING YOUR ACCOUNT…"/>; if(!user)return <AccountState label="SIGN IN TO VIEW YOUR ACCOUNT." action/>; if(state==="loading")return <AccountState label="LOADING ACCOUNT…"/>;
+  return <div className="accountPage"><header className="accountPage__head"><span>ACCOUNT</span><h1>MY ACCOUNT</h1></header>{state==="success"?<p className="accountFeedback accountFeedback--success">ACCOUNT DETAILS SAVED.</p>:null}{state==="error"&&message?<p className="accountFeedback accountFeedback--error" role="alert">{message}</p>:null}<div className="accountGrid">
+    <div className="accountColumn"><section className="accountCard accountIdentity"><small>CUSTOMER</small><div className="accountNameLine"><h2>{profile?.identity.displayName||"RUN213 CUSTOMER"}</h2><button aria-label="Edit display name" title="Edit display name" onClick={()=>setEditing(true)}>✎</button></div><p>{profile?.identity.email}</p>{profile?.identity.createdAt?<p>Member since {new Date(profile.identity.createdAt).toLocaleDateString()}</p>:null}{editing?<form className="accountNameEdit" onSubmit={saveName}><label>DISPLAY NAME<input autoFocus value={name} onChange={event=>setName(event.target.value)}/></label><div><button disabled={state==="saving"}>{state==="saving"?"SAVING…":"SAVE"}</button><button type="button" onClick={()=>setEditing(false)}>CANCEL</button></div></form>:null}</section>
+    <section className="accountCard"><h2>ACCOUNT ACTIVITY</h2><nav className="accountActivity"><Activity href="/orders" icon="▣" label="MY ORDERS"/><Activity href="/favorites" icon="♡" label="FAVORITES" detail={`${totalFavoriteCount} SAVED`}/><Activity href="/favorites" icon="⌑" label="SAVED"/><Activity href="/run-club" icon="↗" label="RUN CLUB"/></nav></section><section className="accountCard accountSignout"><div><h2>SIGN OUT</h2><p>Guest-order access stays on this device.</p></div><button onClick={signOut}>SIGN OUT</button></section></div>
+    <section className="accountCard accountRuns"><h2>MY RUN CLUB ACTIVITY</h2>{runs.length?runs.map(run=><RunCard key={run.id} run={run} onAction={runAction}/>):<p className="accountMuted">No securely linked Run Club submissions yet.</p>}{cursor?<button className="accountLoadMore" disabled={runsLoading} onClick={()=>void loadRuns(user,true,cursor)}>{runsLoading?"LOADING…":"LOAD MORE"}</button>:null}</section>
+  </div></div>;
 }
-
-function AccountState({ label, action = false }: { label: string; action?: boolean }) { return <div className="accountPage accountState"><p>{label}</p>{action ? <button onClick={() => window.dispatchEvent(new Event("run213:open-auth"))}>SIGN IN</button> : null}</div>; }
+function Activity({href,icon,label,detail}:{href:string;icon:string;label:string;detail?:string}){return <Link href={href}><span><i aria-hidden>{icon}</i>{label}</span><b>{detail||"VIEW"} →</b></Link>}
+function RunCard({run,onAction}:{run:RunItem;onAction:(id:string,action:"edit"|"remove",values?:{caption:string;wilaya:string})=>Promise<void>}){const [editing,setEditing]=useState(false),[caption,setCaption]=useState(run.caption??""),[wilaya,setWilaya]=useState(run.wilaya??"");const pending=run.status==="pending";return <article className="accountRunCard">{run.proofImage?<Image src={run.proofImage.secureUrl} alt="Run proof" width={96} height={96}/>:null}<div><div className="accountRunMeta"><span>{run.monthKey}</span><b>{run.status.replaceAll("_"," ").toUpperCase()}</b>{run.isWinner?<em>WINNER</em>:null}</div><p>{run.caption||"No caption"}</p><small>{run.publicState.toUpperCase()}</small>{editing?<form onSubmit={event=>{event.preventDefault();void onAction(run.id,"edit",{caption,wilaya}).then(()=>setEditing(false));}}><input aria-label="Caption" value={caption} onChange={e=>setCaption(e.target.value)} maxLength={280}/><input aria-label="Wilaya" value={wilaya} onChange={e=>setWilaya(e.target.value)} maxLength={60}/><button>{pending?"SAVE EDIT":"REQUEST EDIT"}</button><button type="button" onClick={()=>setEditing(false)}>CANCEL</button></form>:<div className="accountRunActions"><button onClick={()=>setEditing(true)}>{pending?"EDIT":"REQUEST EDIT"}</button><button onClick={()=>void onAction(run.id,"remove")}>{pending?"CANCEL":"REQUEST REMOVAL"}</button></div>}</div></article>}
+function AccountState({label,action=false}:{label:string;action?:boolean}){return <div className="accountPage accountState"><p>{label}</p>{action?<button onClick={()=>window.dispatchEvent(new Event("run213:open-auth"))}>SIGN IN</button>:null}</div>}

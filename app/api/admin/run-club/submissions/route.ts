@@ -6,7 +6,7 @@ import { getAlgiersMonthKey } from "@/lib/run-club/security";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-const querySchema = z.object({ month: z.string().regex(/^\d{4}-\d{2}$/).optional(), status: z.enum(["pending", "approved", "rejected"]).optional(), limit: z.coerce.number().int().min(1).max(20).default(20), cursor: z.string().optional() });
+const querySchema = z.object({ month: z.string().regex(/^\d{4}-\d{2}$/).optional(), status: z.enum(["pending", "approved", "rejected","edit_requested","removal_requested"]).optional(), limit: z.coerce.number().int().min(1).max(20).default(20), cursor: z.string().optional() });
 
 export async function GET(request: Request) {
   const admin = await verifyAdminRequest(request);
@@ -16,7 +16,8 @@ export async function GET(request: Request) {
   if (!parsed.success) return Response.json({ ok: false, code: "validation_failed", message: "Invalid filters." }, { status: 400 });
   const monthKey = parsed.data.month ?? getAlgiersMonthKey();
   const status = parsed.data.status ?? "pending";
-  let query = getAdminDb().collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", status).orderBy("createdAt", "desc").limit(parsed.data.limit + 1);
+  const requestQueue=status==="edit_requested"||status==="removal_requested";
+  let query = getAdminDb().collection("runClubSubmissions").where("monthKey", "==", monthKey).where(requestQueue?"moderationState":"status", "==", status).orderBy("createdAt", "desc").limit(parsed.data.limit + 1);
   const cursorDate = parseCursor(parsed.data.cursor);
   if (cursorDate) query = query.startAfter(cursorDate);
   const snapshot = await query.get();
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
 }
 
 function serializeAdminSubmission(data: FirebaseFirestore.DocumentData) {
-  return { name: data.name ?? "", contactType: data.contactType ?? "", contactValue: data.contactValue ?? "", instagram: data.instagram ?? null, wilaya: data.wilaya ?? null, caption: data.caption ?? null, publicName: data.publicName ?? data.name ?? "", publicCaption: data.publicCaption ?? data.caption ?? null, publicWilaya: data.publicWilaya ?? data.wilaya ?? null, monthKey: data.monthKey, status: data.status, consentAccepted: data.consentAccepted === true, proofImage: data.proofImage ?? null, createdAt: toIso(data.createdAt), approvedAt: toIso(data.approvedAt), rejectedAt: toIso(data.rejectedAt), rejectionReason: data.rejectionReason ?? null };
+  return { name: data.name ?? "", contactType: data.contactType ?? "", contactValue: data.contactValue ?? "", instagram: data.instagram ?? null, wilaya: data.wilaya ?? null, caption: data.caption ?? null, publicName: data.publicName ?? data.name ?? "", publicCaption: data.publicCaption ?? data.caption ?? null, publicWilaya: data.publicWilaya ?? data.wilaya ?? null, monthKey: data.monthKey, status: data.moderationState ?? data.status, baseStatus:data.status, pendingRevision:data.pendingRevision??null, consentAccepted: data.consentAccepted === true, proofImage: data.proofImage ?? null, createdAt: toIso(data.createdAt), approvedAt: toIso(data.approvedAt), rejectedAt: toIso(data.rejectedAt), rejectionReason: data.rejectionReason ?? null };
 }
 function toIso(value: unknown) { return value instanceof Timestamp ? value.toDate().toISOString() : null; }
 function encodeCursor(value: unknown) { return value instanceof Timestamp ? Buffer.from(value.toDate().toISOString(), "utf8").toString("base64url") : null; }

@@ -1,7 +1,5 @@
 import type { User } from "firebase/auth";
-import type { CustomerProfile } from "@/types/profile";
-
-export type ProfileResponse = { identity: { displayName: string | null; email: string | null; photoURL: string | null; createdAt: string | null }; defaults: CustomerProfile };
+export type ProfileResponse = { identity: { displayName: string | null; email: string | null; createdAt: string | null } };
 
 async function requestProfile(user: User, init?: RequestInit): Promise<ProfileResponse> {
   const response = await fetch("/api/account/profile", { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}`, ...init?.headers }, cache: "no-store" });
@@ -10,4 +8,4 @@ async function requestProfile(user: User, init?: RequestInit): Promise<ProfileRe
   return body as ProfileResponse;
 }
 export const loadProfile = (user: User) => requestProfile(user);
-export const saveProfile = (user: User, defaults: CustomerProfile) => requestProfile(user, { method: "PUT", body: JSON.stringify(defaults) });
+export const saveProfile = (user: User, displayName: string) => requestProfile(user, { method: "PUT", body: JSON.stringify({ displayName }) });

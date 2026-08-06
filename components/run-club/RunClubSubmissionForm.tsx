@@ -54,7 +54,9 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
       const parsed = runClubSubmissionSchema.safeParse(payload);
       if (!parsed.success) { const nextErrors = Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value."])); setStatus("error"); setMessage("Check the highlighted fields and try again."); setFieldErrors(nextErrors); return; }
       setStatus("submitting");
-      const response = await fetch("/api/run-club/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data) });
+      const { auth } = await import("@/lib/firebase/client");
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch("/api/run-club/submissions", { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(parsed.data) });
       const result = await response.json();
       if (!response.ok || !result.ok) { const nextErrors = result.fieldErrors ?? {}; if (Object.keys(nextErrors).length) setFieldErrors(nextErrors); throw new Error(result.message || "Submission could not be completed. Please try again."); }
       setFields(initialFields); setFile(null); if (preview) URL.revokeObjectURL(preview); setPreview(null); setStatus("success"); setMessage("Your entry is pending review. It will only appear publicly after approval.");

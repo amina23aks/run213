@@ -38,6 +38,7 @@ export function selectSecureWinnerIndex(length: number): number {
 export function isEligibleRunClubSubmission(data: FirebaseFirestore.DocumentData): boolean {
   const proof = data.proofImage;
   return data.status === "approved"
+    && data.publicVisible !== false
     && typeof data.monthKey === "string"
     && proof != null
     && typeof proof.secureUrl === "string"

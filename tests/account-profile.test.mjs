@@ -1,42 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-
-const api = readFileSync("app/api/account/profile/route.ts", "utf8");
-const server = readFileSync("lib/profile/server.ts", "utf8");
-const schema = readFileSync("lib/profile/validation.ts", "utf8");
-const checkout = readFileSync("components/checkout/CheckoutForm.tsx", "utf8");
-const menu = readFileSync("components/auth/AccountMenu.tsx", "utf8");
-
-test("profile read and write require verified Firebase authentication", () => {
-  assert.match(api, /requireCustomerRequest\(request\)/);
-  assert.equal((api.match(/requireCustomerRequest\(request\)/g) ?? []).length, 2);
-});
-test("verified token UID scopes all profile reads and writes", () => {
-  assert.match(server, /doc\(customer\.uid\)/);
-  assert.doesNotMatch(server, /input\.uid|body\.uid/);
-});
-test("fake UID and unsupported fields are rejected", () => {
-  assert.match(schema, /\.strict\(\)/);
-  assert.doesNotMatch(schema, /uid:|email:/);
-});
-test("email is sourced from Firebase Auth and cannot be edited", () => {
-  assert.match(server, /authUser\.email/);
-  assert.doesNotMatch(server, /updateUser\([^)]*email/);
-});
-test("invalid Algerian phone is rejected", () => assert.match(schema, /\\\+213\|0/));
-test("Checkout waits for auth hydration before profile loading", () => assert.match(checkout, /waitForAuthHydration\(\)\.then/));
-test("Checkout only prefills empty, untouched fields", () => {
-  assert.match(checkout, /!dirtyFields\.current\.has\(field\) && !control\.value/);
-});
-test("Guest Checkout remains supported", () => assert.match(checkout, /if \(!active \|\| !user\)/));
-test("saving defaults is explicit", () => {
-  assert.match(checkout, /SAVE THESE DETAILS FOR NEXT TIME/);
-  assert.match(checkout, /user && saveDetails/);
-});
-test("account menu exposes required signed-in and signed-out destinations", () => {
-  for (const label of ["MY ACCOUNT", "MY ORDERS", "FAVORITES", "SIGN OUT", "SIGN IN"]) assert.match(menu, new RegExp(label));
-});
-test("profile response is customer-safe", () => {
-  for (const secret of ["role:", "token:", "hash:", "internalNotes"]) assert.doesNotMatch(server, new RegExp(secret));
-});
+const profileApi=readFileSync("app/api/account/profile/route.ts","utf8"),profile=readFileSync("lib/profile/server.ts","utf8"),accountRuns=readFileSync("lib/run-club/customer.ts","utf8"),submit=readFileSync("app/api/run-club/submissions/route.ts","utf8"),account=readFileSync("components/account/AccountPageClient.tsx","utf8"),checkout=readFileSync("components/checkout/CheckoutForm.tsx","utf8"),admin=readFileSync("app/api/admin/run-club/submissions/[id]/route.ts","utf8");
+test("unauthenticated account API is rejected",()=>assert.equal((profileApi.match(/requireCustomerRequest\(request\)/g)||[]).length,2));
+test("profile update derives verified UID and edits display name only",()=>{assert.match(profile,/doc\(customer\.uid\)/);assert.match(profile,/displayNameSchema/);assert.doesNotMatch(profile,/input\.uid|checkoutDefaults|phone:/)});
+test("email cannot be edited",()=>{assert.match(profile,/authUser\.email/);assert.doesNotMatch(profile,/updateUser\([^)]*email/)});
+test("fake UID and cross-account access are impossible",()=>{assert.match(accountRuns,/customerUserId\"\)===customer\.uid|customerUserId\"\)!==customer\.uid/);assert.doesNotMatch(accountRuns,/input\.uid/)});
+test("authenticated submission snapshots verified UID and guest remains null",()=>{assert.match(submit,/verifyOptionalCustomerRequest/);assert.match(submit,/customerUserId.*\?\.uid \?\? null/);assert.doesNotMatch(submit,/parsed\.data\.customerUserId/)});
+test("old submissions are never identity matched",()=>assert.doesNotMatch(accountRuns,/contactValue|normalizedContact|instagramHash|phone/));
+test("owned query is limited and never loads full collection",()=>{assert.match(accountRuns,/where\(\"customerUserId\",\"==\",customer\.uid\)/);assert.match(accountRuns,/limit\(9\)/)});
+test("pending direct edit and cancellation are ownership scoped",()=>{assert.match(accountRuns,/d\.status===\"pending\"/);assert.match(accountRuns,/customer_cancelled/)});
+test("approved edit keeps public content until moderation",()=>{assert.match(accountRuns,/pendingRevision:values/);assert.doesNotMatch(accountRuns,/pendingRevision:values,publicCaption/);assert.match(admin,/edit_approved/)});
+test("approved removal hides immediately and requires moderation",()=>{assert.match(accountRuns,/moderationState:\"removal_requested\",publicVisible:false/);assert.match(admin,/removal_approved/);assert.match(admin,/removal_rejected/)});
+test("private contact fields are absent from customer serializer",()=>{for(const field of ["contactValue","normalizedContact","instagram"])assert.doesNotMatch(accountRuns,new RegExp(field))});
+test("sign-out clears private rendered state",()=>assert.match(account,/setProfile\(null\);setRuns\(\[\]\);setCursor\(null\)/));
+test("account has no saved delivery details and checkout has no prefill",()=>{assert.doesNotMatch(account,/SAVED DELIVERY|phone|deliveryMode|photoURL/);assert.doesNotMatch(checkout,/loadProfile|SAVE THESE DETAILS/)});
