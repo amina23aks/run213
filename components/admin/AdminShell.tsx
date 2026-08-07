@@ -22,9 +22,10 @@ type AdminShellProps = {
   eyebrow?: string;
   description?: string;
   children: ReactNode;
+  compactHeader?: boolean;
 };
 
-export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, children }: AdminShellProps) {
+export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, children, compactHeader = false }: AdminShellProps) {
   const pathname = usePathname();
   const [isNavOpen, setIsNavOpen] = useState(false);
 
@@ -87,7 +88,7 @@ export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, chil
         </div>
       </aside>
 
-      <section className="adminMain">
+      <section className={compactHeader ? "adminMain adminMain--compactHeader" : "adminMain"}>
         <header className="adminMain__header">
           <div>
             <p>{eyebrow}</p>

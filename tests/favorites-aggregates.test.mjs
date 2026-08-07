@@ -33,8 +33,23 @@ test("backfill and live writes use the same aggregate document schema", async ()
   ]);
   for (const field of ["type", "itemId", "count", "updatedAt"]) assert.match(backfill, new RegExp(`\\b${field}\\b`));
   for (const field of ["type", "itemId", "count", "updatedAt"]) assert.match(writer, new RegExp(`\\b${field}\\b`));
-  assert.match(reader, /favoriteAggregateId\(item\.type, item\.itemId\)/);
+  assert.match(reader, /favoriteAggregateId\(itemType, itemId\)/);
   assert.doesNotMatch(reader, /uid|email/i);
+});
+
+test("Admin Favorites waits behind the authenticated Admin gate and retries one 401", async () => {
+  const client = await readFile("components/admin/AdminFavoritesClient.tsx", "utf8");
+  assert.match(client, /<AdminAccessGate><AdminFavoritesWorkspace \/><\/AdminAccessGate>/);
+  assert.match(client, /response\.status === 401/);
+  assert.match(client, /getToken\(true\)/);
+});
+
+test("Admin aggregate reads tolerate malformed documents and log server failures safely", async () => {
+  const route = await readFile("app/api/admin/favorites/route.ts", "utf8");
+  assert.match(route, /skipped malformed aggregate/);
+  assert.match(route, /\[admin-favorites\] request failed/);
+  assert.match(route, /Favorites insights are temporarily unavailable\./);
+  assert.doesNotMatch(route, /AggregateField|orderBy\("count"/);
 });
 
 test("Admin Favorites explicitly bypasses HTTP and browser caches", async () => {
