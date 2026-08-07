@@ -11,6 +11,10 @@ type Item = { id: string; itemId: string; type: "product" | "look"; count: numbe
 type Payload = { summary: { productSaves: number; lookSaves: number; totalSaves: number; mostSavedItem: string | null }; items: Item[]; nextOffset: number | null };
 
 export function AdminFavoritesClient() {
+  return <AdminShell title="Favorites" eyebrow="MERCHANDISING" description="Aggregate saves only. Customer identities stay private." compactHeader><AdminAccessGate><AdminFavoritesWorkspace /></AdminAccessGate></AdminShell>;
+}
+
+function AdminFavoritesWorkspace() {
   const [kind, setKind] = useState<Kind>("all");
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -25,8 +29,12 @@ export function AdminFavoritesClient() {
       const params = new URLSearchParams({ offset: String(offset) });
       if (kind !== "all") params.set("type", kind);
       if (query) params.set("search", query);
-      const response = await fetch(`/api/admin/favorites?${params}`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!response.ok) throw new Error("Favorites insights could not be loaded.");
+      let response = await fetch(`/api/admin/favorites?${params}`, { cache: "no-store", headers: { Authorization: `Bearer ${token}` } });
+      if (response.status === 401) {
+        const freshToken = await getToken(true);
+        response = await fetch(`/api/admin/favorites?${params}`, { cache: "no-store", headers: { Authorization: `Bearer ${freshToken}` } });
+      }
+      if (!response.ok) throw new Error(`Favorites insights could not be loaded (${response.status}).`);
       const next = await response.json() as Payload;
       setData((current) => append && current ? { ...next, items: [...current.items, ...next.items] } : next);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Favorites insights could not be loaded."); }
@@ -35,8 +43,7 @@ export function AdminFavoritesClient() {
 
   useEffect(() => { const task = queueMicrotask(() => void load()); return () => void task; }, [load]);
   return (
-    <AdminShell title="Favorites" eyebrow="MERCHANDISING" description="Aggregate saves only. Customer identities stay private.">
-      <AdminAccessGate>
+    <>
         <div className="adminInsightStats">
           <Stat label="TOTAL PRODUCT SAVES" value={data?.summary.productSaves} />
           <Stat label="TOTAL LOOK SAVES" value={data?.summary.lookSaves} />
@@ -52,6 +59,7 @@ export function AdminFavoritesClient() {
               <input aria-label="Search favorites by item name" placeholder="Search item name…" value={search} onChange={(event) => setSearch(event.target.value)} />
               <button type="submit">SEARCH</button>
             </form>
+            <button className="adminInsightsMore" disabled={loading} onClick={() => void load()} type="button">{loading ? "REFRESHING…" : "REFRESH"}</button>
           </div>
           {error ? <ErrorState message={error} retry={() => void load()} /> : loading && !data ? <p className="adminInsightState">Loading aggregate saves…</p> : !data?.items.length ? <p className="adminInsightState">No saved items match this view.</p> : (
             <div className="adminInsightRows">
@@ -60,8 +68,7 @@ export function AdminFavoritesClient() {
           )}
           {data?.nextOffset !== null && data?.nextOffset !== undefined ? <button className="adminInsightsMore" disabled={loading} onClick={() => void load(data.nextOffset ?? 0, true)} type="button">{loading ? "LOADING…" : "LOAD MORE"}</button> : null}
         </section>
-      </AdminAccessGate>
-    </AdminShell>
+    </>
   );
 }
 
@@ -75,4 +82,4 @@ function FavoriteRow({ item }: { item: Item }) {
 }
 function Stat({ label, value, text = false }: { label: string; value: number | string | undefined; text?: boolean }) { return <article className="adminInsightStat"><span>{label}</span><strong className={text ? "isText" : ""}>{value === undefined ? "—" : typeof value === "number" ? value.toLocaleString() : value}</strong></article>; }
 function ErrorState({ message, retry }: { message: string; retry: () => void }) { return <div className="adminInsightState adminInsightState--error" role="alert"><span>{message}</span><button onClick={retry} type="button">TRY AGAIN</button></div>; }
-async function getToken() { const { auth } = await import("@/lib/firebase/client"); const token = await auth.currentUser?.getIdToken(); if (!token) throw new Error("Admin session expired. Sign in again."); return token; }
+async function getToken(forceRefresh = false) { const { auth } = await import("@/lib/firebase/client"); const user = auth.currentUser; if (!user) throw new Error("Admin session expired. Sign in again."); return user.getIdToken(forceRefresh); }

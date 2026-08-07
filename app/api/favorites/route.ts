@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { applyFavoriteAggregate } from "@/lib/favorites/aggregate";
+import { applyFavoriteAggregate, favoriteAggregateId, nextFavoriteAggregateCount } from "@/lib/favorites/aggregate";
 
 const inputSchema = z.object({
   type: z.enum(["product", "look"]),
@@ -30,12 +30,13 @@ export async function POST(request: Request) {
   const favoriteRef = db.collection("users").doc(uid).collection(collection).doc(itemId);
 
   await db.runTransaction(async (transaction) => {
-    const aggregateRef = db.collection("favoriteAggregates").doc(`${type}_${itemId}`);
+    const aggregateRef = db.collection("favoriteAggregates").doc(favoriteAggregateId(type, itemId));
     const [current, aggregate] = await transaction.getAll(favoriteRef, aggregateRef);
     if (favorite === current.exists) return;
     if (favorite) transaction.create(favoriteRef, { itemId, createdAt: FieldValue.serverTimestamp() });
     else transaction.delete(favoriteRef);
-    if (favorite || aggregate.exists && Number(aggregate.get("count") ?? 0) > 0) applyFavoriteAggregate(transaction, db, type, itemId, favorite ? 1 : -1);
+    const nextCount = nextFavoriteAggregateCount(aggregate.get("count"), favorite ? 1 : -1);
+    applyFavoriteAggregate(transaction, db, type, itemId, nextCount);
   });
 
   return Response.json({ favorite });
