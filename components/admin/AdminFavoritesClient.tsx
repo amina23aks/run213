@@ -25,7 +25,7 @@ export function AdminFavoritesClient() {
       const params = new URLSearchParams({ offset: String(offset) });
       if (kind !== "all") params.set("type", kind);
       if (query) params.set("search", query);
-      const response = await fetch(`/api/admin/favorites?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await fetch(`/api/admin/favorites?${params}`, { cache: "no-store", headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) throw new Error("Favorites insights could not be loaded.");
       const next = await response.json() as Payload;
       setData((current) => append && current ? { ...next, items: [...current.items, ...next.items] } : next);
@@ -52,6 +52,7 @@ export function AdminFavoritesClient() {
               <input aria-label="Search favorites by item name" placeholder="Search item name…" value={search} onChange={(event) => setSearch(event.target.value)} />
               <button type="submit">SEARCH</button>
             </form>
+            <button className="adminInsightsMore" disabled={loading} onClick={() => void load()} type="button">{loading ? "REFRESHING…" : "REFRESH"}</button>
           </div>
           {error ? <ErrorState message={error} retry={() => void load()} /> : loading && !data ? <p className="adminInsightState">Loading aggregate saves…</p> : !data?.items.length ? <p className="adminInsightState">No saved items match this view.</p> : (
             <div className="adminInsightRows">

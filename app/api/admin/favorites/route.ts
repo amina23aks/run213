@@ -1,5 +1,6 @@
 import { AggregateField, FieldPath } from "firebase-admin/firestore";
 import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
+import { favoriteAggregateId, type FavoriteKind } from "@/lib/favorites/aggregate";
 import { getAdminDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,8 @@ export async function GET(request: Request) {
   ]);
 
   const candidates = ranked.docs
-    .map((doc) => ({ id: doc.id, itemId: String(doc.get("itemId") ?? ""), type: doc.get("type") as "product" | "look", count: Math.max(0, Number(doc.get("count") ?? 0)) }))
+    .map((doc) => ({ id: doc.id, itemId: String(doc.get("itemId") ?? ""), type: doc.get("type") as FavoriteKind, count: Math.max(0, Number(doc.get("count") ?? 0)) }))
+    .filter((item) => (item.type === "product" || item.type === "look") && item.id === favoriteAggregateId(item.type, item.itemId))
     .filter((item) => item.count > 0 && (type !== "product" && type !== "look" || item.type === type));
   const refs = candidates.map((item) => db.collection(item.type === "product" ? "products" : "looks").doc(item.itemId));
   const itemDocs = refs.length ? await db.getAll(...refs) : [];
@@ -51,5 +53,5 @@ export async function GET(request: Request) {
     items,
     nextOffset: offset + PAGE_SIZE < enriched.length ? offset + PAGE_SIZE : null,
     boundedTo: SCAN_LIMIT,
-  });
+  }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }
