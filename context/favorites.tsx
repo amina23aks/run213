@@ -29,7 +29,6 @@ const FAVORITES_ERROR = "Favorites could not sync. Your saved items are safe; pl
 
 function withoutId(ids: string[], itemId: string) { return ids.filter((id) => id !== itemId); }
 function withId(ids: string[], itemId: string) { return ids.includes(itemId) ? ids : [...ids, itemId]; }
-function collectionName(type: FavoriteItemType) { return type === "product" ? "productFavorites" : "lookFavorites"; }
 function idsKey(type: FavoriteItemType): keyof FavoriteArrays { return type === "product" ? "productIds" : "lookIds"; }
 function unique(ids: string[]) { return [...new Set(ids.filter(isValidFavoriteId))]; }
 function unionFavorites(left: FavoriteArrays, right: FavoriteArrays): FavoriteArrays {
@@ -57,12 +56,11 @@ async function writeMissingFavorites(deps: FirebaseDeps, uid: string, missing: F
     ...missing.productIds.map((itemId) => ({ type: "product" as const, itemId })),
     ...missing.lookIds.map((itemId) => ({ type: "look" as const, itemId })),
   ];
-  for (let index = 0; index < writes.length; index += 450) {
-    const batch = deps.writeBatch(deps.db);
-    writes.slice(index, index + 450).forEach(({ type, itemId }) => {
-      batch.set(deps.doc(deps.db, "users", uid, collectionName(type), itemId), { itemId, createdAt: deps.serverTimestamp() });
-    });
-    await batch.commit();
+  const token = await deps.auth.currentUser?.getIdToken();
+  if (!token || deps.auth.currentUser?.uid !== uid) throw new Error("Authentication expired");
+  for (const { type, itemId } of writes) {
+    const response = await fetch("/api/favorites", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ type, itemId, favorite: true }) });
+    if (!response.ok) throw new Error("Favorite merge failed");
   }
 }
 
@@ -185,9 +183,14 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     if (!deps || !authReadyRef.current) return;
     setIsSyncing(true);
     try {
-      const ref = deps.doc(deps.db, "users", uid, collectionName(type), itemId);
-      if (shouldFavorite) await deps.setDoc(ref, { itemId, createdAt: deps.serverTimestamp() });
-      else await deps.deleteDoc(ref);
+      const token = await deps.auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Authentication expired");
+      const response = await fetch("/api/favorites", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ type, itemId, favorite: shouldFavorite }),
+      });
+      if (!response.ok) throw new Error("Favorite write failed");
     } catch (writeError) {
       if (process.env.NODE_ENV !== "production") console.error("[favorites] toggle failed", writeError);
       setFavorites(previous);
