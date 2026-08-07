@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "favoriteAggregates",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "count", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "lookCollections",
       "queryScope": "COLLECTION",
       "fields": [

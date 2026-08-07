@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { BrandPhilosophy } from "@/components/home/BrandPhilosophy";
 import { footerColumns } from "@/constants/home";
+import { FooterClubForm } from "@/components/layout/FooterClubForm";
 
 export function Footer() {
   return (
@@ -20,16 +21,7 @@ export function Footer() {
             {column.links.map((link) => <a href="#home" key={link}>{link}</a>)}
           </nav>
         ))}
-        <form className="site-footer__club" action="#">
-          <h3>JOIN THE CLUB</h3>
-          <p>Get early access to new drops and exclusive offers.</p>
-          <label>
-            <span>Email address</span>
-            <input type="email" placeholder="Enter your email" />
-            <button type="submit" aria-label="Join the club">→</button>
-          </label>
-          <small>Privacy Policy · Terms of Service</small>
-        </form>
+        <FooterClubForm />
       </div>
     </footer>
   );

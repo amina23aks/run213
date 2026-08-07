@@ -1,5 +1,5 @@
-import { AdminPlaceholderPage } from "@/components/admin/AdminPlaceholderPage";
+import { AdminFavoritesClient } from "@/components/admin/AdminFavoritesClient";
 
 export default function AdminFavoritesPage() {
-  return <AdminPlaceholderPage title="Favorites" label="FAVORITES" description="Favorites admin insights are reserved for the favorites sprint." />;
+  return <AdminFavoritesClient />;
 }
