@@ -1411,6 +1411,18 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   min-width: 0;
 }
 
+.adminMain--compactHeader .adminMain__header {
+  align-items: center;
+  border-radius: 1rem;
+  min-height: 0;
+  padding: 1.75rem 2rem;
+}
+
+.adminMain--compactHeader { align-content: start; grid-template-rows: auto minmax(0, 1fr); }
+.adminMain--compactHeader .adminMain__header p { margin: 0 0 .12rem; }
+.adminMain--compactHeader .adminMain__header h1 { font-size: clamp(2.25rem, 4vw, 3.5rem); margin-top: 0; }
+.adminMain--compactHeader .adminMain__header span { margin-left: auto; text-align: right; }
+
 .adminShell--loading {
   display: flex;
   justify-content: center;
@@ -1490,6 +1502,9 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
     align-items: start;
     flex-direction: column;
   }
+
+  .adminMain--compactHeader .adminMain__header { gap: .45rem; padding: 1.5rem; }
+  .adminMain--compactHeader .adminMain__header span { margin-left: 0; text-align: left; }
 }
 
 @media (max-width: 520px) {
