@@ -71,3 +71,11 @@ test("Admin Favorites explicitly bypasses HTTP and browser caches", async () => 
   assert.match(client, /cache: "no-store"/);
   assert.match(client, />\{loading \? "REFRESHING…" : "REFRESH"\}</);
 });
+
+test("Admin Favorites rows open canonical storefront routes without prefetching details", async () => {
+  const client = await readFile("components/admin/AdminFavoritesClient.tsx", "utf8");
+  assert.match(client, /`\/product\/\$\{item\.slug\}`/);
+  assert.match(client, /`\/look\/\$\{item\.slug\}`/);
+  assert.match(client, /prefetch=\{false\}/);
+  assert.doesNotMatch(client, /`\/admin\/(?:products|looks)\?edit=/);
+});

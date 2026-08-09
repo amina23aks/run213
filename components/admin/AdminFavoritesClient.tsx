@@ -73,11 +73,11 @@ function AdminFavoritesWorkspace() {
 }
 
 function FavoriteRow({ item }: { item: Item }) {
-  const href = item.type === "product" ? `/admin/products?edit=${item.itemId}` : `/admin/looks?edit=${item.itemId}`;
-  return <Link className="adminInsightRow" href={href}>
+  const href = item.type === "product" ? `/product/${item.slug}` : `/look/${item.slug}`;
+  return <Link aria-label={`View ${item.name} on the storefront`} className="adminInsightRow" href={href} prefetch={false}>
     <span className="adminInsightRow__image">{item.imageUrl ? <Image src={item.imageUrl} alt="" width={64} height={72} unoptimized /> : <><span aria-hidden="true">—</span><span className="srOnly">No image available</span></>}</span>
     <span className="adminInsightRow__main"><small>{item.type.toUpperCase()}</small><strong>{item.name}</strong><em>{item.status}</em></span>
-    <span className="adminInsightRow__count"><strong>{item.count.toLocaleString()}</strong><small>SAVES</small></span><b aria-hidden="true">→</b>
+    <span className="adminInsightRow__count"><strong>{item.count.toLocaleString()}</strong><small>SAVES</small></span><b aria-hidden="true">↗</b>
   </Link>;
 }
 function Stat({ label, value, text = false }: { label: string; value: number | string | undefined; text?: boolean }) { return <article className="adminInsightStat"><span>{label}</span><strong className={text ? "isText" : ""}>{value === undefined ? "—" : typeof value === "number" ? value.toLocaleString() : value}</strong></article>; }
