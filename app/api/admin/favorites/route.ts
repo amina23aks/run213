@@ -31,9 +31,10 @@ export async function GET(request: Request) {
     const itemDocs = refs.length ? await db.getAll(...refs) : [];
     const rankedItems = ranked.map((item, index) => {
       const data = itemDocs[index]?.data();
-      const images = Array.isArray(data?.images) ? data.images : [];
-      const firstImage = images[0] && typeof images[0] === "object" ? images[0] as Record<string, unknown> : null;
-      return { ...item, name: typeof data?.name === "string" ? data.name : "Unavailable item", slug: typeof data?.slug === "string" ? data.slug : null, status: typeof data?.status === "string" ? data.status : "unavailable", imageUrl: typeof firstImage?.url === "string" ? firstImage.url : null };
+      const image = item.type === "look" ? data?.heroImage : Array.isArray(data?.images) ? data.images[0] : null;
+      const rawImageUrl = image && typeof image === "object" ? (image as Record<string, unknown>).url : null;
+      const imageUrl = typeof rawImageUrl === "string" && rawImageUrl.trim() ? rawImageUrl : null;
+      return { ...item, name: typeof data?.name === "string" ? data.name : "Unavailable item", slug: typeof data?.slug === "string" ? data.slug : null, status: typeof data?.status === "string" ? data.status : "unavailable", imageUrl };
     });
     const enriched = rankedItems.filter((item) => (type !== "product" && type !== "look" || item.type === type) && (!search || item.name.toLocaleLowerCase().includes(search)));
     const productSaves = aggregates.filter((item) => item.type === "product").reduce((sum, item) => sum + item.count, 0);

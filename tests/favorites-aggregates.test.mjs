@@ -52,6 +52,16 @@ test("Admin aggregate reads tolerate malformed documents and log server failures
   assert.doesNotMatch(route, /AggregateField|orderBy\("count"/);
 });
 
+test("Admin favorite rows use canonical Look hero images and neutral missing-image UI", async () => {
+  const [route, client] = await Promise.all([
+    readFile("app/api/admin/favorites/route.ts", "utf8"),
+    readFile("components/admin/AdminFavoritesClient.tsx", "utf8"),
+  ]);
+  assert.match(route, /item\.type === "look" \? data\?\.heroImage/);
+  assert.doesNotMatch(client, /: "213"/);
+  assert.match(client, /No image available/);
+});
+
 test("Admin Favorites explicitly bypasses HTTP and browser caches", async () => {
   const [route, client] = await Promise.all([
     readFile("app/api/admin/favorites/route.ts", "utf8"),
