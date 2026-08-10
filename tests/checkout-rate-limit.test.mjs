@@ -12,10 +12,14 @@ function hash(scope, value) {
   return createHash("sha256").update(`run213:checkout:${scope}:${value}`).digest("hex");
 }
 
-function durableModel({ guestIpLimit = 5, authIpLimit = 10, phoneLimit = 5, uidLimit = 10 } = {}) {
+function environmentNamespace(value) {
+  return value === "production" || value === "preview" ? value : "development";
+}
+
+function durableModel({ environment = "development", guestIpLimit = 5, authIpLimit = 10, phoneLimit = 5, uidLimit = 10 } = {}) {
   const counters = new Map();
   const consume = (prefix, identifier, limit) => {
-    const key = `${prefix}:${identifier}`;
+    const key = `run213:${environmentNamespace(environment)}:checkout:${prefix}:${identifier}`;
     const count = (counters.get(key) ?? 0) + 1;
     counters.set(key, count);
     return { allowed: count <= limit, limit, remaining: Math.max(0, limit - count), reset: Date.now() + 3_600_000 };
@@ -32,6 +36,37 @@ function durableModel({ guestIpLimit = 5, authIpLimit = 10, phoneLimit = 5, uidL
     keys() { return [...counters.keys()]; },
   };
 }
+
+test("production, preview, and development use isolated allowlisted prefixes", () => {
+  const production = durableModel({ environment: "production" });
+  const preview = durableModel({ environment: "preview" });
+  const development = durableModel({ environment: "development" });
+  const attempt = { ip: "same-ip", phone: "same-phone" };
+  production.check(attempt);
+  preview.check(attempt);
+  development.check(attempt);
+  assert.match(production.keys()[0], /^run213:production:checkout:/);
+  assert.match(preview.keys()[0], /^run213:preview:checkout:/);
+  assert.match(development.keys()[0], /^run213:development:checkout:/);
+  assert.notEqual(production.keys()[0], preview.keys()[0]);
+  assert.notEqual(preview.keys()[0], development.keys()[0]);
+});
+
+test("preview attempts cannot consume production quota", () => {
+  const production = durableModel({ environment: "production", guestIpLimit: 1 });
+  const preview = durableModel({ environment: "preview", guestIpLimit: 1 });
+  const attempt = { ip: "same-ip", phone: "same-phone" };
+  assert.equal(preview.check(attempt).allowed, true);
+  assert.equal(preview.check(attempt).allowed, false);
+  assert.equal(production.check(attempt).allowed, true);
+});
+
+test("unknown or missing VERCEL_ENV deterministically falls back to development", () => {
+  assert.equal(environmentNamespace(undefined), "development");
+  assert.equal(environmentNamespace("arbitrary-browser-value"), "development");
+  assert.match(checkoutLimiterSource, /resolveCheckoutEnvironment\(process\.env\.VERCEL_ENV\)/);
+  assert.doesNotMatch(checkoutLimiterSource, /request.*VERCEL_ENV|headers.*VERCEL_ENV/i);
+});
 
 test("valid guest and authenticated checkout pass below durable limits", () => {
   const limiter = durableModel();
