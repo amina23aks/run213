@@ -6,7 +6,7 @@ import { RUN_CLUB_ALLOWED_MIME_TYPES, RUN_CLUB_MAX_IMAGE_BYTES, runClubSubmissio
 import { waitForAuthHydration } from "@/components/orders/customerOrderAccess";
 
 type FieldErrors = Record<string, string>;
-type UploadProof = { publicId: string; secureUrl: string; width: number; height: number; format: string; bytes: number; version: string; signature?: string };
+type UploadProof = { proofImage: { publicId: string; secureUrl: string; width: number; height: number; format: string; bytes: number; version: string; signature?: string }; uploadGrantId: string };
 
 const initialFields = { name: "", contact: "", instagram: "", wilaya: "", caption: "", consentAccepted: false, website: "" };
 
@@ -38,7 +38,7 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     setFile(nextFile); setPreview(URL.createObjectURL(nextFile));
   }
   async function uploadProof(selectedFile: File, token: string): Promise<UploadProof> {
-    const signatureResponse = await fetch("/api/run-club/upload-signature", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ fileType: selectedFile.type, fileSize: selectedFile.size }) });
+    const signatureResponse = await fetch("/api/run-club/upload-signature", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ fileType: selectedFile.type, fileSize: selectedFile.size, contact: fields.contact, instagram: fields.instagram, website: fields.website }) });
     const signaturePayload = await signatureResponse.json();
     if (!signatureResponse.ok || !signaturePayload.ok) throw new Error(signaturePayload.message || "Upload failed.");
     const formData = new FormData();
@@ -50,7 +50,7 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     const cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${signaturePayload.cloudName}/image/upload`, { method: "POST", body: formData });
     const upload = await cloudinaryResponse.json();
     if (!cloudinaryResponse.ok) throw new Error("Image upload failed. Try again.");
-    return { publicId: upload.public_id, secureUrl: upload.secure_url, width: upload.width, height: upload.height, format: upload.format, bytes: upload.bytes, version: String(upload.version), signature: upload.signature };
+    return { proofImage: { publicId: upload.public_id, secureUrl: upload.secure_url, width: upload.width, height: upload.height, format: upload.format, bytes: upload.bytes, version: String(upload.version), signature: upload.signature }, uploadGrantId: signaturePayload.uploadGrantId };
   }
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!authHydrated || isClosed || status === "uploading" || status === "submitting") return;
@@ -62,8 +62,8 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
       let token: string;
       try { token = await user.getIdToken(true); }
       catch { throw new Error("Your session could not be verified. Please sign in again and retry."); }
-      const proofImage = await uploadProof(file, token);
-      const payload = { ...fields, proofImage };
+      const upload = await uploadProof(file, token);
+      const payload = { ...fields, ...upload };
       const parsed = runClubSubmissionSchema.safeParse(payload);
       if (!parsed.success) { const nextErrors = Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value."])); setStatus("error"); setMessage("Check the highlighted fields and try again."); setFieldErrors(nextErrors); return; }
       setStatus("submitting");

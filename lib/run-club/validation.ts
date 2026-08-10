@@ -45,6 +45,7 @@ export const runClubSubmissionSchema = z.object({
   caption: trimmedOptional(280),
   consentAccepted: z.literal(true, { error: "Consent is required." }),
   proofImage: cloudinaryUploadProofSchema,
+  uploadGrantId: z.uuid(),
   website: z.string().max(0).optional().default(""),
 }).strict();
 

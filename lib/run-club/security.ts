@@ -46,3 +46,13 @@ export async function checkRunClubRateLimit(request: Request, limit = 5) {
     return { allowed: true, resetAt: now + windowMs };
   });
 }
+
+export async function checkMonthlyDuplicateLocks(monthKey: string, normalizedContact: string, normalizedInstagram: string | null) {
+  const db = getAdminDb();
+  const contactHash = createIdentityHash(monthKey, "contact", normalizedContact);
+  const instagramHash = normalizedInstagram ? createIdentityHash(monthKey, "instagram", normalizedInstagram) : null;
+  const contactRef = db.collection("runClubSubmissionKeys").doc(`${monthKey}_contact_${contactHash}`);
+  const instagramRef = instagramHash ? db.collection("runClubSubmissionKeys").doc(`${monthKey}_instagram_${instagramHash}`) : null;
+  const [contact, instagram] = await Promise.all([contactRef.get(), instagramRef?.get() ?? Promise.resolve(null)]);
+  return { duplicateContact: contact.exists, duplicateInstagram: Boolean(instagram?.exists) };
+}
