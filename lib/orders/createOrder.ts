@@ -8,7 +8,7 @@ import { createOrderNumber } from "@/lib/orders/orderNumber";
 import { shippingCalculator } from "@/lib/orders/shipping";
 import { calculateLookGroupPrice } from "@/lib/lookPricing";
 import { normalizeProductColors } from "@/lib/productColors";
-import { normalizeEmail, normalizePhone } from "@/lib/orders/validation";
+import { normalizeEmail } from "@/lib/orders/validation";
 import { buildAdminSearchTokens } from "@/lib/orders/admin";
 
 const ORDERS_COLLECTION = "orders";
@@ -41,7 +41,29 @@ export class OrderCreationError extends Error {
 type ExistingOrderResult = CreateOrderResponse & { idempotent: true };
 type NewOrderResult = CreateOrderResponse & { idempotent: false };
 
-export async function createOrder(input: CreateOrderRequest, verifiedCustomerUid?: string | null): Promise<ExistingOrderResult | NewOrderResult> {
+export async function findCompletedOrderForCheckout(input: CreateOrderRequest, normalizedPhone: string): Promise<ExistingOrderResult | null> {
+  const { getAdminDb } = await import("@/lib/firebase/admin");
+  const adminDb = getAdminDb();
+  const idempotencyHash = createIdempotencyHash(input.idempotencyKey, normalizedPhone);
+  const lockSnapshot = await adminDb.collection(IDEMPOTENCY_COLLECTION).doc(idempotencyHash).get();
+  const existingOrderId = lockSnapshot.exists && typeof lockSnapshot.data()?.orderId === "string" ? lockSnapshot.data()?.orderId as string : null;
+  if (!existingOrderId) return null;
+
+  const existingOrderSnapshot = await adminDb.collection(ORDERS_COLLECTION).doc(existingOrderId).get();
+  const existingOrder = existingOrderSnapshot.data() as Partial<OrderRecord> | undefined;
+  if (!existingOrderSnapshot.exists || !existingOrder?.orderNumber || !existingOrder.status || !existingOrder.paymentStatus || !existingOrder.totals) return null;
+
+  return {
+    orderId: existingOrderSnapshot.id,
+    orderNumber: existingOrder.orderNumber,
+    status: existingOrder.status,
+    paymentStatus: existingOrder.paymentStatus,
+    totals: existingOrder.totals,
+    idempotent: true,
+  };
+}
+
+export async function createOrder(input: CreateOrderRequest, verifiedCustomerUid: string | null, normalizedPhone: string): Promise<ExistingOrderResult | NewOrderResult> {
   const [{ getAdminDb }, { FieldValue, Timestamp }] = await Promise.all([
     import("@/lib/firebase/admin"),
     import("firebase-admin/firestore"),
@@ -50,7 +72,6 @@ export async function createOrder(input: CreateOrderRequest, verifiedCustomerUid
 
   const now = new Date();
   const nowIso = now.toISOString();
-  const normalizedPhone = normalizePhone(input.customer.phone);
   const idempotencyHash = createIdempotencyHash(input.idempotencyKey, normalizedPhone);
   const lockRef = adminDb.collection(IDEMPOTENCY_COLLECTION).doc(idempotencyHash);
   const orderRef = adminDb.collection(ORDERS_COLLECTION).doc();
