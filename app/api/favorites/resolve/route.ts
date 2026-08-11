@@ -4,6 +4,8 @@ import { toProductCardView } from "@/constants/products";
 import { getActiveLooksByIds } from "@/lib/firestore/looks";
 import { getActiveProductsByIds } from "@/lib/firestore/products";
 import { getLookHref } from "@/lib/look-urls";
+import { checkFavoriteResolveRateLimit, getFavoriteClientIp } from "@/lib/favorites/rateLimit";
+import { DurableRateLimitUnavailableError } from "@/lib/rate-limit";
 
 const MAX_IDS_PER_TYPE = 80;
 const favoriteIdSchema = z.string().trim().min(1).max(180).regex(/^[A-Za-z0-9_-]+$/);
@@ -29,6 +31,12 @@ export async function POST(request: Request) {
   const lookIds = unique(parsed.lookIds);
 
   try {
+    const rateLimit = await checkFavoriteResolveRateLimit(getFavoriteClientIp(request));
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000));
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429, headers: { "Retry-After": String(retryAfter) } });
+    }
+
     const [productsById, looksById] = await Promise.all([
       getActiveProductsByIds(productIds),
       getActiveLooksByIds(lookIds),
@@ -37,7 +45,16 @@ export async function POST(request: Request) {
     return NextResponse.json({
       products: productIds.flatMap((id) => {
         const product = productsById.get(id);
-        return product ? [{ id: product.id, card: toProductCardView(product), sourceProduct: { ...product, costPriceDzd: null } }] : [];
+        return product ? [{
+          id: product.id,
+          card: toProductCardView(product),
+          sourceProduct: {
+            slug: product.slug,
+            priceDzd: product.priceDzd,
+            compareAtPriceDzd: product.compareAtPriceDzd,
+            images: product.images.map(({ url, alt }) => ({ url, alt })),
+          },
+        }] : [];
       }),
       looks: lookIds.flatMap((id) => {
         const look = looksById.get(id);
@@ -58,6 +75,9 @@ export async function POST(request: Request) {
       unavailableLookIds: lookIds.filter((id) => !looksById.has(id)),
     });
   } catch (error) {
+    if (error instanceof DurableRateLimitUnavailableError) {
+      return NextResponse.json({ error: "Favorites are temporarily unavailable." }, { status: 503 });
+    }
     if (process.env.NODE_ENV !== "production") console.error("[favorites] resolve failed", error);
     return NextResponse.json({ error: "Favorites could not be loaded right now." }, { status: 500 });
   }

@@ -8,13 +8,18 @@ import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { getLookPromoState } from "@/components/look/LookPriceDisplay";
 import { formatDzd } from "@/constants/products";
 import { useFavorites } from "@/context/favorites";
-import type { Product, ProductCardView } from "@/types/product";
+import type { ProductCardView } from "@/types/product";
 import type { LookImage } from "@/types/look";
 
 type ResolvedProductFavorite = {
   id: string;
   card: ProductCardView;
-  sourceProduct: Product;
+  sourceProduct: {
+    slug: string;
+    priceDzd: number;
+    compareAtPriceDzd: number | null;
+    images: Array<{ url: string; alt: string }>;
+  };
 };
 
 type ResolvedLookFavorite = {
@@ -46,7 +51,7 @@ export function getSavedItemsLabel(count: number) {
   return `${count} SAVED ITEM${count === 1 ? "" : "S"}`;
 }
 
-function getProductPromo(product: Product) {
+function getProductPromo(product: ResolvedProductFavorite["sourceProduct"]) {
   const compareAt = product.compareAtPriceDzd;
   const hasValidCompareAt = typeof compareAt === "number" && Number.isFinite(compareAt) && compareAt > product.priceDzd;
   const discountPercent = hasValidCompareAt ? Math.round(((compareAt - product.priceDzd) / compareAt) * 100) : 0;
