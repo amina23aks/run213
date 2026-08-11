@@ -241,6 +241,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .productDetail { display: grid; gap: clamp(1.1rem, 2.6vw, 2rem); align-items: start; }
 .productGallery { display: grid; gap: 0.85rem; min-width: 0; }
 .productGallery__main { display: flex; min-height: clamp(19rem, 40vw, 33rem); max-height: 36rem; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(0, 0, 0, 0.07); border-radius: clamp(1.25rem, 3vw, 1.5rem); background: rgba(255, 250, 240, 0.88); padding: clamp(0.9rem, 2vw, 1.55rem); }
+.productGallery__main { position: relative; }
 .productGallery__main img { width: 100%; height: 100%; max-width: 82%; max-height: 32rem; object-fit: contain; object-position: center; }
 .productGallery__thumbs { display: flex; gap: 0.65rem; overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: none; }
 .productGallery__thumbs::-webkit-scrollbar { display: none; }
@@ -264,6 +265,14 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .productQuantity div { display: inline-flex; align-items: center; overflow: hidden; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 999px; background: rgba(255, 255, 255, 0.34); }
 .productQuantity button { width: 2rem; height: 2rem; border: 0; background: transparent; color: var(--foreground); font-size: 1rem; font-weight: 900; }
 .productQuantity strong { min-width: 1.75rem; text-align: center; }
+.productQuantity__label { align-items: center; display: inline-flex; gap: .55rem; }
+.productQuantity__label b { color: #c51c24; font-size: .64rem; font-weight: 950; white-space: nowrap; }
+.productQuantity button:disabled { cursor: not-allowed; opacity: .38; }
+.stockBadge { align-items: center; background: rgba(255,255,255,.94); border: 1px solid rgba(7,7,6,.1); border-radius: 999px; box-shadow: 0 2px 9px rgba(0,0,0,.12); color: #14723a; display: inline-flex; font-size: clamp(.52rem, 1.5vw, .61rem); font-weight: 950; gap: .32rem; left: clamp(.5rem, 1.4vw, .7rem); letter-spacing: .055em; line-height: 1; padding: .38rem .5rem; pointer-events: none; position: absolute; top: clamp(.5rem, 1.4vw, .7rem); white-space: nowrap; z-index: 5; }
+.stockBadge i { background: currentColor; border-radius: 50%; height: .38rem; width: .38rem; }
+.stockBadge--out { color: #bd1e27; }
+.productImageWrap:has(.stockBadge) .promoBadge { top: 2.35rem; }
+.favoriteCompactCard__media .stockBadge { left: 7px; top: 7px; }
 .productActionsRow { display: grid; grid-template-columns: 1fr 2.875rem; gap: 0.625rem; }
 .productAddButton, .productWishlistButton { min-height: 2.875rem; border-radius: 0.75rem; font-weight: 950; line-height: 1; }
 .productAddButton { border: 0; background: var(--lime); color: var(--foreground); font-size: 0.8rem; text-transform: uppercase; }

@@ -10,6 +10,7 @@ import { formatDzd } from "@/constants/products";
 import { useFavorites } from "@/context/favorites";
 import type { ProductCardView } from "@/types/product";
 import type { LookImage } from "@/types/look";
+import { StockBadge } from "@/components/product/StockBadge";
 
 type ResolvedProductFavorite = {
   id: string;
@@ -19,6 +20,7 @@ type ResolvedProductFavorite = {
     priceDzd: number;
     compareAtPriceDzd: number | null;
     images: Array<{ url: string; alt: string }>;
+    availability: "in_stock" | "out_of_stock";
   };
 };
 
@@ -198,6 +200,7 @@ function FavoriteProductCard({ product }: { product: ResolvedProductFavorite }) 
     <FavoriteSavedCardShell
       className="favoriteCompactCard--product"
       media={<Link href={href} aria-label={`View product ${product.card.name}`}><Image src={product.card.image} alt={product.sourceProduct.images[0]?.alt || `${product.card.name} product image`} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
+      mediaOverlay={<StockBadge product={{ status: "active", stockMode: product.sourceProduct.availability === "in_stock" ? "unlimited" : "limited", stockQty: product.sourceProduct.availability === "in_stock" ? null : 0 }} />}
       favoriteButton={<FavoriteButton itemType="product" itemId={product.id} itemName={product.card.name} variant="card" className="favoriteCompactCard__favorite" />}
       title={<Link href={href}>{product.card.name}</Link>}
       pricing={<><strong>{formatDzd(product.sourceProduct.priceDzd)}</strong>{promo.hasValidCompareAt ? <del>{formatDzd(promo.compareAt ?? 0)}</del> : null}{promo.hasValidCompareAt ? <em aria-label={`${promo.discountPercent}% discount`}>-{promo.discountPercent}%</em> : null}</>}
@@ -235,10 +238,10 @@ function FavoriteLookCard({ look }: { look: ResolvedLookFavorite }) {
   );
 }
 
-function FavoriteSavedCardShell({ className, media, favoriteButton, meta, title, description, pricing, savings, action }: { className?: string; media: ReactNode; favoriteButton: ReactNode; meta?: string; title: ReactNode; description?: string; pricing?: ReactNode; savings?: string; action?: ReactNode }) {
+function FavoriteSavedCardShell({ className, media, mediaOverlay, favoriteButton, meta, title, description, pricing, savings, action }: { className?: string; media: ReactNode; mediaOverlay?: ReactNode; favoriteButton: ReactNode; meta?: string; title: ReactNode; description?: string; pricing?: ReactNode; savings?: string; action?: ReactNode }) {
   return (
     <article className={["favoriteCompactCard", className].filter(Boolean).join(" ")}>
-      <div className="favoriteCompactCard__media">{media}{favoriteButton}</div>
+      <div className="favoriteCompactCard__media">{media}{mediaOverlay}{favoriteButton}</div>
       <div className="favoriteCompactCard__body">
         {meta ? <span>{meta}</span> : null}
         <h3>{title}</h3>

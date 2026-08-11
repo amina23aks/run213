@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from "react";
 import type { CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
+import { isProductInStock } from "@/lib/products/availability";
 import { calculateCustomerSubtotal, groupCartItemsForPricing } from "@/components/cart/cartGrouping";
 
 export const CART_STORAGE_KEY = "213run-cart";
@@ -68,9 +69,7 @@ function getMaxQuantity(product: Product): number | undefined {
 }
 
 function isProductAvailable(product: Product): boolean {
-  if (product.status !== "active" || !product.inStock) return false;
-  if (product.stockMode === "limited") return (product.stockQty ?? 0) > 0;
-  return true;
+  return isProductInStock(product);
 }
 
 function hasRequiredSelections(product: Product, selectedSize: string | null, selectedColor: string | null): boolean {

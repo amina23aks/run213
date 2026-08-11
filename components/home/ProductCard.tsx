@@ -6,6 +6,8 @@ import { useState } from "react";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
+import { isProductInStock } from "@/lib/products/availability";
+import { StockBadge } from "@/components/product/StockBadge";
 
 type ProductCardItem = {
   name: string;
@@ -43,7 +45,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
-  const isUnavailable = Boolean(sourceProduct && (!sourceProduct.inStock || sourceProduct.status !== "active" || (sourceProduct.stockMode === "limited" && (sourceProduct.stockQty ?? 0) <= 0)));
+  const isUnavailable = Boolean(sourceProduct && !isProductInStock(sourceProduct));
 
   function handleColorSelect(colorId: string) {
     setSelectedColorId(colorId);
@@ -79,6 +81,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
     <article className="productCard">
       <div className="productCard__media productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
+        {sourceProduct ? <StockBadge product={sourceProduct} /> : null}
         {sourceProduct ? (
           <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
             <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />

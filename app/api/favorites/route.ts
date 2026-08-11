@@ -88,9 +88,8 @@ function isAvailableFavoriteTarget(type: "product" | "look", data: Record<string
     && isPositiveNumber(data.priceDzd)
     && Array.isArray(data.images) && data.images.length > 0
     && Array.isArray(data.colors) && data.colors.length > 0;
-  const hasStock = data.inStock !== false
-    && (data.stockMode !== "limited" || (typeof data.stockQty === "number" && data.stockQty > 0));
-  return hasCanonicalProductFields && hasStock;
+  // Active products remain valid favorites when sold out. Stock only gates buying.
+  return hasCanonicalProductFields;
 }
 
 function isNonEmptyString(value: unknown): value is string {

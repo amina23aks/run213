@@ -6,6 +6,7 @@ import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
+import { isProductInStock } from "@/lib/products/availability";
 
 type ProductInfoProps = {
   product: Product;
@@ -20,13 +21,19 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
   const [cartMessage, setCartMessage] = useState<string | null>(null);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const maxQuantity = product.stockMode === "limited" && typeof product.stockQty === "number" ? product.stockQty : undefined;
-  const isOutOfStock = !product.inStock || product.status !== "active" || (product.stockMode === "limited" && (product.stockQty ?? 0) <= 0);
+  const isOutOfStock = !isProductInStock(product);
+  const lowStockQuantity = product.stockMode === "limited" && typeof product.stockQty === "number" && product.stockQty > 0 && product.stockQty < 5 ? product.stockQty : null;
   const requiresColor = product.colors.length > 0;
   const requiresSize = product.sizes.length > 0;
 
   function updateQuantity(nextQuantity: number) {
+    if (typeof maxQuantity === "number" && nextQuantity > maxQuantity) {
+      setCartMessage(`Only ${maxQuantity} available.`);
+      return;
+    }
     const minClamped = Math.max(1, nextQuantity);
     setQuantity(typeof maxQuantity === "number" ? Math.min(minClamped, maxQuantity) : minClamped);
+    setCartMessage(null);
   }
 
   function handleColorSelect(colorId: string) {
@@ -41,6 +48,10 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
   }
 
   function handleAddToCart() {
+    if (typeof maxQuantity === "number" && quantity > maxQuantity) {
+      setCartMessage(`Only ${maxQuantity} available.`);
+      return;
+    }
     if (requiresColor && !selectedColorId) {
       setCartMessage("Choose a color before adding to cart.");
       return;
@@ -53,7 +64,7 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
 
     const selectedColor = product.colors.find((color) => color.id === selectedColorId)?.name ?? null;
     const wasAdded = addItem({ product, selectedColor, selectedSize, quantity });
-    setCartMessage(wasAdded ? "Added to cart." : "This product is currently unavailable.");
+    setCartMessage(wasAdded ? "Added to cart." : typeof maxQuantity === "number" ? `Only ${maxQuantity} available.` : "This product is currently unavailable.");
   }
 
   return (
@@ -101,11 +112,11 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
       ) : null}
 
       <div className="productQuantity" aria-label="Quantity selector">
-        <span>Quantity</span>
+        <span className="productQuantity__label">Quantity {lowStockQuantity !== null ? <b>ONLY {lowStockQuantity} LEFT</b> : null}</span>
         <div>
-          <button type="button" aria-label="Decrease quantity" disabled={quantity <= 1} onClick={() => updateQuantity(quantity - 1)}>−</button>
+          <button type="button" aria-label="Decrease quantity" disabled={isOutOfStock || quantity <= 1} onClick={() => updateQuantity(quantity - 1)}>−</button>
           <strong>{quantity}</strong>
-          <button type="button" aria-label="Increase quantity" disabled={typeof maxQuantity === "number" && quantity >= maxQuantity} onClick={() => updateQuantity(quantity + 1)}>+</button>
+          <button type="button" aria-label="Increase quantity" disabled={isOutOfStock || (typeof maxQuantity === "number" && quantity >= maxQuantity)} onClick={() => updateQuantity(quantity + 1)}>+</button>
         </div>
       </div>
 

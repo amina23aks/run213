@@ -2,7 +2,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { adminProductInputSchema } from "@/lib/products/schema";
+import { adminProductInputSchema, withCanonicalStock } from "@/lib/products/schema";
 
 export const dynamic = "force-dynamic";
 const COLLECTION = "products";
@@ -55,10 +55,11 @@ export async function POST(request: Request) {
   const slugSnapshot = await getAdminDb().collection(COLLECTION).where("slug", "==", parsed.data.slug).limit(1).get();
   if (!slugSnapshot.empty) return adminJsonError("A product with this slug already exists.", 409);
 
+  const product = withCanonicalStock(parsed.data);
   const docRef = getAdminDb().collection(COLLECTION).doc();
   const now = FieldValue.serverTimestamp();
   const sortOrder = await getNextProductSortOrder();
-  await docRef.set({ ...parsed.data, sortOrder, createdAt: now, updatedAt: now, updatedBy: admin.email });
+  await docRef.set({ ...product, sortOrder, createdAt: now, updatedAt: now, updatedBy: admin.email });
   revalidateProductStorefront(parsed.data.slug);
 
   return Response.json({ id: docRef.id }, { status: 201 });

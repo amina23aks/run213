@@ -9,6 +9,7 @@ import { calculateLookGroupPrice, isValidLookPrice } from "@/lib/lookPricing";
 import { useCart } from "@/context/cart";
 import type { LookWithProducts } from "@/types/look";
 import type { Product } from "@/types/product";
+import { isProductInStock } from "@/lib/products/availability";
 
 type SelectedItem = {
   enabled: boolean;
@@ -19,10 +20,7 @@ type SelectedItem = {
 const LOOK_VALIDATION_MESSAGE = "Select a size and color for every item before adding this Look to your cart.";
 
 function isUnavailable(product: Product | null) {
-  if (!product) return true;
-  if (product.status !== "active" || !product.inStock) return true;
-  if (product.stockMode === "limited" && (product.stockQty ?? 0) <= 0) return true;
-  return false;
+  return !product || !isProductInStock(product);
 }
 
 function needsColor(product: Product) { return product.colors.length > 0; }
