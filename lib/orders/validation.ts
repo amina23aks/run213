@@ -4,18 +4,37 @@ import type { CreateOrderRequest } from "@/types/order";
 
 const VALID_WILAYAS = new Set(ALGERIA_WILAYAS.map((wilaya) => wilaya.name));
 
+export const customerNameSchema = z.string().trim().min(2, "Full name must contain at least 2 characters.").max(80, "Full name must contain at most 80 characters.");
+export const customerPhoneSchema = z.string().trim().min(8, "Enter a valid Algerian phone number.").max(20, "Enter a valid Algerian phone number.").refine(
+  (phone) => /^(?:\+213|0)[567]\d{8}$/.test(normalizePhone(phone)),
+  "Enter a valid Algerian phone number.",
+);
+export const wilayaSchema = z.string().trim().refine((value) => VALID_WILAYAS.has(value), "Unsupported wilaya.");
+export const deliveryModeSchema = z.enum(["home", "desk"], { message: "Unsupported delivery mode." });
+export const deliveryAddressSchema = z.string().trim().min(5, "Address must contain at least 5 characters.").max(180, "Address must contain at most 180 characters.");
+export const deliveryNotesSchema = z.string().trim().max(300, "Delivery notes must contain at most 300 characters.").nullable().optional();
+
+export const customerDeliveryEditSchema = z.object({
+  fullName: customerNameSchema,
+  phone: customerPhoneSchema,
+  wilaya: wilayaSchema,
+  deliveryMode: deliveryModeSchema,
+  address: deliveryAddressSchema,
+  notes: deliveryNotesSchema,
+}).strict();
+
 export const createOrderRequestSchema = z.object({
   customer: z.object({
-    fullName: z.string().trim().min(2).max(80),
-    phone: z.string().trim().min(8).max(20),
+    fullName: customerNameSchema,
+    phone: customerPhoneSchema,
     email: z.string().trim().email().max(120).nullable().optional(),
   }),
   delivery: z.object({
-    wilaya: z.string().trim().refine((value) => VALID_WILAYAS.has(value), "Unsupported wilaya"),
-    deliveryMode: z.enum(["home", "desk"]),
-    address: z.string().trim().min(5).max(180),
+    wilaya: wilayaSchema,
+    deliveryMode: deliveryModeSchema,
+    address: deliveryAddressSchema,
     commune: z.string().trim().min(2).max(80).nullable().optional(),
-    notes: z.string().trim().max(300).nullable().optional(),
+    notes: deliveryNotesSchema,
   }),
   items: z.array(z.object({
     productId: z.string().trim().min(1).max(120),
