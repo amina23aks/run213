@@ -62,11 +62,38 @@ test("stock badges overlay card, detail, and active favorite media", () => {
 
 test("low-stock threshold and quantity limits stay compact and exact", () => {
   const info = readFileSync("components/product/ProductInfo.tsx", "utf8");
-  assert.match(info, /product\.stockQty > 0 && product\.stockQty < 5/);
-  assert.match(info, /ONLY \{lowStockQuantity\} LEFT/);
+  assert.match(info, /limitedStockQuantity > 0 && limitedStockQuantity < 5/);
+  assert.match(info, /`Only \$\{limitedStockQuantity\} left`/);
+  assert.match(info, /`Available: \$\{limitedStockQuantity\}`/);
+  assert.match(info, /: "In stock"/);
+  assert.match(info, /isOutOfStock[\s\S]*\? "Out of stock"/);
+  assert.match(info, /productStockInfo--low/);
   assert.match(info, /nextQuantity > maxQuantity/);
   assert.match(info, /Only \$\{maxQuantity\} available\./);
   assert.match(info, /quantity >= maxQuantity/);
   assert.match(info, /disabled=\{isOutOfStock \|\| quantity <= 1\}/);
   assert.match(info, /productAddButton[^>]*disabled=\{isOutOfStock\}/);
+});
+
+test("storefront card overlays use compact symmetric corner placement", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.productCard \.stockBadge \{[\s\S]*?left: 8px;[\s\S]*?top: 8px;[\s\S]*?font-size: 0\.5rem;/);
+  assert.match(css, /\.productCard__favorite\.favoriteButton,[\s\S]*?right: 8px !important;[\s\S]*?top: 8px !important;[\s\S]*?width: 30px;[\s\S]*?height: 30px;/);
+});
+
+test("Favorites product and Look cards keep content compact and actions balanced", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.favoriteCompactCard__body \{ gap: 0\.25rem; padding: 0\.48rem 0\.52rem 0\.52rem; \}/);
+  assert.match(css, /\.favoriteCompactCard__price \{ margin-top: 0; \}/);
+  assert.match(css, /\.favoriteCompactCard__action \{ margin-top: auto; \}/);
+  assert.match(css, /\.favoriteCompactCard--product \.favoriteCompactCard__media \{ aspect-ratio: 4 \/ 4\.5; \}/);
+  assert.match(css, /\.favoriteCompactCard--look \.favoriteCompactCard__media \{ aspect-ratio: 4 \/ 3\.6; \}/);
+});
+
+test("Look slider starts neutral and highlights only real interaction", () => {
+  const slider = readFileSync("components/home/ShopTheLookClient.tsx", "utf8");
+  assert.match(slider, /useState<number \| null>\(null\)/);
+  assert.doesNotMatch(slider, /useState\(0\)/);
+  assert.match(slider, /onMouseLeave=\{\(\) => \{ setHighlightedFigure\(null\); \}\}/);
+  assert.match(slider, /onBlur=\{\(\) => \{ setHighlightedFigure\(null\); \}\}/);
 });

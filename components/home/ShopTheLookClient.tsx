@@ -25,7 +25,7 @@ type ShopTheLookClientProps = {
 };
 
 export function ShopTheLookClient({ figures, collections }: ShopTheLookClientProps) {
-  const [activeFigure, setActiveFigure] = useState(0);
+  const [highlightedFigure, setHighlightedFigure] = useState<number | null>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -56,15 +56,10 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
     if (!row) return;
     const naturalWidth = hasOverflow ? row.scrollWidth / 2 : row.scrollWidth;
     const overflow = naturalWidth > row.clientWidth + 2;
-    const step = getFigureStep();
     setHasOverflow(overflow);
     setCanScrollPrev(overflow && row.scrollLeft > 2);
     setCanScrollNext(overflow);
-    if (step > 0 && figures.length > 0) {
-      const normalizedScroll = row.scrollLeft % Math.max(naturalWidth, 1);
-      setActiveFigure(Math.min(Math.round(normalizedScroll / step), figures.length - 1));
-    }
-  }, [figures.length, getFigureStep, hasOverflow]);
+  }, [hasOverflow]);
 
   const pauseAfterInteraction = useCallback(() => {
     isUserPausedRef.current = true;
@@ -147,11 +142,13 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
               return (
                 <Link
                   aria-hidden={isDuplicate || undefined}
-                  className={originalIndex === activeFigure ? "figure-card is-active" : "figure-card"}
+                  className={originalIndex === highlightedFigure ? "figure-card is-active" : "figure-card"}
                   href={getLookHref(figure)}
                   key={`${figure.id}-${isDuplicate ? "duplicate" : "original"}`}
-                  onFocus={() => { setActiveFigure(originalIndex); }}
-                  onMouseEnter={() => { setActiveFigure(originalIndex); }}
+                  onFocus={() => { setHighlightedFigure(originalIndex); }}
+                  onBlur={() => { setHighlightedFigure(null); }}
+                  onMouseEnter={() => { setHighlightedFigure(originalIndex); }}
+                  onMouseLeave={() => { setHighlightedFigure(null); }}
                   onClick={pauseAfterInteraction}
                   tabIndex={isDuplicate ? -1 : undefined}
                   title={displayTitle}
