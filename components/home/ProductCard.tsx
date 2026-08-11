@@ -7,6 +7,7 @@ import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
 import { isProductInStock } from "@/lib/products/availability";
+import { StockBadge } from "@/components/product/StockBadge";
 
 type ProductCardItem = {
   name: string;
@@ -80,6 +81,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
     <article className="productCard">
       <div className="productCard__media productImageWrap">
         {promo ? <span className="promoBadge">PROMO</span> : null}
+        {sourceProduct ? <StockBadge product={sourceProduct} /> : null}
         {sourceProduct ? (
           <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
             <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
@@ -89,7 +91,6 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       </div>
 
       <div className="productCard__content productInfo">
-        {isUnavailable ? <strong className="productStockState">OUT OF STOCK</strong> : null}
         <h3 className="productTitle">{sourceProduct ? <Link href={`/product/${sourceProduct.slug}`}>{product.name}</Link> : product.name}</h3>
         <div className="productPriceRow">
           <span className="currentPrice">{product.price}</span>

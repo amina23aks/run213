@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { Product } from "@/types/product";
+import { StockBadge } from "@/components/product/StockBadge";
 
 type ProductGalleryProps = {
   product: Product;
@@ -20,6 +21,7 @@ export function ProductGallery({ product, selectedColorId }: ProductGalleryProps
   return (
     <section className="productGallery" aria-label={`${product.name} gallery`}>
       <div className="productGallery__main">
+        <StockBadge product={product} />
         <Image key={activeImage.id} src={activeImage.url} alt={activeImage.alt || `${product.name} main product image`} width={900} height={1080} priority />
       </div>
       <div className="productGallery__thumbs" aria-label="Product thumbnails">
