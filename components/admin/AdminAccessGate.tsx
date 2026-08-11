@@ -1,9 +1,8 @@
 "use client";
 
-import type { User } from "firebase/auth";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
-import { extractFirebaseAuthCode, getAuthErrorMessage } from "@/lib/auth-errors";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 
 const missingClientEnv = getMissingFirebaseClientEnv();
@@ -13,10 +12,12 @@ type AdminAccessGateProps = {
 };
 
 export function AdminAccessGate({ children }: AdminAccessGateProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const verificationRef = useRef(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isChecking, setIsChecking] = useState(() => missingClientEnv.length === 0);
-  const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Checking admin access…");
+  const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Verifying your signed-in account.");
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -28,36 +29,33 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
 
     Promise.all([import("@/lib/firebase/client"), import("firebase/auth")])
       .then(([client, authModule]) => {
-        authModule.getRedirectResult(client.auth)
-          .catch((error: unknown) => setMessage(getAuthErrorMessage(extractFirebaseAuthCode(error))));
+        void authModule.getRedirectResult(client.auth).catch(() => undefined);
 
         unsubscribe = authModule.onIdTokenChanged(client.auth, (nextUser) => {
           if (cancelled) return;
-          setUser(nextUser);
+          const verification = ++verificationRef.current;
           setIsAdmin(false);
+          setIsChecking(true);
 
           if (!nextUser) {
-            setMessage("Admin access required. Sign in from the account icon, then return to this page.");
-            setIsChecking(false);
+            const returnTo = pathname.startsWith("/admin") ? pathname : "/admin";
+            router.replace(`/account?returnTo=${encodeURIComponent(returnTo)}`);
             return;
           }
 
-          setIsChecking(true);
           nextUser.getIdToken(true)
             .then((token) => fetch("/api/admin/me", { headers: { Authorization: `Bearer ${token}` } }))
-            .then((response) => response.ok ? response.json() : Promise.reject(new Error("Access denied")))
+            .then((response) => response.ok ? response.json() : Promise.reject(new Error(String(response.status))))
             .then((data: { isAdmin?: boolean }) => {
-              if (cancelled) return;
-              setIsAdmin(data.isAdmin === true);
-              setMessage(data.isAdmin === true ? "" : "Admin access required. Sign in from the account icon, then return to this page.");
+              if (cancelled || verification !== verificationRef.current) return;
+              if (data.isAdmin !== true) throw new Error("403");
+              setIsAdmin(true);
+              setIsChecking(false);
             })
             .catch(() => {
-              if (cancelled) return;
+              if (cancelled || verification !== verificationRef.current) return;
               setIsAdmin(false);
-              setMessage("Admin access required. Sign in from the account icon, then return to this page.");
-            })
-            .finally(() => {
-              if (!cancelled) setIsChecking(false);
+              router.replace("/?adminAccess=required");
             });
         });
       })
@@ -70,31 +68,18 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
       cancelled = true;
       unsubscribe?.();
     };
-  }, []);
+  }, [pathname, router]);
 
-  if (isChecking) {
+  if (isChecking || !isAdmin) {
     return (
-      <section className="adminAccessState adminCard">
-        <div className="adminCard__heading">
-          <p>ADMIN ACCESS</p>
-          <h2>Checking access</h2>
-          <span>Verifying your signed-in account.</span>
+      <main className="adminAuthState" role="status" aria-live="polite">
+        <div className="adminAuthState__mark" aria-hidden="true">213</div>
+        <div>
+          <p>RUN213</p>
+          <h1>{missingClientEnv.length ? "Authentication unavailable" : "Checking access"}</h1>
+          <span>{message}</span>
         </div>
-      </section>
-    );
-  }
-
-  if (!user || !isAdmin) {
-    return (
-      <section className="adminAccessState adminCard">
-        <div className="adminCard__heading">
-          <p>ADMIN ACCESS</p>
-          <h2>Admin access required</h2>
-          <span>Sign in from the account icon, then return to this page.</span>
-        </div>
-        {missingClientEnv.length ? <p className="adminNotice adminNotice--error">Missing client env: {missingClientEnv.join(", ")}</p> : null}
-        <p className="adminNotice">{message}</p>
-      </section>
+      </main>
     );
   }
 
