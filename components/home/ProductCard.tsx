@@ -134,7 +134,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
             </div>
           ) : null}
           <div className="addButtonRow">
-            <button className="addButton" type="button" aria-label={`Add ${product.name}`} disabled={isUnavailable} onClick={(event) => { event.stopPropagation(); handleAddToCart(); }}>+</button>
+            <button className="addButton" type="button" aria-label={`Add ${product.name}`} disabled={isUnavailable} onClick={(event) => { event.stopPropagation(); handleAddToCart(); }}><span aria-hidden="true">+</span></button>
           </div>
           {helperMessage ? <p className="productCardHelper" role="status">{helperMessage}</p> : null}
         </div>

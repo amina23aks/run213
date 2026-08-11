@@ -4945,13 +4945,27 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .productCard .swatchesRow .productSwatch[aria-pressed="true"],
 .productCard .swatchesRow .productSwatch--selected {
   outline: 1px solid #111 !important;
-  outline-offset: 1.5px !important;
+  outline-offset: 0.5px !important;
 }
 
 .productCard .swatchesRow .productSwatch[aria-pressed="true"] .productSwatch__color,
 .productCard .swatchesRow .productSwatch--selected .productSwatch__color {
-  width: 0.68rem !important;
-  height: 0.68rem !important;
+  width: 0.78rem !important;
+  height: 0.78rem !important;
+}
+
+.productCard .addButton {
+  position: relative;
+}
+
+.productCard .addButton > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-bottom: 0.06rem;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .productCard .sizeChips {
@@ -6153,9 +6167,9 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .productCard__favorite {
   right: 4px !important;
   top: 4px !important;
-  width: 26px;
-  height: 26px;
-  font-size: 0.76rem;
+  width: 28px;
+  height: 28px;
+  font-size: 0.9rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
 }
 .productCard.productImageWrap:has(.stockBadge) .promoBadge,

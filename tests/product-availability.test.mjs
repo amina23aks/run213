@@ -78,7 +78,7 @@ test("low-stock threshold and quantity limits stay compact and exact", () => {
 test("storefront card overlays use compact symmetric corner placement", () => {
   const css = readFileSync("app/globals.css", "utf8");
   assert.match(css, /\.productCard \.stockBadge \{[\s\S]*?left: 4px;[\s\S]*?top: 4px;[\s\S]*?font-size: 0\.46rem;/);
-  assert.match(css, /\.productCard__favorite\.favoriteButton,[\s\S]*?right: 4px !important;[\s\S]*?top: 4px !important;[\s\S]*?width: 26px;[\s\S]*?height: 26px;/);
+  assert.match(css, /\.productCard__favorite\.favoriteButton,[\s\S]*?right: 4px !important;[\s\S]*?top: 4px !important;[\s\S]*?width: 28px;[\s\S]*?height: 28px;[\s\S]*?font-size: 0\.9rem;/);
 });
 
 test("product cards keep a tight media frame and compact refined controls", () => {
@@ -86,8 +86,17 @@ test("product cards keep a tight media frame and compact refined controls", () =
   assert.match(css, /\/\* Product Card compact controls: final scoped source-of-truth\. \*\/[\s\S]*?\.productCard \{[\s\S]*?padding: 0\.45rem;/);
   assert.match(css, /\.productCard \.productCard__media,[\s\S]*?margin-bottom: 0\.28rem;[\s\S]*?padding: 0\.22rem;[\s\S]*?border-radius: 0\.72rem;/);
   assert.match(css, /\.productCard \.swatchesRow \.productSwatch__color \{[\s\S]*?width: 0\.68rem !important;[\s\S]*?height: 0\.68rem !important;[\s\S]*?border: 0\.75px solid/);
-  assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\],[\s\S]*?outline: 1px solid #111 !important;[\s\S]*?outline-offset: 1\.5px !important;/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\],[\s\S]*?outline: 1px solid #111 !important;[\s\S]*?outline-offset: 0\.5px !important;/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\] \.productSwatch__color,[\s\S]*?width: 0\.78rem !important;[\s\S]*?height: 0\.78rem !important;/);
   assert.match(css, /\.productCard \.sizeChips button,[\s\S]*?min-width: 1\.5rem !important;[\s\S]*?height: 1\.3rem !important;[\s\S]*?border-radius: 0\.35rem !important;[\s\S]*?font-size: 0\.6rem !important;/);
+});
+
+test("product card add icon is geometrically centered without changing cart behavior", () => {
+  const card = readFileSync("components/home/ProductCard.tsx", "utf8");
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(card, /className="addButton"[\s\S]*?<span aria-hidden="true">\+<\/span>/);
+  assert.match(css, /\.productCard \.addButton > span \{[\s\S]*?position: absolute;[\s\S]*?inset: 0;[\s\S]*?display: grid;[\s\S]*?place-items: center;[\s\S]*?line-height: 1;/);
+  assert.match(card, /onClick=\{\(event\) => \{ event\.stopPropagation\(\); handleAddToCart\(\); \}\}/);
 });
 
 test("Favorites product and Look cards keep content compact and actions balanced", () => {
