@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { formatAdminDate, formatDzdValue, NEXT_STATUS } from "@/components/admin/orders/adminOrderUtils";
 import { AdminStatusMenu } from "@/components/admin/orders/AdminStatusMenu";
@@ -22,7 +21,7 @@ export function AdminOrderDetailClient({ orderId }: { orderId: string }) {
   async function updateStatus(nextStatus: AdminOrderStatus, note?: string | null) { setSaving(true); setMessage(null); try { const token = await getToken(); const response = await fetch(`/api/admin/orders/${orderId}/status`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ status: nextStatus, note }) }); const data = await response.json() as { order?: AdminOrderDetail; error?: string }; if (!response.ok || !data.order) throw new Error(data.error ?? "Status could not be updated."); setOrder(data.order); setMessage("Status updated."); } catch (error) { setMessage(error instanceof Error ? error.message : "Status could not be updated."); } finally { setSaving(false); } }
   useEffect(() => { const timer = window.setTimeout(() => { void load(); }, 0); return () => window.clearTimeout(timer); }, [load]);
 
-  return <AdminShell title={order?.orderNumber ?? "Order"} description="Manage one order with secure server-side status transitions."><AdminAccessGate>
+  return <AdminShell title={order?.orderNumber ?? "Order"} description="Manage one order with secure server-side status transitions.">
     {loading ? <section className="adminCard"><p className="adminNotice">Loading order…</p></section> : null}
     {message ? <p className={`adminNotice ${message === "Status updated." ? "adminNotice--success" : "adminNotice--error"}`}>{message}</p> : null}
     {order ? <section className="adminOrderDetailWorkspace">
@@ -35,7 +34,7 @@ export function AdminOrderDetailClient({ orderId }: { orderId: string }) {
       <section className="adminOrderItems adminCard"><div className="adminCard__heading"><p>ITEMS</p><h2>Order items</h2></div>{order.items.map((item, index) => <article className="adminOrderItem" key={`${item.productId ?? index}-${index}`}>{item.image ? <Image src={item.image} alt={item.name} width={72} height={72} unoptimized /> : <span className="adminOrderItem__imageFallback">No image</span>}<div><strong>{item.name}</strong><small><span>{item.selectedSize ? `SIZE ${item.selectedSize}` : "Size not recorded"}</span>{item.selectedColor ? <i className="inlineSwatch" style={{ background: item.selectedColorHex ?? "transparent" }} aria-label={`Color ${item.selectedColor}`} title={item.selectedColor} /> : <span>Color not recorded</span>}<span>Qty {item.quantity}</span></small>{item.lookName ? <small>Look: {item.lookName} · {item.lookPricingMode ?? "look"}</small> : null}</div><dl><div><dt>Unit</dt><dd>{formatDzdValue(item.unitPriceDzd)}</dd></div><div><dt>Total</dt><dd>{formatDzdValue(item.lineTotalDzd)}</dd></div><div><dt>Unit cost</dt><dd>{item.unitCostDzd == null ? "Cost unavailable" : formatDzdValue(item.unitCostDzd)}</dd></div><div><dt>Line cost</dt><dd>{item.lineCostDzd == null ? "Cost unavailable" : formatDzdValue(item.lineCostDzd)}</dd></div><div><dt>Profit</dt><dd>{item.estimatedLineProfitDzd == null ? "Cost unavailable" : formatDzdValue(item.estimatedLineProfitDzd)}</dd></div></dl></article>)}</section>
       <section className="adminOrderHistory adminCard"><div className="adminCard__heading"><p>ORDER PROGRESS</p></div>{order.statusHistory.map((entry, index) => <article key={`${entry.status}-${entry.at ?? index}`}><strong>{historyLabel(entry.previousStatus, entry.status, entry.note)}</strong><span>{formatAdminDate(entry.at)}{entry.actor ? ` · ${entry.actor}` : ""}</span>{entry.note ? <p>{entry.note}</p> : null}</article>)}</section>
     </section> : null}
-  </AdminAccessGate></AdminShell>;
+  </AdminShell>;
 }
 
 function AdminInfoCard({ title, rows }: { title: string; rows: Array<[string, string]> }) { return <section className="adminOrderInfoCard adminCard"><h3>{title}</h3>{rows.map(([label, value]) => <p key={label}><span>{label}</span><strong>{value}</strong></p>)}</section>; }

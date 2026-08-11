@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 type Status = "pending" | "approved" | "rejected" | "edit_requested" | "removal_requested";
@@ -24,9 +23,7 @@ function StatusBadge({ status }: { status: Status | Summary["status"] }) {
 export function AdminRunClubClient({ defaultMonth }: { defaultMonth: string }) {
   return (
     <AdminShell title="Run Club" description="Review monthly run proof submissions.">
-      <AdminAccessGate>
         <AdminRunClubWorkspace defaultMonth={defaultMonth} />
-      </AdminAccessGate>
     </AdminShell>
   );
 }

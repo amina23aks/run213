@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { formatDzd } from "@/constants/products";
 import { calculateLookPricing } from "@/lib/looks/pricing";
+import { invalidateAdminAccessOnDenied } from "@/lib/admin-client-auth";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Look, LookCollection } from "@/types/look";
 import type { Product } from "@/types/product";
@@ -42,7 +43,7 @@ export function AdminLooksClient() {
 
   const adminFetch = useCallback(async (path: string, init?: RequestInit, authUser = user) => {
     const token = await authUser?.getIdToken();
-    const response = await fetch(path, { ...init, headers: { Authorization: `Bearer ${token}`, ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }), ...init?.headers } });
+    const response = invalidateAdminAccessOnDenied(await fetch(path, { ...init, headers: { Authorization: `Bearer ${token}`, ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }), ...init?.headers } }));
     if (!response.ok) throw new Error(formatApiError(await response.text()));
     return response.json();
   }, [user]);

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 type Subscriber = { id: string; email: string; joinedAt: string | null; status: string | null };
@@ -17,7 +16,7 @@ export function AdminWishlistClient() {
   }, [query]);
   useEffect(() => { const task = queueMicrotask(() => void load()); return () => void task; }, [load]);
   async function remove() { if (!pending) return; try { const token = await getToken(); const response = await fetch("/api/admin/wishlist", { method: "DELETE", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ id: pending.id }) }); if (!response.ok) throw new Error(); setPending(null); await load(); } catch { setError("Subscriber could not be removed. Try again."); setPending(null); } }
-  return <AdminShell title="Wishlist" eyebrow="AUDIENCE" description="Join the Club email subscribers, newest first."><AdminAccessGate>
+  return <AdminShell title="Wishlist" eyebrow="AUDIENCE" description="Join the Club email subscribers, newest first.">
     <div className="adminInsightStats adminInsightStats--single"><Stat total={data?.total} /></div>
     <section className="adminCard adminInsightsPanel">
       <div className="adminInsightsToolbar"><strong>SUBSCRIBERS</strong><form onSubmit={(event) => { event.preventDefault(); setQuery(search.trim().toLowerCase()); }}><input aria-label="Search subscriber email" placeholder="Search email…" value={search} onChange={(event) => setSearch(event.target.value)} /><button type="submit">SEARCH</button></form></div>
@@ -25,7 +24,7 @@ export function AdminWishlistClient() {
       {data?.nextOffset !== null && data?.nextOffset !== undefined ? <button className="adminInsightsMore" disabled={loading} onClick={() => void load(data.nextOffset ?? 0, true)} type="button">{loading ? "LOADING…" : "LOAD MORE"}</button> : null}
     </section>
     {pending ? <div className="adminConfirmBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPending(null); }}><section aria-labelledby="remove-subscriber-title" aria-modal="true" className="adminConfirmModal" role="dialog"><small>CONFIRM REMOVAL</small><h2 id="remove-subscriber-title">Remove this subscriber?</h2><p>{pending.email} will stop appearing in the Join the Club list.</p><div><button onClick={() => setPending(null)} type="button">KEEP</button><button className="isDanger" onClick={() => void remove()} type="button">REMOVE</button></div></section></div> : null}
-  </AdminAccessGate></AdminShell>;
+  </AdminShell>;
 }
 function Stat({ total }: { total?: number }) { return <article className="adminInsightStat"><span>TOTAL SUBSCRIBERS</span><strong>{total === undefined ? "—" : total.toLocaleString()}</strong></article>; }
 async function getToken() { const { auth } = await import("@/lib/firebase/client"); const token = await auth.currentUser?.getIdToken(); if (!token) throw new Error("Admin session expired. Sign in again."); return token; }
