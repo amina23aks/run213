@@ -77,8 +77,17 @@ test("low-stock threshold and quantity limits stay compact and exact", () => {
 
 test("storefront card overlays use compact symmetric corner placement", () => {
   const css = readFileSync("app/globals.css", "utf8");
-  assert.match(css, /\.productCard \.stockBadge \{[\s\S]*?left: 8px;[\s\S]*?top: 8px;[\s\S]*?font-size: 0\.5rem;/);
-  assert.match(css, /\.productCard__favorite\.favoriteButton,[\s\S]*?right: 8px !important;[\s\S]*?top: 8px !important;[\s\S]*?width: 30px;[\s\S]*?height: 30px;/);
+  assert.match(css, /\.productCard \.stockBadge \{[\s\S]*?left: 4px;[\s\S]*?top: 4px;[\s\S]*?font-size: 0\.46rem;/);
+  assert.match(css, /\.productCard__favorite\.favoriteButton,[\s\S]*?right: 4px !important;[\s\S]*?top: 4px !important;[\s\S]*?width: 26px;[\s\S]*?height: 26px;/);
+});
+
+test("product cards keep a tight media frame and compact refined controls", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\/\* Product Card compact controls: final scoped source-of-truth\. \*\/[\s\S]*?\.productCard \{[\s\S]*?padding: 0\.45rem;/);
+  assert.match(css, /\.productCard \.productCard__media,[\s\S]*?margin-bottom: 0\.28rem;[\s\S]*?padding: 0\.22rem;[\s\S]*?border-radius: 0\.72rem;/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch__color \{[\s\S]*?width: 0\.68rem !important;[\s\S]*?height: 0\.68rem !important;[\s\S]*?border: 0\.75px solid/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\],[\s\S]*?outline: 1px solid #111 !important;[\s\S]*?outline-offset: 1\.5px !important;/);
+  assert.match(css, /\.productCard \.sizeChips button,[\s\S]*?min-width: 1\.5rem !important;[\s\S]*?height: 1\.3rem !important;[\s\S]*?border-radius: 0\.35rem !important;[\s\S]*?font-size: 0\.6rem !important;/);
 });
 
 test("Favorites product and Look cards keep content compact and actions balanced", () => {
