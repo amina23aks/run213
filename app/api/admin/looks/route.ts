@@ -1,6 +1,6 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { FieldPath, FieldValue } from "firebase-admin/firestore";
-import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { lookInputSchema, type LookInput } from "@/lib/look-schema";
 import { calculateLookPricing } from "@/lib/looks/pricing";
@@ -16,8 +16,10 @@ type Cursor = { sortOrder: number; id: string };
 type SafeErrorCode = "validation_failed" | "duplicate_slug" | "collection_missing" | "products_unavailable" | "index_required" | "write_failed";
 
 export async function GET(request: Request) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
   const url = new URL(request.url);
   const cursor = parseCursor(url.searchParams.get("cursor"));
   let query = getAdminDb().collection(COLLECTION).orderBy("sortOrder", "asc").orderBy(FieldPath.documentId(), "asc").limit(DEFAULT_LIMIT + 1);
@@ -34,8 +36,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const parsed = lookInputSchema.safeParse(await request.json());
   if (!parsed.success) return safeLookError("validation_failed", "Check the Look fields and try again.", 400, parsed.error.flatten().fieldErrors);
 

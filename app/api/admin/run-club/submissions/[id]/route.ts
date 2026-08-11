@@ -1,7 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
-import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { RUN_CLUB_MAX_APPROVED } from "@/lib/run-club/types";
 
@@ -13,7 +13,11 @@ const requestSchema=z.object({action:z.enum(["approve_edit","reject_edit","appro
 const bodySchema = z.union([approveSchema, rejectSchema,requestSchema]);
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const admin = await verifyAdminRequest(request); if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { id } = await context.params;
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ ok: false, code: "validation_failed", message: "Invalid moderation action." }, { status: 400 });

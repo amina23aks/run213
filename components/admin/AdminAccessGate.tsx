@@ -43,9 +43,8 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
           }
 
           setIsChecking(true);
-          nextUser.getIdToken()
+          nextUser.getIdToken(true)
             .then((token) => fetch("/api/admin/me", { headers: { Authorization: `Bearer ${token}` } }))
-            .then((response) => response.status === 401 ? nextUser.getIdToken(true).then((freshToken) => fetch("/api/admin/me", { headers: { Authorization: `Bearer ${freshToken}` } })) : response)
             .then((response) => response.ok ? response.json() : Promise.reject(new Error("Access denied")))
             .then((data: { isAdmin?: boolean }) => {
               if (cancelled) return;

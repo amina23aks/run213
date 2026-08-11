@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getWinnerSubmissionIds, isEligibleRunClubSubmission, isValidMonthKey, RUN_CLUB_DRAW_VERSION, serializePublicWinner } from "@/lib/run-club/draw";
 
@@ -9,8 +9,11 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: Request, context: { params: Promise<{ monthKey: string }> }) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { monthKey } = await context.params;
   if (!isValidMonthKey(monthKey)) return Response.json({ ok: false, code: "invalid_month", message: "Invalid month." }, { status: 400 });
 

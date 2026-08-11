@@ -123,17 +123,6 @@ export function AdminProductsClient() {
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
 
-    fetch("/api/admin/config")
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Config unavailable")))
-      .then((data: AdminConfigResponse) => {
-        setMissingServerEnv(data.missingServerEnv);
-        setCloudinaryConfigured(data.cloudinaryConfigured === true);
-      })
-      .catch(() => {
-        setMissingServerEnv(["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"]);
-        setCloudinaryConfigured(false);
-      });
-
     if (missingClientEnv.length) {
       return () => undefined;
     }
@@ -150,11 +139,22 @@ export function AdminProductsClient() {
 
           if (nextUser) {
             nextUser.getIdToken()
-              .then((token) => fetch("/api/admin/products", { headers: { Authorization: `Bearer ${token}` } }))
-              .then((response) => response.ok ? response.json() : Promise.reject(new Error("Access denied")))
-              .then((data: AdminProductsResponse) => {
+              .then((token) => Promise.all([
+                fetch("/api/admin/products", { headers: { Authorization: `Bearer ${token}` } }),
+                fetch("/api/admin/config", { headers: { Authorization: `Bearer ${token}` } }),
+              ]))
+              .then(async ([productsResponse, configResponse]) => {
+                if (!productsResponse.ok || !configResponse.ok) throw new Error("Access denied");
+                return Promise.all([
+                  productsResponse.json() as Promise<AdminProductsResponse>,
+                  configResponse.json() as Promise<AdminConfigResponse>,
+                ]);
+              })
+              .then(([data, config]) => {
                 setProducts(data.products);
                 setNextCursor(data.nextCursor);
+                setMissingServerEnv(config.missingServerEnv);
+                setCloudinaryConfigured(config.cloudinaryConfigured === true);
                 setIsAuthorized(true);
                 showTemporaryMessage("Products loaded.");
               })

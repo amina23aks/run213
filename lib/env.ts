@@ -67,13 +67,3 @@ export function getFirebaseAdminEnv() {
     privateKey: readRequiredServerEnv("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n"),
   };
 }
-
-export function getAdminEmailEnv() {
-  return {
-    adminEmails: (process.env.ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
-    superAdminEmail: process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase() ?? "",
-  };
-}

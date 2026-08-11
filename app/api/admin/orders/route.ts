@@ -4,8 +4,10 @@ import { AdminOrderError, listAdminOrders } from "@/lib/orders/admin";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
   const url = new URL(request.url);
   try {
     const result = await listAdminOrders({

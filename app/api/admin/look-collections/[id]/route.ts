@@ -9,8 +9,11 @@ const COLLECTION = "lookCollections";
 type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(request: Request, { params }: Params) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { id } = await params;
   const parsed = lookCollectionInputSchema.safeParse(await request.json());
   if (!parsed.success) return Response.json({ error: "Invalid collection input", issues: parsed.error.flatten() }, { status: 400 });
@@ -25,8 +28,11 @@ export async function PUT(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { id } = await params;
   const docRef = getAdminDb().collection(COLLECTION).doc(id);
   const current = await docRef.get();
