@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 type Kind = "all" | "product" | "look";
@@ -11,7 +10,7 @@ type Item = { id: string; itemId: string; type: "product" | "look"; count: numbe
 type Payload = { summary: { productSaves: number; lookSaves: number; totalSaves: number; mostSavedItem: string | null }; items: Item[]; nextOffset: number | null };
 
 export function AdminFavoritesClient() {
-  return <AdminShell title="Favorites" eyebrow="MERCHANDISING" description="Aggregate saves only. Customer identities stay private." compactHeader><AdminAccessGate><AdminFavoritesWorkspace /></AdminAccessGate></AdminShell>;
+  return <AdminShell title="Favorites" eyebrow="MERCHANDISING" description="Aggregate saves only. Customer identities stay private." compactHeader><AdminFavoritesWorkspace /></AdminShell>;
 }
 
 function AdminFavoritesWorkspace() {

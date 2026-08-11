@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { AdminAccessGate } from "@/components/admin/AdminAccessGate";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { formatAdminDate, formatDzdValue, STATUS_OPTIONS } from "@/components/admin/orders/adminOrderUtils";
 import { AdminStatusMenu } from "@/components/admin/orders/AdminStatusMenu";
@@ -39,7 +38,7 @@ export function AdminOrdersClient() {
   useEffect(() => { const timer = window.setTimeout(() => { void load(null, "replace"); }, 0); return () => window.clearTimeout(timer); }, [load]);
   async function updateOrderStatus(orderId: string, next: AdminOrderStatus, note?: string | null) { setUpdatingId(orderId); setMessage(null); try { const token = await getToken(); const response = await fetch(`/api/admin/orders/${orderId}/status`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ status: next, note }) }); const data = await response.json() as { order?: AdminOrderSummary; error?: string }; if (!response.ok || !data.order) throw new Error(data.error ?? "Status could not be updated."); setOrders((current) => current.map((order) => order.id === orderId ? { ...order, status: data.order!.status } : order)); setMessage("Status updated."); } catch (error) { setMessage(error instanceof Error ? error.message : "Status could not be updated."); } finally { setUpdatingId(null); } }
 
-  return <AdminShell title="Orders" description="Review real pending COD orders, customer details, totals, and fulfillment status."><AdminAccessGate>
+  return <AdminShell title="Orders" description="Review real pending COD orders, customer details, totals, and fulfillment status.">
     <section className="adminOrdersWorkspace">
       <form className="adminOrdersToolbar adminCard" onSubmit={(event) => { event.preventDefault(); void load(null, "replace"); }}>
         <label><span>Search orders</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Order number, customer, phone, email" /></label>
@@ -59,5 +58,5 @@ export function AdminOrdersClient() {
       </section>
       {cursor ? <button className="adminProductList__more" type="button" disabled={loading} onClick={() => void load(cursor, "append")}>{loading ? "Loading..." : "Load more"}</button> : null}
     </section>
-  </AdminAccessGate></AdminShell>;
+  </AdminShell>;
 }

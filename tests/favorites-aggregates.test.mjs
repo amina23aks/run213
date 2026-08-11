@@ -39,7 +39,9 @@ test("backfill and live writes use the same aggregate document schema", async ()
 
 test("Admin Favorites waits behind the authenticated Admin gate and retries one 401", async () => {
   const client = await readFile("components/admin/AdminFavoritesClient.tsx", "utf8");
-  assert.match(client, /<AdminAccessGate><AdminFavoritesWorkspace \/><\/AdminAccessGate>/);
+  const layout = await readFile("app/admin/layout.tsx", "utf8");
+  assert.match(layout, /<AdminAccessGate>\{children\}<\/AdminAccessGate>/);
+  assert.doesNotMatch(client, /AdminAccessGate/);
   assert.match(client, /response\.status === 401/);
   assert.match(client, /getToken\(true\)/);
 });

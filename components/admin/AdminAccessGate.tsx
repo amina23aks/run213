@@ -14,7 +14,9 @@ type AdminAccessGateProps = {
 export function AdminAccessGate({ children }: AdminAccessGateProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const entryPathnameRef = useRef(pathname);
   const verificationRef = useRef(0);
+  const verifiedUidRef = useRef<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isChecking, setIsChecking] = useState(() => missingClientEnv.length === 0);
   const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Verifying your signed-in account.");
@@ -29,6 +31,7 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
 
     Promise.all([import("@/lib/firebase/client"), import("firebase/auth")])
       .then(([client, authModule]) => {
+        if (cancelled) return;
         void authModule.getRedirectResult(client.auth).catch(() => undefined);
 
         unsubscribe = authModule.onIdTokenChanged(client.auth, (nextUser) => {
@@ -38,17 +41,21 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
           setIsChecking(true);
 
           if (!nextUser) {
-            const returnTo = pathname.startsWith("/admin") ? pathname : "/admin";
+            verifiedUidRef.current = null;
+            const entryPathname = entryPathnameRef.current;
+            const returnTo = entryPathname.startsWith("/admin") ? entryPathname : "/admin";
             router.replace(`/account?returnTo=${encodeURIComponent(returnTo)}`);
             return;
           }
 
-          nextUser.getIdToken(true)
+          const forceRefresh = verifiedUidRef.current !== nextUser.uid;
+          nextUser.getIdToken(forceRefresh)
             .then((token) => fetch("/api/admin/me", { headers: { Authorization: `Bearer ${token}` } }))
             .then((response) => response.ok ? response.json() : Promise.reject(new Error(String(response.status))))
             .then((data: { isAdmin?: boolean }) => {
               if (cancelled || verification !== verificationRef.current) return;
               if (data.isAdmin !== true) throw new Error("403");
+              verifiedUidRef.current = nextUser.uid;
               setIsAdmin(true);
               setIsChecking(false);
             })
@@ -58,6 +65,20 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
               router.replace("/?adminAccess=required");
             });
         });
+
+        const invalidateAdmin = () => {
+          verificationRef.current += 1;
+          verifiedUidRef.current = null;
+          setIsAdmin(false);
+          setIsChecking(true);
+          router.replace("/?adminAccess=required");
+        };
+        window.addEventListener("run213:admin-auth-invalid", invalidateAdmin);
+        const previousUnsubscribe = unsubscribe;
+        unsubscribe = () => {
+          previousUnsubscribe?.();
+          window.removeEventListener("run213:admin-auth-invalid", invalidateAdmin);
+        };
       })
       .catch(() => {
         setMessage("Firebase client env is missing.");
@@ -68,7 +89,7 @@ export function AdminAccessGate({ children }: AdminAccessGateProps) {
       cancelled = true;
       unsubscribe?.();
     };
-  }, [pathname, router]);
+  }, [router]);
 
   if (isChecking || !isAdmin) {
     return (
