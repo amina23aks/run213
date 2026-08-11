@@ -7,7 +7,9 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 25;
 
 export async function GET(request: Request) {
-  if (!await verifyAdminRequest(request)) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
   const url = new URL(request.url);
   const search = (url.searchParams.get("search") ?? "").trim().toLowerCase();
   const offset = Math.max(0, Number.parseInt(url.searchParams.get("offset") ?? "0", 10) || 0);
@@ -27,7 +29,9 @@ export async function GET(request: Request) {
 
 const deleteSchema = z.object({ id: z.string().min(1).max(400) });
 export async function DELETE(request: Request) {
-  if (!await verifyAdminRequest(request)) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
   const parsed = deleteSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return adminJsonError("Invalid subscriber.", 400);
   await getAdminDb().collection("wishlistSignups").doc(parsed.data.id).delete();

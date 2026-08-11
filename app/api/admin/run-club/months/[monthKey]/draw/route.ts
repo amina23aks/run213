@@ -1,7 +1,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { z } from "zod";
-import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getWinnerSubmissionIds, isEligibleRunClubSubmission, isValidMonthKey, normalizeWinnerCount, RUN_CLUB_DRAW_VERSION, selectSecureWinnerIndexes, serializePublicWinner } from "@/lib/run-club/draw";
 
@@ -11,8 +11,11 @@ export const runtime = "nodejs";
 const drawRequestSchema = z.object({ winnerCount: z.number().int().min(1).max(3).optional() }).optional();
 
 export async function POST(request: Request, context: { params: Promise<{ monthKey: string }> }) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { monthKey } = await context.params;
   if (!isValidMonthKey(monthKey)) return Response.json({ ok: false, code: "invalid_month", message: "Invalid month." }, { status: 400 });
   const requestJson: unknown = await request.json().catch(() => undefined);

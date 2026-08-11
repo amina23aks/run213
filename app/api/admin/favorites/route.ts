@@ -8,7 +8,9 @@ const PAGE_SIZE = 20;
 const NO_STORE_HEADERS = { "Cache-Control": "private, no-store, max-age=0" };
 
 export async function GET(request: Request) {
-  if (!await verifyAdminRequest(request)) return Response.json({ error: "Unauthorized" }, { status: 401, headers: NO_STORE_HEADERS });
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
   try {
     const url = new URL(request.url);
     const type = url.searchParams.get("type");

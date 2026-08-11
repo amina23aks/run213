@@ -15,8 +15,10 @@ type AdminProductCursor = {
 };
 
 export async function GET(request: Request) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
 
   const url = new URL(request.url);
   const requestedLimit = Number(url.searchParams.get("limit") ?? DEFAULT_LIMIT);
@@ -46,8 +48,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
 
   const parsed = adminProductInputSchema.safeParse(await request.json());
   if (!parsed.success) return Response.json({ error: "Invalid product input", issues: parsed.error.flatten() }, { status: 400 });

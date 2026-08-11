@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
-import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +8,11 @@ export const runtime = "nodejs";
 const linkSchema = z.object({ uid: z.string().trim().min(1).max(128), confirm: z.boolean().default(false) }).strict();
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const parsed = linkSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ ok: false, message: "Enter an exact Firebase Authentication UID." }, { status: 400 });
   const { id } = await context.params;
@@ -36,8 +39,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { id } = await context.params;
   const db = getAdminDb(), ref = db.collection("runClubSubmissions").doc(id);
   try {

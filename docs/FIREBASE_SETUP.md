@@ -61,9 +61,6 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
 FIREBASE_PROJECT_ID=run213
 FIREBASE_CLIENT_EMAIL=
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-
-ADMIN_EMAILS=
-SUPER_ADMIN_EMAIL=
 ```
 
 ## Vercel environment variables
@@ -86,3 +83,4 @@ Recommended scopes:
 - Never commit Firebase service account JSON files.
 - Never expose `FIREBASE_CLIENT_EMAIL` or `FIREBASE_PRIVATE_KEY` with a `NEXT_PUBLIC_` prefix.
 - `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` may exist, but Firebase Analytics is not initialized in this sprint.
+- Admin access is granted with a Firebase custom claim, not environment email allowlists. Follow [Admin authorization](./ADMIN_AUTHORIZATION.md) before deploying a restrictive authorization change.

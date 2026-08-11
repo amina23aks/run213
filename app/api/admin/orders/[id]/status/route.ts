@@ -8,8 +8,11 @@ type Params = { params: Promise<{ id: string }> };
 const bodySchema = z.object({ status: z.enum(["pending", "confirmed", "preparing", "shipped", "delivered", "cancelled", "returned"]), note: z.string().trim().max(240).nullable().optional() });
 
 export async function POST(request: Request, { params }: Params) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid status update", issues: parsed.error.flatten() }, { status: 400 });
   const { id } = await params;

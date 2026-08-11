@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { z } from "zod";
-import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
+import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getAlgiersMonthKey } from "@/lib/run-club/security";
 
@@ -9,8 +9,10 @@ export const runtime = "nodejs";
 const querySchema = z.object({ month: z.string().regex(/^\d{4}-\d{2}$/).optional(), status: z.enum(["pending", "approved", "rejected","edit_requested","removal_requested"]).optional(), limit: z.coerce.number().int().min(1).max(20).default(20), cursor: z.string().optional() });
 
 export async function GET(request: Request) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
   const url = new URL(request.url);
   const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams));
   if (!parsed.success) return Response.json({ ok: false, code: "validation_failed", message: "Invalid filters." }, { status: 400 });

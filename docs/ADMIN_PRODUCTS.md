@@ -23,22 +23,13 @@ FIREBASE_CLIENT_EMAIL=
 FIREBASE_PRIVATE_KEY=
 ```
 
-Admin allowlist variables control who can use admin APIs:
-
-```bash
-SUPER_ADMIN_EMAIL=owner@example.com
-ADMIN_EMAILS=admin1@example.com,admin2@example.com
-```
-
-Emails are normalized to lowercase before checks.
-
 ## How admin auth works
 
 - `/admin/products` loads Firebase Auth in the browser.
 - Admins can sign in with Google or Firebase Email/Password.
 - The browser sends the Firebase ID token as `Authorization: Bearer <token>` to `/api/admin/products` routes.
 - Server API routes verify the ID token with Firebase Admin Auth.
-- The verified token email must match `SUPER_ADMIN_EMAIL` or one of `ADMIN_EMAILS`.
+- The verified token must contain the Firebase custom claim `admin: true`; email alone never authorizes Admin access.
 - The UI shows the product form only after the server confirms access by returning the products list.
 - Product writes are never sent directly from the browser to Firestore.
 
@@ -89,7 +80,7 @@ Public storefront reads require `status == "active"`. If Firestore is empty or u
 2. Enable Google sign-in.
 3. Enable Email/Password sign-in if you want email login.
 4. Create admin users in Firebase Auth.
-5. Add their emails to `SUPER_ADMIN_EMAIL` or `ADMIN_EMAILS`.
+5. Grant each exact existing account with `npm run admin:grant -- --email admin@example.com`, following the lockout-safe order in [Admin authorization](./ADMIN_AUTHORIZATION.md).
 6. Create/deploy Firestore indexes if Firebase prompts for the homepage placement queries.
 
 ## Firebase Auth providers and Vercel domains

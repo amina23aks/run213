@@ -4,7 +4,7 @@ import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
-import { getAdminEmailEnv, getFirebaseAdminEnv } from "@/lib/env";
+import { getFirebaseAdminEnv } from "@/lib/env";
 
 let firebaseAdminApp: App | null = null;
 let cachedAuth: Auth | null = null;
@@ -36,16 +36,4 @@ export function getAdminAuth(): Auth {
 export function getAdminDb(): Firestore {
   cachedDb ??= getFirestore(getFirebaseAdminApp());
   return cachedDb;
-}
-
-export const { adminEmails, superAdminEmail } = getAdminEmailEnv();
-
-export function isConfiguredAdminEmail(email: string | null | undefined): boolean {
-  if (!email) {
-    return false;
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-
-  return normalizedEmail === superAdminEmail || adminEmails.includes(normalizedEmail);
 }

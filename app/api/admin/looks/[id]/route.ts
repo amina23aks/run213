@@ -13,8 +13,11 @@ const COLLECTIONS_COLLECTION = "lookCollections";
 type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(request: Request, { params }: Params) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { id } = await params;
   const parsed = lookInputSchema.safeParse(await request.json());
   if (!parsed.success) return Response.json({ code: "validation_failed", message: "Check the Look fields and try again.", fieldErrors: parsed.error.flatten().fieldErrors }, { status: 400 });
@@ -41,8 +44,11 @@ export async function PUT(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
-  const admin = await verifyAdminRequest(request);
-  if (!admin) return adminJsonError("Unauthorized", 401);
+  const adminVerification = await verifyAdminRequest(request);
+
+  if (!adminVerification.ok) return adminVerification.response;
+
+  const admin = adminVerification.admin;
   const { id } = await params;
   const docRef = getAdminDb().collection(COLLECTION).doc(id);
   const current = await docRef.get();
