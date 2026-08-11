@@ -62,11 +62,56 @@ test("stock badges overlay card, detail, and active favorite media", () => {
 
 test("low-stock threshold and quantity limits stay compact and exact", () => {
   const info = readFileSync("components/product/ProductInfo.tsx", "utf8");
-  assert.match(info, /product\.stockQty > 0 && product\.stockQty < 5/);
-  assert.match(info, /ONLY \{lowStockQuantity\} LEFT/);
+  assert.match(info, /limitedStockQuantity > 0 && limitedStockQuantity < 5/);
+  assert.match(info, /`Only \$\{limitedStockQuantity\} left`/);
+  assert.match(info, /`Available: \$\{limitedStockQuantity\}`/);
+  assert.match(info, /: "In stock"/);
+  assert.match(info, /isOutOfStock[\s\S]*\? "Out of stock"/);
+  assert.match(info, /productStockInfo--low/);
   assert.match(info, /nextQuantity > maxQuantity/);
   assert.match(info, /Only \$\{maxQuantity\} available\./);
   assert.match(info, /quantity >= maxQuantity/);
   assert.match(info, /disabled=\{isOutOfStock \|\| quantity <= 1\}/);
   assert.match(info, /productAddButton[^>]*disabled=\{isOutOfStock\}/);
+});
+
+test("storefront card overlays use compact symmetric corner placement", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.productCard \.stockBadge \{[\s\S]*?left: 4px;[\s\S]*?top: 4px;[\s\S]*?font-size: 0\.46rem;/);
+  assert.match(css, /\.productCard__favorite\.favoriteButton,[\s\S]*?right: 4px !important;[\s\S]*?top: 4px !important;[\s\S]*?width: 28px;[\s\S]*?height: 28px;[\s\S]*?font-size: 0\.9rem;/);
+});
+
+test("product cards keep a tight media frame and compact refined controls", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\/\* Product Card compact controls: final scoped source-of-truth\. \*\/[\s\S]*?\.productCard \{[\s\S]*?padding: 0\.45rem;/);
+  assert.match(css, /\.productCard \.productCard__media,[\s\S]*?margin-bottom: 0\.28rem;[\s\S]*?padding: 0\.22rem;[\s\S]*?border-radius: 0\.72rem;/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch__color \{[\s\S]*?width: 0\.68rem !important;[\s\S]*?height: 0\.68rem !important;[\s\S]*?border: 0\.75px solid/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\],[\s\S]*?outline: 1px solid #111 !important;[\s\S]*?outline-offset: 0\.5px !important;/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\] \.productSwatch__color,[\s\S]*?width: 0\.78rem !important;[\s\S]*?height: 0\.78rem !important;/);
+  assert.match(css, /\.productCard \.sizeChips button,[\s\S]*?min-width: 1\.5rem !important;[\s\S]*?height: 1\.3rem !important;[\s\S]*?border-radius: 0\.35rem !important;[\s\S]*?font-size: 0\.6rem !important;/);
+});
+
+test("product card add icon is geometrically centered without changing cart behavior", () => {
+  const card = readFileSync("components/home/ProductCard.tsx", "utf8");
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(card, /className="addButton"[\s\S]*?<span aria-hidden="true">\+<\/span>/);
+  assert.match(css, /\.productCard \.addButton > span \{[\s\S]*?position: absolute;[\s\S]*?inset: 0;[\s\S]*?display: grid;[\s\S]*?place-items: center;[\s\S]*?line-height: 1;/);
+  assert.match(card, /onClick=\{\(event\) => \{ event\.stopPropagation\(\); handleAddToCart\(\); \}\}/);
+});
+
+test("Favorites product and Look cards keep content compact and actions balanced", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /\.favoriteCompactCard__body \{ gap: 0\.25rem; padding: 0\.48rem 0\.52rem 0\.52rem; \}/);
+  assert.match(css, /\.favoriteCompactCard__price \{ margin-top: 0; \}/);
+  assert.match(css, /\.favoriteCompactCard__action \{ margin-top: auto; \}/);
+  assert.match(css, /\.favoriteCompactCard--product \.favoriteCompactCard__media \{ aspect-ratio: 4 \/ 4\.5; \}/);
+  assert.match(css, /\.favoriteCompactCard--look \.favoriteCompactCard__media \{ aspect-ratio: 4 \/ 3\.6; \}/);
+});
+
+test("Look slider starts neutral and highlights only real interaction", () => {
+  const slider = readFileSync("components/home/ShopTheLookClient.tsx", "utf8");
+  assert.match(slider, /useState<number \| null>\(null\)/);
+  assert.doesNotMatch(slider, /useState\(0\)/);
+  assert.match(slider, /onMouseLeave=\{\(\) => \{ setHighlightedFigure\(null\); \}\}/);
+  assert.match(slider, /onBlur=\{\(\) => \{ setHighlightedFigure\(null\); \}\}/);
 });

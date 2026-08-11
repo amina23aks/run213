@@ -22,7 +22,15 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const maxQuantity = product.stockMode === "limited" && typeof product.stockQty === "number" ? product.stockQty : undefined;
   const isOutOfStock = !isProductInStock(product);
-  const lowStockQuantity = product.stockMode === "limited" && typeof product.stockQty === "number" && product.stockQty > 0 && product.stockQty < 5 ? product.stockQty : null;
+  const limitedStockQuantity = product.stockMode === "limited" && typeof product.stockQty === "number" ? product.stockQty : null;
+  const isLowStock = limitedStockQuantity !== null && limitedStockQuantity > 0 && limitedStockQuantity < 5;
+  const stockInfo = isOutOfStock
+    ? "Out of stock"
+    : isLowStock
+      ? `Only ${limitedStockQuantity} left`
+      : limitedStockQuantity !== null
+        ? `Available: ${limitedStockQuantity}`
+        : "In stock";
   const requiresColor = product.colors.length > 0;
   const requiresSize = product.sizes.length > 0;
 
@@ -111,8 +119,13 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
         </div>
       ) : null}
 
+      <p className={`productStockInfo${isLowStock ? " productStockInfo--low" : ""}${isOutOfStock ? " productStockInfo--out" : ""}`} role="status">
+        <i aria-hidden="true" />
+        {stockInfo}
+      </p>
+
       <div className="productQuantity" aria-label="Quantity selector">
-        <span className="productQuantity__label">Quantity {lowStockQuantity !== null ? <b>ONLY {lowStockQuantity} LEFT</b> : null}</span>
+        <span className="productQuantity__label">Quantity</span>
         <div>
           <button type="button" aria-label="Decrease quantity" disabled={isOutOfStock || quantity <= 1} onClick={() => updateQuantity(quantity - 1)}>−</button>
           <strong>{quantity}</strong>
