@@ -3,7 +3,8 @@ import "server-only";
 import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { verifyCustomerAccessToken } from "@/lib/orders/accessToken";
-import { normalizePhone } from "@/lib/orders/validation";
+import { customerDeliveryEditSchema, normalizePhone } from "@/lib/orders/validation";
+import { shippingCalculator } from "@/lib/orders/shipping";
 import { normalizeProductColors } from "@/lib/productColors";
 import type { VerifiedCustomer } from "@/lib/customer-auth";
 import type { OrderStatus } from "@/types/order";
@@ -85,16 +86,38 @@ export async function cancelCustomerOrder(orderId: string, auth: VerifiedCustome
 
 export async function editCustomerDelivery(orderId: string, auth: VerifiedCustomer | null, token: string | null, input: Record<string, unknown>) {
   const db = getAdminDb(); const ref = db.collection(ORDERS).doc(orderId);
-  const customer = { fullName: str(input.fullName), phone: str(input.phone) };
-  const deliveryPatch = { wilaya: str(input.wilaya), address: str(input.address), deliveryMode: input.deliveryMode === "desk" ? "desk" : "home", notes: opt(input.notes) };
-  if (!customer.fullName || !customer.phone || !deliveryPatch.wilaya || !deliveryPatch.address) throw new CustomerOrderError("validation_failed", "Required delivery details are missing.", 400);
+  const parsed = customerDeliveryEditSchema.safeParse(input);
+  if (!parsed.success) throw new CustomerOrderError("validation_failed", "Check the highlighted delivery details.", 400, Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0] ?? "form"), issue.message])));
+  const customer = { fullName: parsed.data.fullName, phone: parsed.data.phone };
+  const deliveryPatch = { wilaya: parsed.data.wilaya, address: parsed.data.address, deliveryMode: parsed.data.deliveryMode, notes: parsed.data.notes?.trim() || null };
   await db.runTransaction(async (transaction) => {
     const snap = await transaction.get(ref); if (!snap.exists) throw new CustomerOrderError("not_found", "Order not found.", 404);
     const data = snap.data() ?? {}; authorize(data, auth, token);
     if (data.status !== "pending") throw new CustomerOrderError("not_pending", "This order can no longer be edited.", 409);
-    transaction.update(ref, { customer: { ...data.customer, ...customer, phoneNormalized: normalizePhone(customer.phone) }, delivery: { ...obj(data.delivery), ...deliveryPatch }, customerLookup: { ...obj(data.customerLookup), phoneNormalized: normalizePhone(customer.phone) }, updatedAt: new Date().toISOString(), updatedAtTimestamp: FieldValue.serverTimestamp(), statusHistory: FieldValue.arrayUnion({ status: "pending", at: new Date().toISOString(), actor: "customer", note: "Delivery details updated" }) });
+    const itemsSubtotalDzd = canonicalMerchandiseSubtotal(data);
+    const quote = await shippingCalculator.quote({ ...deliveryPatch, commune: null });
+    const totals = { ...obj(data.totals), itemsSubtotalDzd, shippingDzd: quote.amountDzd, totalDzd: itemsSubtotalDzd + quote.amountDzd, deliveryPricingStatus: quote.status };
+    transaction.update(ref, { customer: { ...obj(data.customer), ...customer, phoneNormalized: normalizePhone(customer.phone) }, delivery: { ...obj(data.delivery), ...deliveryPatch }, totals, customerLookup: { ...obj(data.customerLookup), phoneNormalized: normalizePhone(customer.phone) }, updatedAt: new Date().toISOString(), updatedAtTimestamp: FieldValue.serverTimestamp(), statusHistory: FieldValue.arrayUnion({ status: "pending", at: new Date().toISOString(), actor: "customer", note: "Delivery details updated" }) });
   });
   return getCustomerOrder(orderId, auth, token);
+}
+
+function canonicalMerchandiseSubtotal(data: FirebaseFirestore.DocumentData): number {
+  const stored = num(obj(data.totals).itemsSubtotalDzd);
+  if (stored !== null && Number.isInteger(stored) && stored >= 0) return stored;
+  const items = Array.isArray(data.items) ? data.items : [];
+  if (items.length === 0) throw new CustomerOrderError("subtotal_unavailable", "This legacy order cannot be safely repriced. Contact support.", 409);
+  let subtotal = 0;
+  for (const raw of items) {
+    const item = obj(raw); const lineTotal = num(item.lineTotalDzd);
+    if (lineTotal !== null && Number.isInteger(lineTotal) && lineTotal >= 0) { subtotal += lineTotal; continue; }
+    if (opt(item.lookGroupId) || opt(item.lookId)) throw new CustomerOrderError("subtotal_unavailable", "This legacy order cannot be safely repriced. Contact support.", 409);
+    const unitPrice = num(item.unitPriceDzd); const quantity = num(item.quantity);
+    if (unitPrice === null || quantity === null || !Number.isInteger(unitPrice) || unitPrice < 0 || !Number.isInteger(quantity) || quantity < 1) throw new CustomerOrderError("subtotal_unavailable", "This legacy order cannot be safely repriced. Contact support.", 409);
+    subtotal += unitPrice * quantity;
+  }
+  if (!Number.isSafeInteger(subtotal) || subtotal < 0) throw new CustomerOrderError("subtotal_unavailable", "This legacy order cannot be safely repriced. Contact support.", 409);
+  return subtotal;
 }
 
 export async function getCustomerOrderItemOptions(orderId: string, auth: VerifiedCustomer | null, token: string | null, itemIndexRaw: number) {
@@ -150,4 +173,4 @@ function explanation(status: unknown) { return status === "pending" ? "We receiv
 function str(v: unknown) { return typeof v === "string" ? v.trim() : ""; } function opt(v: unknown) { const s = str(v); return s || null; } function num(v: unknown) { return typeof v === "number" && Number.isFinite(v) ? v : null; } function obj(v: unknown): Record<string, unknown> { return typeof v === "object" && v !== null ? v as Record<string, unknown> : {}; } function iso(v: unknown) { if (typeof v === "string") return v; if (obj(v).toDate instanceof Function) return (obj(v).toDate as () => Date)().toISOString(); return null; }
 function encodeCursor(doc: FirebaseFirestore.QueryDocumentSnapshot) { const d = doc.get("createdAtTimestamp")?.toDate?.(); return Buffer.from(JSON.stringify({ createdAtMillis: d instanceof Date ? d.getTime() : Date.now(), id: doc.id }), "utf8").toString("base64url"); }
 function parseCursor(value: string | null): Cursor | null { try { const x = value ? JSON.parse(Buffer.from(value, "base64url").toString("utf8")) : null; return typeof x?.createdAtMillis === "number" && typeof x.id === "string" ? x : null; } catch { return null; } }
-export class CustomerOrderError extends Error { constructor(public code: string, message: string, public status: number) { super(message); } }
+export class CustomerOrderError extends Error { constructor(public code: string, message: string, public status: number, public fieldErrors?: Record<string, string>) { super(message); } }
