@@ -7,18 +7,20 @@ import { waitForAuthHydration } from "@/components/orders/customerOrderAccess";
 
 type FieldErrors = Record<string, string>;
 type UploadProof = { proofImage: { publicId: string; secureUrl: string; width: number; height: number; format: string; bytes: number; version: string; signature?: string }; uploadGrantId: string };
+type ProofSelection = { file: File; preview: string } | { file: null; preview: null };
 
 const initialFields = { name: "", contact: "", instagram: "", wilaya: "", caption: "", consentAccepted: false, website: "" };
+const emptyProofSelection: ProofSelection = { file: null, preview: null };
 
 export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
   const [fields, setFields] = useState(initialFields);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [proofSelection, setProofSelection] = useState<ProofSelection>(emptyProofSelection);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<"idle" | "uploading" | "submitting" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [authHydrated, setAuthHydrated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const proofSelectionRef = useRef<ProofSelection>(emptyProofSelection);
 
   useEffect(() => {
     let active = true;
@@ -26,16 +28,25 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => () => {
+    if (proofSelectionRef.current.preview) URL.revokeObjectURL(proofSelectionRef.current.preview);
+  }, []);
+
   function focusFirstError(nextErrors: FieldErrors) { window.requestAnimationFrame(() => { const firstKey = Object.keys(nextErrors).find((key) => nextErrors[key]); if (!firstKey) return; document.getElementById(firstKey === "proofImage" ? "run-club-proof" : firstKey === "consentAccepted" ? "run-club-consent" : `run-club-${firstKey}`)?.focus(); }); }
   function setFieldErrors(nextErrors: FieldErrors) { setErrors(nextErrors); focusFirstError(nextErrors); }
   function updateField(name: keyof typeof initialFields, value: string | boolean) { setFields((current) => ({ ...current, [name]: value })); setErrors((current) => ({ ...current, [name]: "" })); if (status === "error") { setStatus("idle"); setMessage(""); } }
+  function commitProofSelection(nextSelection: ProofSelection) {
+    if (proofSelectionRef.current.preview) URL.revokeObjectURL(proofSelectionRef.current.preview);
+    proofSelectionRef.current = nextSelection;
+    setProofSelection(nextSelection);
+    if (!nextSelection.file && fileInputRef.current) fileInputRef.current.value = "";
+  }
   function selectFile(nextFile: File | null) {
-    if (preview) URL.revokeObjectURL(preview);
-    setFile(null); setPreview(null); setErrors((current) => ({ ...current, proofImage: "" })); if (status === "error") { setStatus("idle"); setMessage(""); }
-    if (!nextFile) return;
-    if (!RUN_CLUB_ALLOWED_MIME_TYPES.includes(nextFile.type as typeof RUN_CLUB_ALLOWED_MIME_TYPES[number])) { const nextErrors = { ...errors, proofImage: "The selected image type is not supported." }; setFieldErrors(nextErrors); return; }
-    if (nextFile.size > RUN_CLUB_MAX_IMAGE_BYTES) { const nextErrors = { ...errors, proofImage: "The selected image is larger than 5 MB." }; setFieldErrors(nextErrors); return; }
-    setFile(nextFile); setPreview(URL.createObjectURL(nextFile));
+    setErrors((current) => ({ ...current, proofImage: "" })); if (status === "error") { setStatus("idle"); setMessage(""); }
+    if (!nextFile) { commitProofSelection(emptyProofSelection); return; }
+    if (!RUN_CLUB_ALLOWED_MIME_TYPES.includes(nextFile.type as typeof RUN_CLUB_ALLOWED_MIME_TYPES[number])) { commitProofSelection(emptyProofSelection); const nextErrors = { ...errors, proofImage: "The selected image type is not supported." }; setFieldErrors(nextErrors); return; }
+    if (nextFile.size > RUN_CLUB_MAX_IMAGE_BYTES) { commitProofSelection(emptyProofSelection); const nextErrors = { ...errors, proofImage: "The selected image is larger than 5 MB." }; setFieldErrors(nextErrors); return; }
+    commitProofSelection({ file: nextFile, preview: URL.createObjectURL(nextFile) });
   }
   async function uploadProof(selectedFile: File, token: string): Promise<UploadProof> {
     const signatureResponse = await fetch("/api/run-club/upload-signature", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ fileType: selectedFile.type, fileSize: selectedFile.size, contact: fields.contact, instagram: fields.instagram, website: fields.website }) });
@@ -56,13 +67,13 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     event.preventDefault(); if (!authHydrated || isClosed || status === "uploading" || status === "submitting") return;
     const user = await waitForAuthHydration();
     if (!user) { setStatus("error"); setMessage("Sign in is required to submit your run."); window.dispatchEvent(new Event("run213:open-auth")); return; }
-    if (!file) { setStatus("error"); setMessage("Run proof image is required."); setFieldErrors({ proofImage: "Run proof image is required." }); return; }
+    if (!proofSelection.file) { setStatus("error"); setMessage("Run proof image is required."); setFieldErrors({ proofImage: "Run proof image is required." }); return; }
     setStatus("uploading"); setMessage(""); setErrors({});
     try {
       let token: string;
       try { token = await user.getIdToken(true); }
       catch { throw new Error("Your session could not be verified. Please sign in again and retry."); }
-      const upload = await uploadProof(file, token);
+      const upload = await uploadProof(proofSelection.file, token);
       const payload = { ...fields, ...upload };
       const parsed = runClubSubmissionSchema.safeParse(payload);
       if (!parsed.success) { const nextErrors = Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Invalid value."])); setStatus("error"); setMessage("Check the highlighted fields and try again."); setFieldErrors(nextErrors); return; }
@@ -70,7 +81,7 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
       const response = await fetch("/api/run-club/submissions", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify(parsed.data) });
       const result = await response.json();
       if (!response.ok || !result.ok) { const nextErrors = result.fieldErrors ?? {}; if (Object.keys(nextErrors).length) setFieldErrors(nextErrors); throw new Error(result.message || "Submission could not be completed. Please try again."); }
-      setFields(initialFields); setFile(null); if (preview) URL.revokeObjectURL(preview); setPreview(null); setStatus("success"); setMessage("Your entry is pending review. It will only appear publicly after approval.");
+      setFields(initialFields); commitProofSelection(emptyProofSelection); setStatus("success"); setMessage("Your entry is pending review. It will only appear publicly after approval.");
     } catch (error) { setStatus("error"); setMessage(error instanceof Error ? error.message : "Submission failed. Try again."); }
   }
   const processing = status === "uploading" || status === "submitting";
@@ -83,9 +94,9 @@ export function RunClubSubmissionForm({ isClosed }: { isClosed: boolean }) {
     <label htmlFor="run-club-caption">Run caption<textarea id="run-club-caption" value={fields.caption} maxLength={280} onChange={(event) => updateField("caption", event.target.value)} placeholder="What did showing up feel like today?" aria-invalid={Boolean(errors.caption)} aria-describedby={errors.caption ? errorId("caption") : undefined} />{errors.caption && <span className="runClubFieldError" id={errorId("caption")}>{errors.caption}</span>}</label>
     <div className="runClubDropzone" onDrop={(event) => { event.preventDefault(); selectFile(event.dataTransfer.files[0] ?? null); }} onDragOver={(event) => event.preventDefault()}>
       <div className="runClubDropzone__copy"><strong>Proof image</strong><p>Drag your proof image here, or choose a file.</p><small>JPG, PNG, WEBP · Maximum 5 MB</small></div>
-      {preview ? <Image src={preview} alt="Selected run proof preview" width={420} height={280} unoptimized /> : null}
+      {proofSelection.file && proofSelection.preview ? <Image src={proofSelection.preview} alt="Selected run proof preview" width={420} height={280} unoptimized /> : null}
       <input id="run-club-proof" ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectFile(event.target.files?.[0] ?? null)} aria-invalid={Boolean(errors.proofImage)} aria-describedby={errors.proofImage ? errorId("proofImage") : undefined} />
-      <div><button type="button" className="button" onClick={() => fileInputRef.current?.click()}>{file ? "REPLACE" : "CHOOSE IMAGE"}</button>{file && <button type="button" className="button" onClick={() => selectFile(null)}>REMOVE</button>}</div>
+      <div><button type="button" className="button" onClick={() => fileInputRef.current?.click()}>{proofSelection.file ? "REPLACE" : "CHOOSE IMAGE"}</button>{proofSelection.file && <button type="button" className="button" onClick={() => selectFile(null)}>REMOVE</button>}</div>
       {errors.proofImage && <span className="runClubFieldError" id={errorId("proofImage")}>{errors.proofImage}</span>}
     </div>
     <label className="runClubConsent"><input id="run-club-consent" type="checkbox" checked={fields.consentAccepted} onChange={(event) => updateField("consentAccepted", event.target.checked)} aria-invalid={Boolean(errors.consentAccepted)} aria-describedby={errors.consentAccepted ? errorId("consentAccepted") : undefined} /><span>I confirm that I own this content and allow 213 RUN to display it if my submission is approved.</span>{errors.consentAccepted && <span className="runClubFieldError runClubConsent__error" id={errorId("consentAccepted")}>{errors.consentAccepted}</span>}</label>
