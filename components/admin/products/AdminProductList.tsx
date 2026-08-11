@@ -5,11 +5,12 @@ type AdminProductListProps = {
   products: Product[];
   nextCursor: string | null;
   onArchive: (id: string) => void;
+  onRestore: (id: string) => void;
   onEdit: (product: Product) => void;
   onLoadMore: (cursor: string) => void;
 };
 
-export function AdminProductList({ products, nextCursor, onArchive, onEdit, onLoadMore }: AdminProductListProps) {
+export function AdminProductList({ products, nextCursor, onArchive, onRestore, onEdit, onLoadMore }: AdminProductListProps) {
   return (
     <section className="adminProductList adminCard">
       <div className="adminCard__heading">
@@ -20,7 +21,7 @@ export function AdminProductList({ products, nextCursor, onArchive, onEdit, onLo
 
       {products.length ? (
         <div className="adminProductList__items">
-          {products.map((product) => <AdminProductListItem key={product.id} product={product} onArchive={onArchive} onEdit={onEdit} />)}
+          {products.map((product) => <AdminProductListItem key={product.id} product={product} onArchive={onArchive} onRestore={onRestore} onEdit={onEdit} />)}
         </div>
       ) : (
         <div className="adminProductList__empty">
@@ -34,7 +35,7 @@ export function AdminProductList({ products, nextCursor, onArchive, onEdit, onLo
   );
 }
 
-function AdminProductListItem({ product, onArchive, onEdit }: { product: Product; onArchive: (id: string) => void; onEdit: (product: Product) => void }) {
+function AdminProductListItem({ product, onArchive, onRestore, onEdit }: { product: Product; onArchive: (id: string) => void; onRestore: (id: string) => void; onEdit: (product: Product) => void }) {
   const imageUrl = product.images[0]?.url;
   const placements = getPlacements(product);
 
@@ -62,7 +63,7 @@ function AdminProductListItem({ product, onArchive, onEdit }: { product: Product
 
       <div className="adminProductItem__actions">
         <button type="button" onClick={() => onEdit(product)}>Edit</button>
-        {product.status === "archived" ? <span className="adminProductArchivedNote">Archived</span> : <button type="button" onClick={() => onArchive(product.id)}>Archive</button>}
+        {product.status === "archived" ? <button type="button" onClick={() => onRestore(product.id)}>Restore product</button> : <button type="button" onClick={() => onArchive(product.id)}>Archive product</button>}
       </div>
     </article>
   );

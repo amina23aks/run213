@@ -73,6 +73,7 @@ export function AdminProductsClient() {
   const [uploadingSizeGuide, setUploadingSizeGuide] = useState(false);
   const [message, setMessage] = useState(() => missingClientEnv.length ? `Missing Firebase env: ${missingClientEnv.join(", ")}` : "Sign in with an approved admin email.");
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [archiveTarget, setArchiveTarget] = useState<Product | null>(null);
 
   const showTemporaryMessage = useCallback((nextMessage: string) => {
     setMessage(nextMessage);
@@ -197,7 +198,18 @@ export function AdminProductsClient() {
     try {
       await adminFetch(`/api/admin/products/${id}`, { method: "DELETE" });
       await loadProducts();
+      setArchiveTarget(null);
       showTemporaryMessage("Product archived.");
+    } catch (error) {
+      setMessage(formatAdminError(error));
+    }
+  }
+
+  async function restoreProduct(id: string) {
+    try {
+      await adminFetch(`/api/admin/products/${id}`, { method: "PATCH" });
+      await loadProducts();
+      showTemporaryMessage("Product restored as a draft. Review it before publishing.");
     } catch (error) {
       setMessage(formatAdminError(error));
     }
@@ -375,7 +387,8 @@ export function AdminProductsClient() {
           uploadingSizeGuide={uploadingSizeGuide}
           cloudinaryConfigured={cloudinaryConfigured}
         />
-        <AdminProductList products={products} nextCursor={nextCursor} onArchive={archiveProduct} onEdit={editProduct} onLoadMore={loadProducts} />
+        <AdminProductList products={products} nextCursor={nextCursor} onArchive={(id) => setArchiveTarget(products.find((product) => product.id === id) ?? null)} onRestore={restoreProduct} onEdit={editProduct} onLoadMore={loadProducts} />
+        {archiveTarget ? <div className="adminConfirmBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setArchiveTarget(null); }}><section className="adminConfirmModal" role="dialog" aria-modal="true" aria-labelledby="archive-product-title"><small>ARCHIVE PRODUCT</small><h2 id="archive-product-title">ARCHIVE PRODUCT?</h2><p>{archiveTarget.name} will disappear from the storefront. Existing historical Orders are preserved.</p><div><button type="button" onClick={() => setArchiveTarget(null)}>CANCEL</button><button className="isDanger" type="button" onClick={() => void archiveProduct(archiveTarget.id)}>ARCHIVE PRODUCT</button></div></section></div> : null}
       </div>
     </AdminShell>
   );

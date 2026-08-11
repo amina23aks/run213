@@ -10,6 +10,7 @@ import { calculateLookGroupPrice } from "@/lib/lookPricing";
 import { normalizeProductColors } from "@/lib/productColors";
 import { normalizeEmail } from "@/lib/orders/validation";
 import { buildAdminSearchTokens } from "@/lib/orders/admin";
+import { canonicalInStock, isProductInStock } from "@/lib/products/availability";
 
 const ORDERS_COLLECTION = "orders";
 const PRODUCTS_COLLECTION = "products";
@@ -375,7 +376,7 @@ function validateVariant(product: Product, selectedColor: string | null, selecte
 }
 
 function validateQuantity(product: Product, quantity: number): void {
-  if (!product.inStock) throw new OrderCreationError("product_unavailable", `${product.name} is out of stock.`, 409);
+  if (!isProductInStock(product)) throw new OrderCreationError("product_unavailable", `${product.name} is out of stock.`, 409);
   if (product.stockMode === "limited" && typeof product.stockQty === "number" && quantity > product.stockQty) throw new OrderCreationError("insufficient_stock", `Not enough stock for ${product.name}.`, 409);
 }
 
@@ -393,7 +394,7 @@ function applyStockUpdates(
     const ref = productRefs.get(productId);
     if (!product || !ref || product.stockMode !== "limited") continue;
     const currentStock = typeof product.stockQty === "number" ? product.stockQty : 0;
-    if (!product.inStock || requestedQuantity < 1 || currentStock < requestedQuantity) throw new OrderCreationError("insufficient_stock", `Not enough stock for ${product.name}.`, 409);
+    if (!isProductInStock(product) || requestedQuantity < 1 || currentStock < requestedQuantity) throw new OrderCreationError("insufficient_stock", `Not enough stock for ${product.name}.`, 409);
     const remaining = currentStock - requestedQuantity;
     transaction.update(ref, { stockQty: remaining, inStock: remaining > 0, updatedAt });
   }
@@ -420,7 +421,7 @@ function parseActiveProduct(id: string, data: FirebaseFirestore.DocumentData): P
     sizes,
     stockMode: isStockMode(data.stockMode) ? data.stockMode : "made_to_order",
     stockQty: isNumber(data.stockQty) ? data.stockQty : null,
-    inStock: typeof data.inStock === "boolean" ? data.inStock : true,
+    inStock: canonicalInStock(isStockMode(data.stockMode) ? data.stockMode : "made_to_order", isNumber(data.stockQty) ? data.stockQty : null),
     featured: typeof data.featured === "boolean" ? data.featured : false,
     showInDrop001: typeof data.showInDrop001 === "boolean" ? data.showInDrop001 : false,
     showInFeaturedDrop: typeof data.showInFeaturedDrop === "boolean" ? data.showInFeaturedDrop : false,

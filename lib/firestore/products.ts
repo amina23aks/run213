@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { shopProducts, getStaticProductBySlug } from "@/constants/products";
 import { getMissingFirebaseAdminEnv } from "@/lib/env";
 import { normalizeProductColors } from "@/lib/productColors";
+import { canonicalInStock } from "@/lib/products/availability";
 import type { Product, ProductCategory, ProductImage, ProductSize, ProductStockMode } from "@/types/product";
 
 const PRODUCTS_COLLECTION = "products";
@@ -229,8 +230,7 @@ function parseProduct(id: string, data: Record<string, unknown>): Product | null
 }
 
 function isInStock(data: Record<string, unknown>): boolean {
-  if (data.stockMode === "limited") return isNumber(data.stockQty) && data.stockQty > 0;
-  return data.inStock !== false;
+  return canonicalInStock(isStockMode(data.stockMode) ? data.stockMode : "unlimited", isNumber(data.stockQty) ? data.stockQty : null);
 }
 
 function parseImages(value: unknown, productName: string): ProductImage[] {

@@ -19,6 +19,7 @@ type ResolvedProductFavorite = {
     priceDzd: number;
     compareAtPriceDzd: number | null;
     images: Array<{ url: string; alt: string }>;
+    availability: "in_stock" | "out_of_stock";
   };
 };
 
@@ -200,6 +201,7 @@ function FavoriteProductCard({ product }: { product: ResolvedProductFavorite }) 
       media={<Link href={href} aria-label={`View product ${product.card.name}`}><Image src={product.card.image} alt={product.sourceProduct.images[0]?.alt || `${product.card.name} product image`} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
       favoriteButton={<FavoriteButton itemType="product" itemId={product.id} itemName={product.card.name} variant="card" className="favoriteCompactCard__favorite" />}
       title={<Link href={href}>{product.card.name}</Link>}
+      meta={product.sourceProduct.availability === "out_of_stock" ? "OUT OF STOCK" : undefined}
       pricing={<><strong>{formatDzd(product.sourceProduct.priceDzd)}</strong>{promo.hasValidCompareAt ? <del>{formatDzd(promo.compareAt ?? 0)}</del> : null}{promo.hasValidCompareAt ? <em aria-label={`${promo.discountPercent}% discount`}>-{promo.discountPercent}%</em> : null}</>}
       action={<Link className="favoriteCompactCard__action" href={href} aria-label={`View product ${product.card.name}`}>VIEW PRODUCT →</Link>}
     />

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
+import { isProductInStock } from "@/lib/products/availability";
 
 type ProductCardItem = {
   name: string;
@@ -43,7 +44,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const [helperMessage, setHelperMessage] = useState<string | null>(null);
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
-  const isUnavailable = Boolean(sourceProduct && (!sourceProduct.inStock || sourceProduct.status !== "active" || (sourceProduct.stockMode === "limited" && (sourceProduct.stockQty ?? 0) <= 0)));
+  const isUnavailable = Boolean(sourceProduct && !isProductInStock(sourceProduct));
 
   function handleColorSelect(colorId: string) {
     setSelectedColorId(colorId);
@@ -88,6 +89,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       </div>
 
       <div className="productCard__content productInfo">
+        {isUnavailable ? <strong className="productStockState">OUT OF STOCK</strong> : null}
         <h3 className="productTitle">{sourceProduct ? <Link href={`/product/${sourceProduct.slug}`}>{product.name}</Link> : product.name}</h3>
         <div className="productPriceRow">
           <span className="currentPrice">{product.price}</span>

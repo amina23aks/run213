@@ -53,3 +53,7 @@ export const adminProductInputSchema = z.object({
 });
 
 export type AdminProductInput = z.infer<typeof adminProductInputSchema>;
+
+export function withCanonicalStock(input: AdminProductInput): AdminProductInput {
+  return { ...input, inStock: input.stockMode === "unlimited" || (input.stockQty ?? 0) > 0 };
+}

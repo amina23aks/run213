@@ -53,6 +53,7 @@ export async function POST(request: Request) {
             priceDzd: product.priceDzd,
             compareAtPriceDzd: product.compareAtPriceDzd,
             images: product.images.map(({ url, alt }) => ({ url, alt })),
+            availability: product.inStock ? "in_stock" : "out_of_stock",
           },
         }] : [];
       }),

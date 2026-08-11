@@ -6,6 +6,7 @@ import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
+import { isProductInStock } from "@/lib/products/availability";
 
 type ProductInfoProps = {
   product: Product;
@@ -20,7 +21,7 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
   const [cartMessage, setCartMessage] = useState<string | null>(null);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const maxQuantity = product.stockMode === "limited" && typeof product.stockQty === "number" ? product.stockQty : undefined;
-  const isOutOfStock = !product.inStock || product.status !== "active" || (product.stockMode === "limited" && (product.stockQty ?? 0) <= 0);
+  const isOutOfStock = !isProductInStock(product);
   const requiresColor = product.colors.length > 0;
   const requiresSize = product.sizes.length > 0;
 
