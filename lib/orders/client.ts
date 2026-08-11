@@ -1,5 +1,6 @@
 import type { CartItem } from "@/types/cart";
 import type { CreateOrderRequest, CreateOrderResponse, DeliveryMode } from "@/types/order";
+import { customerDeliveryEditSchema } from "@/lib/orders/validation";
 
 export type OrderFormValues = {
   fullName: string;
@@ -13,11 +14,13 @@ export type OrderFormValues = {
 
 export class OrderSubmissionError extends Error {
   status: number;
+  fieldErrors: Record<string, string>;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, fieldErrors: Record<string, string> = {}) {
     super(message);
     this.name = "OrderSubmissionError";
     this.status = status;
+    this.fieldErrors = fieldErrors;
   }
 }
 
@@ -50,14 +53,15 @@ export function buildCreateOrderRequest(values: OrderFormValues, cartItems: Cart
   };
 }
 
+export function validateOrderFormFields(values: OrderFormValues, cartItems: CartItem[]): { message: string | null; fieldErrors: Record<string, string> } {
+  if (!cartItems.length) return { message: "Your cart is empty.", fieldErrors: {} };
+  const parsed = customerDeliveryEditSchema.safeParse(values);
+  if (parsed.success) return { message: null, fieldErrors: {} };
+  return { message: "Check the highlighted delivery details.", fieldErrors: issuesToFieldErrors(parsed.error.issues) };
+}
+
 export function validateOrderFormValues(values: OrderFormValues, cartItems: CartItem[]): string | null {
-  if (!cartItems.length) return "Your cart is empty.";
-  if (!values.fullName.trim()) return "Full name is required.";
-  if (!values.phone.trim()) return "Phone number is required.";
-  if (!values.wilaya) return "Wilaya is required.";
-  if (values.deliveryMode !== "home" && values.deliveryMode !== "desk") return "Delivery mode is required.";
-  if (!values.address.trim()) return "Address is required.";
-  return null;
+  return validateOrderFormFields(values, cartItems).message;
 }
 
 export async function submitOrderToApi(payload: CreateOrderRequest, idToken?: string | null): Promise<CreateOrderResponse> {
@@ -72,7 +76,7 @@ export async function submitOrderToApi(payload: CreateOrderRequest, idToken?: st
 
   if (!response.ok) {
     const message = getErrorMessage(body, response.status);
-    throw new OrderSubmissionError(message, response.status);
+    throw new OrderSubmissionError(message, response.status, getFieldErrors(body));
   }
 
   return body as CreateOrderResponse;
@@ -104,4 +108,13 @@ function getErrorMessage(body: unknown, status: number): string {
   if (status === 429) { const retryAfter = typeof body === "object" && body !== null && "retryAfterSeconds" in body && typeof body.retryAfterSeconds === "number" ? ` Please wait about ${Math.ceil(body.retryAfterSeconds / 60)} minute(s).` : ""; return `Too many checkout attempts.${retryAfter}`; }
   if (status === 400) return "Please check your order details and try again.";
   return "Could not create order. Please try again.";
+}
+
+function getFieldErrors(body: unknown): Record<string, string> {
+  if (typeof body !== "object" || body === null || !("fieldErrors" in body) || typeof body.fieldErrors !== "object" || body.fieldErrors === null) return {};
+  return Object.fromEntries(Object.entries(body.fieldErrors).flatMap(([path, message]) => typeof message === "string" ? [[path.split(".").at(-1) ?? path, message]] : []));
+}
+
+function issuesToFieldErrors(issues: Array<{ path: PropertyKey[]; message: string }>): Record<string, string> {
+  return Object.fromEntries(issues.flatMap((issue) => typeof issue.path[0] === "string" ? [[issue.path[0], issue.message]] : []));
 }
