@@ -1,4 +1,4 @@
-import { unstable_noStore as noStore } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { shopProducts, getStaticProductBySlug } from "@/constants/products";
 import { getMissingFirebaseAdminEnv } from "@/lib/env";
 import { normalizeProductColors } from "@/lib/productColors";
@@ -11,7 +11,6 @@ const MAX_PRODUCT_LIMIT = 60;
 const ACTIVE_PRODUCT_READ_LIMIT = 60;
 
 export async function listActiveProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
-  noStore();
   const limit = clampLimit(requestedLimit);
 
   if (shouldUseStaticFallback()) {
@@ -24,7 +23,7 @@ export async function listActiveProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT)
   }
 
   try {
-    const products = await readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT);
+    const products = await readCachedActiveProducts();
     return sortByProductOrder(products).slice(0, limit);
   } catch (error) {
     warnProducts("Active product query failed; returning no storefront products.", error);
@@ -33,7 +32,6 @@ export async function listActiveProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT)
 }
 
 export async function listActiveProductsByPlacement(placement: "showInDrop001" | "showInFeaturedDrop", requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
-  noStore();
   const limit = clampLimit(requestedLimit);
 
   if (shouldUseStaticFallback()) {
@@ -49,7 +47,7 @@ export async function listActiveProductsByPlacement(placement: "showInDrop001" |
   }
 
   try {
-    const products = await readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT);
+    const products = await readCachedActiveProducts();
     return products
       .filter((product) => product[placement] === true)
       .sort((a, b) => getPlacementSortOrder(a, placement) - getPlacementSortOrder(b, placement))
@@ -61,7 +59,6 @@ export async function listActiveProductsByPlacement(placement: "showInDrop001" |
 }
 
 export async function listActivePromoProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
-  noStore();
   const limit = clampLimit(requestedLimit);
 
   if (shouldUseStaticFallback()) {
@@ -74,7 +71,7 @@ export async function listActivePromoProducts(requestedLimit = DEFAULT_PRODUCT_L
   }
 
   try {
-    const products = await readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT);
+    const products = await readCachedActiveProducts();
     return products
       .filter((product) => product.isPromo === true || (product.discountPercent ?? 0) > 0)
       .sort((a, b) => getPromoRecency(b) - getPromoRecency(a) || a.name.localeCompare(b.name))
@@ -86,7 +83,6 @@ export async function listActivePromoProducts(requestedLimit = DEFAULT_PRODUCT_L
 }
 
 export async function getActiveProductsByIds(productIds: string[]): Promise<Map<string, Product>> {
-  noStore();
   const products = new Map<string, Product>();
   const uniqueIds = Array.from(new Set(productIds.filter(Boolean)));
 
@@ -116,7 +112,6 @@ export async function getActiveProductsByIds(productIds: string[]): Promise<Map<
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  noStore();
 
   if (shouldUseStaticFallback()) {
     return getStaticProductBySlug(slug) ?? null;
@@ -128,19 +123,28 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   }
 
   try {
-    const { getAdminDb } = await import("@/lib/firebase/admin");
-    const snapshot = await getAdminDb()
-      .collection(PRODUCTS_COLLECTION)
-      .where("slug", "==", slug)
-      .where("status", "==", "active")
-      .limit(1)
-      .get();
-    return snapshot.docs[0] ? parseProduct(snapshot.docs[0].id, snapshot.docs[0].data()) : null;
+    return await readCachedActiveProductBySlug(slug);
   } catch (error) {
     warnProducts(`Active product lookup failed for slug "${slug}"; returning not found.`, error);
     return null;
   }
 }
+
+const readCachedActiveProducts = unstable_cache(
+  () => readActiveProducts(ACTIVE_PRODUCT_READ_LIMIT),
+  ["active-products-v1"],
+  { revalidate: 60, tags: ["products"] },
+);
+
+const readCachedActiveProductBySlug = unstable_cache(
+  async (slug: string) => {
+    const { getAdminDb } = await import("@/lib/firebase/admin");
+    const snapshot = await getAdminDb().collection(PRODUCTS_COLLECTION).where("slug", "==", slug).where("status", "==", "active").limit(1).get();
+    return snapshot.docs[0] ? parseProduct(snapshot.docs[0].id, snapshot.docs[0].data()) : null;
+  },
+  ["active-product-by-slug-v1"],
+  { revalidate: 60, tags: ["products"] },
+);
 
 async function readActiveProducts(limit: number): Promise<Product[]> {
   const { getAdminDb } = await import("@/lib/firebase/admin");

@@ -4,6 +4,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getWinnerSubmissionIds, isEligibleRunClubSubmission, isValidMonthKey, RUN_CLUB_DRAW_VERSION, serializePublicWinner } from "@/lib/run-club/draw";
+import { RUN_CLUB_MAX_APPROVED } from "@/lib/run-club/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,7 +28,7 @@ export async function POST(request: Request, context: { params: Promise<{ monthK
       if (!existingWinnerIds.length || monthData.drawStatus !== "drawn") throw new Error("MONTH_NOT_DRAWN");
       if (existingWinnerIds.length >= 3) throw new Error("MAX_WINNERS_SAVED");
 
-      const eligibleSnapshot = await transaction.get(db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved"));
+      const eligibleSnapshot = await transaction.get(db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").limit(RUN_CLUB_MAX_APPROVED + 1));
       const existingSet = new Set(existingWinnerIds);
       const candidates = eligibleSnapshot.docs.filter((doc) => isEligibleRunClubSubmission(doc.data()) && !existingSet.has(doc.id));
       if (!candidates.length) throw new Error("NO_ADDITIONAL_CANDIDATES");

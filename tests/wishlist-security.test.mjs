@@ -102,7 +102,8 @@ test("Redis failure fails closed and 429 includes Retry-After without limiter me
 test("Admin Wishlist passes opaque document IDs through list and remove", () => {
   assert.match(adminRoute, /id: doc\.id/);
   assert.match(adminRoute, /doc\(parsed\.data\.id\)\.delete/);
-  assert.doesNotMatch(adminRoute, /base64|decode/);
+  assert.doesNotMatch(adminRoute, /atob|email.*Buffer|Buffer.*email/);
+  assert.match(adminRoute, /startAfter\(new Date\(cursor\.createdAt\), cursor\.id\)/);
 });
 
 test("migration preserves fields, deletes only after replacement, and is idempotent", () => {

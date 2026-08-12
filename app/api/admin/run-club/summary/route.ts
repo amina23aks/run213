@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").count().get(),
     db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "rejected").count().get(),
     db.collection("runClubMonths").doc(monthKey).get(),
-    db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").get(),
+    db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").limit(RUN_CLUB_MAX_APPROVED + 1).get(),
   ]);
   const monthData = monthDoc.exists ? monthDoc.data() ?? {} : {};
   const storedApprovedCount = Number(monthDoc.get("approvedCount") ?? approved.data().count ?? 0);
