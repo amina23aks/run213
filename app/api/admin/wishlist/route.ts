@@ -11,21 +11,25 @@ export async function GET(request: Request) {
 
   if (!adminVerification.ok) return adminVerification.response;
   const url = new URL(request.url);
-  const search = (url.searchParams.get("search") ?? "").trim().toLowerCase();
-  const offset = Math.max(0, Number.parseInt(url.searchParams.get("offset") ?? "0", 10) || 0);
+  const cursor = parseCursor(url.searchParams.get("cursor"));
   const collection = getAdminDb().collection("wishlistSignups");
-  const [count, snapshot] = await Promise.all([
-    collection.count().get(),
-    collection.orderBy("createdAt", "desc").orderBy(FieldPath.documentId(), "desc").limit(250).get(),
-  ]);
-  const subscribers = snapshot.docs.map((doc) => ({
+  let query = collection.orderBy("createdAt", "desc").orderBy(FieldPath.documentId(), "desc").limit(PAGE_SIZE + 1);
+  if (cursor) query = query.startAfter(new Date(cursor.createdAt), cursor.id);
+  const [count, snapshot] = await Promise.all([collection.count().get(), query.get()]);
+  const docs = snapshot.docs.slice(0, PAGE_SIZE);
+  const subscribers = docs.map((doc) => ({
     id: doc.id,
     email: String(doc.get("email") ?? ""),
     joinedAt: doc.get("createdAt")?.toDate?.().toISOString?.() ?? null,
     status: typeof doc.get("status") === "string" ? doc.get("status") : null,
-  })).filter((item) => !search || item.email.includes(search));
-  return Response.json({ total: count.data().count, subscribers: subscribers.slice(offset, offset + PAGE_SIZE), nextOffset: offset + PAGE_SIZE < subscribers.length ? offset + PAGE_SIZE : null });
+  }));
+  const last = docs.at(-1), lastDate = last?.get("createdAt")?.toDate?.();
+  return Response.json({ total: count.data().count, subscribers, nextCursor: snapshot.docs.length > PAGE_SIZE && last && lastDate instanceof Date ? encodeCursor({ createdAt: lastDate.toISOString(), id: last.id }) : null });
 }
+
+type WishlistCursor = { createdAt: string; id: string };
+function encodeCursor(cursor: WishlistCursor) { return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url"); }
+function parseCursor(value: string | null): WishlistCursor | null { try { if (!value) return null; const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<WishlistCursor>; return typeof parsed.createdAt === "string" && Number.isFinite(Date.parse(parsed.createdAt)) && typeof parsed.id === "string" && parsed.id ? { createdAt: parsed.createdAt, id: parsed.id } : null; } catch { return null; } }
 
 const deleteSchema = z.object({ id: z.string().min(1).max(400) });
 export async function DELETE(request: Request) {

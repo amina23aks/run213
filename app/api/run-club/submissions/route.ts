@@ -60,12 +60,12 @@ export async function POST(request: NextRequest) {
   const db = getAdminDb();
   const ref = db.collection("runClubSubmissions").doc(submissionId);
   const uidLockRef = db.collection("runClubSubmissionKeys").doc(`${monthKey}_uid_${uidMonthHash}`);
-  const ownedSubmissionsQuery = db.collection("runClubSubmissions").where("customerUserId", "==", customerUserId);
+  const ownedSubmissionsQuery = db.collection("runClubSubmissions").where("customerUserId", "==", customerUserId).where("monthKey", "==", monthKey).limit(1);
 
   try {
     await db.runTransaction(async (transaction) => {
       const [existing, uidLock, ownedSubmissions] = await Promise.all([transaction.get(ref), transaction.get(uidLockRef), transaction.get(ownedSubmissionsQuery)]);
-      if (existing.exists || uidLock.exists || ownedSubmissions.docs.some((doc) => doc.get("monthKey") === monthKey)) throw new Error("DUPLICATE_UID_MONTH");
+      if (existing.exists || uidLock.exists || !ownedSubmissions.empty) throw new Error("DUPLICATE_UID_MONTH");
       transaction.create(ref, {
         id: submissionId, monthKey, status: "pending", name: parsed.data.name, contactType, contactValue: parsed.data.contact.trim(), normalizedContact, uidMonthHash, normalizedInstagram,
         instagram: parsed.data.instagram, wilaya: parsed.data.wilaya, caption: parsed.data.caption, publicName: parsed.data.name, publicCaption: parsed.data.caption, publicWilaya: parsed.data.wilaya,

@@ -51,7 +51,9 @@ test("Admin aggregate reads tolerate malformed documents and log server failures
   assert.match(route, /skipped malformed aggregate/);
   assert.match(route, /\[admin-favorites\] request failed/);
   assert.match(route, /Favorites insights are temporarily unavailable\./);
-  assert.doesNotMatch(route, /AggregateField|orderBy\("count"/);
+  assert.match(route, /AggregateField\.sum\("count"\)/);
+  assert.match(route, /orderBy\("count", "desc"\)/);
+  assert.match(route, /limit\(PAGE_SIZE \+ 1\)/);
 });
 
 test("Admin favorite rows use canonical Look hero images and neutral missing-image UI", async () => {

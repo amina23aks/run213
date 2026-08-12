@@ -52,7 +52,7 @@ export async function checkMonthlyUidSubmission(monthKey: string, uid: string) {
   const db = getAdminDb();
   const uidMonthHash = createUidMonthHash(monthKey, uid);
   const lockRef = db.collection("runClubSubmissionKeys").doc(`${monthKey}_uid_${uidMonthHash}`);
-  const legacyQuery = db.collection("runClubSubmissions").where("customerUserId", "==", uid);
+  const legacyQuery = db.collection("runClubSubmissions").where("customerUserId", "==", uid).where("monthKey", "==", monthKey).limit(1);
   const [lock, ownedSubmissions] = await Promise.all([lockRef.get(), legacyQuery.get()]);
-  return lock.exists || ownedSubmissions.docs.some((doc) => doc.get("monthKey") === monthKey);
+  return lock.exists || !ownedSubmissions.empty;
 }

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getWinnerSubmissionIds, isEligibleRunClubSubmission, isValidMonthKey, normalizeWinnerCount, RUN_CLUB_DRAW_VERSION, selectSecureWinnerIndexes, serializePublicWinner } from "@/lib/run-club/draw";
+import { RUN_CLUB_MAX_APPROVED } from "@/lib/run-club/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,7 +25,7 @@ export async function POST(request: Request, context: { params: Promise<{ monthK
   const db = getAdminDb();
   try {
     const requestedWinnerCount = parsed.data?.winnerCount ?? 1;
-    const eligibleQuery = db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved");
+    const eligibleQuery = db.collection("runClubSubmissions").where("monthKey", "==", monthKey).where("status", "==", "approved").limit(RUN_CLUB_MAX_APPROVED + 1);
     const result = await db.runTransaction(async (transaction) => {
       const monthRef = db.collection("runClubMonths").doc(monthKey);
       const monthSnap = await transaction.get(monthRef);

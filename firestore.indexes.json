@@ -9,6 +9,15 @@
       ]
     },
     {
+      "collectionGroup": "favoriteAggregates",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "count", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "lookCollections",
       "queryScope": "COLLECTION",
       "fields": [
@@ -102,6 +111,14 @@
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
+      ]
+    },
+    {
+      "collectionGroup": "runClubSubmissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "customerUserId", "order": "ASCENDING" },
+        { "fieldPath": "monthKey", "order": "ASCENDING" }
       ]
     },
     {

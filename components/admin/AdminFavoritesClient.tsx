@@ -7,7 +7,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 
 type Kind = "all" | "product" | "look";
 type Item = { id: string; itemId: string; type: "product" | "look"; count: number; name: string; slug: string | null; status: string; imageUrl: string | null };
-type Payload = { summary: { productSaves: number; lookSaves: number; totalSaves: number; mostSavedItem: string | null }; items: Item[]; nextOffset: number | null };
+type Payload = { summary: { productSaves: number; lookSaves: number; totalSaves: number; mostSavedItem: string | null }; items: Item[]; nextCursor: string | null };
 
 export function AdminFavoritesClient() {
   return <AdminShell title="Favorites" eyebrow="MERCHANDISING" description="Aggregate saves only. Customer identities stay private." compactHeader><AdminFavoritesWorkspace /></AdminShell>;
@@ -21,13 +21,13 @@ function AdminFavoritesWorkspace() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (offset = 0, append = false) => {
+  const load = useCallback(async (cursor: string | null = null, append = false) => {
     setLoading(true); setError("");
     try {
       const token = await getToken();
-      const params = new URLSearchParams({ offset: String(offset) });
+      const params = new URLSearchParams();
+      if (cursor) params.set("cursor", cursor);
       if (kind !== "all") params.set("type", kind);
-      if (query) params.set("search", query);
       let response = await fetch(`/api/admin/favorites?${params}`, { cache: "no-store", headers: { Authorization: `Bearer ${token}` } });
       if (response.status === 401) {
         const freshToken = await getToken(true);
@@ -35,10 +35,10 @@ function AdminFavoritesWorkspace() {
       }
       if (!response.ok) throw new Error(`Favorites insights could not be loaded (${response.status}).`);
       const next = await response.json() as Payload;
-      setData((current) => append && current ? { ...next, items: [...current.items, ...next.items] } : next);
+      setData((current) => append && current ? { ...next, summary: current.summary, items: [...current.items, ...next.items] } : next);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Favorites insights could not be loaded."); }
     finally { setLoading(false); }
-  }, [kind, query]);
+  }, [kind]);
 
   useEffect(() => { const task = queueMicrotask(() => void load()); return () => void task; }, [load]);
   return (
@@ -60,12 +60,12 @@ function AdminFavoritesWorkspace() {
             </form>
             <button className="adminInsightsMore" disabled={loading} onClick={() => void load()} type="button">{loading ? "REFRESHING…" : "REFRESH"}</button>
           </div>
-          {error ? <ErrorState message={error} retry={() => void load()} /> : loading && !data ? <p className="adminInsightState">Loading aggregate saves…</p> : !data?.items.length ? <p className="adminInsightState">No saved items match this view.</p> : (
+          {error ? <ErrorState message={error} retry={() => void load()} /> : loading && !data ? <p className="adminInsightState">Loading aggregate saves…</p> : !data?.items.filter((item) => !query || item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).length ? <p className="adminInsightState">No loaded items match this view.</p> : (
             <div className="adminInsightRows">
-              {data.items.map((item) => <FavoriteRow item={item} key={item.id} />)}
+              {data.items.filter((item) => !query || item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((item) => <FavoriteRow item={item} key={item.id} />)}
             </div>
           )}
-          {data?.nextOffset !== null && data?.nextOffset !== undefined ? <button className="adminInsightsMore" disabled={loading} onClick={() => void load(data.nextOffset ?? 0, true)} type="button">{loading ? "LOADING…" : "LOAD MORE"}</button> : null}
+          {data?.nextCursor ? <button className="adminInsightsMore" disabled={loading} onClick={() => void load(data.nextCursor, true)} type="button">{loading ? "LOADING…" : "LOAD MORE"}</button> : null}
         </section>
     </>
   );
