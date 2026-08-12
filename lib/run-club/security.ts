@@ -18,12 +18,8 @@ export function getAlgiersMonthKey(date = new Date()) {
   return `${parts.find((part) => part.type === "year")?.value}-${parts.find((part) => part.type === "month")?.value}`;
 }
 
-export function createSubmitterHash(monthKey: string, normalizedContact: string) {
-  return sha256(`${monthKey}:${normalizedContact}`);
-}
-
-export function createIdentityHash(monthKey: string, type: "contact" | "instagram", normalizedValue: string) {
-  return sha256(`${monthKey}:${type}:${normalizedValue}`);
+export function createUidMonthHash(monthKey: string, uid: string) {
+  return sha256(`${monthKey}:uid:${uid}`);
 }
 
 export function getClientIp(request: Request) {
@@ -47,12 +43,16 @@ export async function checkRunClubRateLimit(request: Request, limit = 5) {
   });
 }
 
-export async function checkMonthlyDuplicateLocks(monthKey: string, normalizedContact: string, normalizedInstagram: string | null) {
+/**
+ * Cheap pre-upload check. The deterministic UID lock is canonical; the query
+ * also protects accounts that submitted before UID locks were introduced.
+ * Rejected records intentionally count so moderation history is never replaced.
+ */
+export async function checkMonthlyUidSubmission(monthKey: string, uid: string) {
   const db = getAdminDb();
-  const contactHash = createIdentityHash(monthKey, "contact", normalizedContact);
-  const instagramHash = normalizedInstagram ? createIdentityHash(monthKey, "instagram", normalizedInstagram) : null;
-  const contactRef = db.collection("runClubSubmissionKeys").doc(`${monthKey}_contact_${contactHash}`);
-  const instagramRef = instagramHash ? db.collection("runClubSubmissionKeys").doc(`${monthKey}_instagram_${instagramHash}`) : null;
-  const [contact, instagram] = await Promise.all([contactRef.get(), instagramRef?.get() ?? Promise.resolve(null)]);
-  return { duplicateContact: contact.exists, duplicateInstagram: Boolean(instagram?.exists) };
+  const uidMonthHash = createUidMonthHash(monthKey, uid);
+  const lockRef = db.collection("runClubSubmissionKeys").doc(`${monthKey}_uid_${uidMonthHash}`);
+  const legacyQuery = db.collection("runClubSubmissions").where("customerUserId", "==", uid);
+  const [lock, ownedSubmissions] = await Promise.all([lockRef.get(), legacyQuery.get()]);
+  return lock.exists || ownedSubmissions.docs.some((doc) => doc.get("monthKey") === monthKey);
 }

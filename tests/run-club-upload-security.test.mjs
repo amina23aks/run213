@@ -41,12 +41,11 @@ test("Redis namespaces are environment isolated and identifiers are SHA-256 scop
   assert.equal(keys.some((key) => key.includes(uid) || key.includes(ip)), false);
 });
 
-test("monthly contact and Instagram locks are checked before signature and Cloudinary cost", () => {
-  const duplicate = uploadRoute.indexOf("checkMonthlyDuplicateLocks");
+test("monthly verified UID lock is checked before signature and Cloudinary cost", () => {
+  const duplicate = uploadRoute.indexOf("checkMonthlyUidSubmission");
   const signature = uploadRoute.indexOf("signCloudinaryParams(params");
   assert.ok(duplicate !== -1 && duplicate < signature);
-  assert.match(uploadRoute, /duplicate\.duplicateContact/);
-  assert.match(uploadRoute, /duplicate\.duplicateInstagram/);
+  assert.match(uploadRoute, /checkMonthlyUidSubmission\(monthKey, customer\.uid\)/);
 });
 
 test("grant has 15 minute TTL, binding fields, and atomic GETDEL consumption", () => {
@@ -72,7 +71,7 @@ test("submission auth, schema, honeypot, and duplicate pre-check precede quota",
   const auth = submissionRoute.indexOf("requireCustomerRequest(request)");
   const schema = submissionRoute.indexOf("runClubSubmissionSchema.safeParse(body)");
   const trap = submissionRoute.indexOf("parsed.data.website");
-  const duplicate = submissionRoute.indexOf("await checkMonthlyDuplicateLocks");
+  const duplicate = submissionRoute.indexOf("await checkMonthlyUidSubmission");
   const quota = submissionRoute.indexOf("await checkRunClubRateLimit(request)");
   assert.ok(auth < schema && schema < trap && trap < duplicate && duplicate < quota);
 });
@@ -96,6 +95,6 @@ test("public serializer privacy remains closed", () => {
 
 test("authoritative duplicate transaction remains the final gate", () => {
   assert.match(submissionRoute, /db\.runTransaction/);
-  assert.match(submissionRoute, /existing\.exists \|\| contactLock\.exists/);
-  assert.match(submissionRoute, /instagramLock\?\.exists/);
+  assert.match(submissionRoute, /existing\.exists \|\| uidLock\.exists/);
+  assert.match(submissionRoute, /transaction\.create\(uidLockRef/);
 });

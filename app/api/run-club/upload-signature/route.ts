@@ -1,10 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createRunClubPublicId, getCloudinaryEnv, signCloudinaryParams } from "@/lib/run-club/cloudinary";
-import { checkMonthlyDuplicateLocks, getAlgiersMonthKey, getClientIp, safeApiError } from "@/lib/run-club/security";
-import { isValidContact, normalizeContact, RUN_CLUB_ALLOWED_MIME_TYPES, RUN_CLUB_MAX_IMAGE_BYTES } from "@/lib/run-club/validation";
+import { checkMonthlyUidSubmission, getAlgiersMonthKey, getClientIp, safeApiError } from "@/lib/run-club/security";
+import { isValidContact, RUN_CLUB_ALLOWED_MIME_TYPES, RUN_CLUB_MAX_IMAGE_BYTES } from "@/lib/run-club/validation";
 import { CustomerAuthError, requireCustomerRequest } from "@/lib/customer-auth";
-import { normalizeInstagram } from "@/lib/run-club/instagram";
 import { checkRunClubUploadLimits, createRunClubUploadGrant } from "@/lib/run-club/protection";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +21,8 @@ export async function POST(request: NextRequest) {
   if (parsed.data.website) return safeApiError("validation_failed", "Check the form fields and try again.", 400);
 
   const monthKey = getAlgiersMonthKey();
-  const normalizedContact = normalizeContact(parsed.data.contact);
-  const normalizedInstagram = normalizeInstagram(parsed.data.instagram);
   try {
-    const duplicate = await checkMonthlyDuplicateLocks(monthKey, normalizedContact, normalizedInstagram);
-    if (duplicate.duplicateContact) return safeApiError("duplicate_submission", "You already submitted a run for this month.", 409);
-    if (duplicate.duplicateInstagram) return safeApiError("duplicate_submission", "This Instagram account has already been used for a submission this month.", 409);
+    if (await checkMonthlyUidSubmission(monthKey, customer.uid)) return safeApiError("duplicate_submission", "You already submitted for this month.", 409);
   } catch { return safeApiError("firestore_failed", "Submission is temporarily unavailable. Try again later.", 503); }
 
   let uploadLimit;
