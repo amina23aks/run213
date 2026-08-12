@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [mutationRoute, resolveRoute, limiterSource, aggregateSource, storageSource, adminRoute] = await Promise.all([
+const [mutationRoute, resolveRoute, limiterSource, aggregateSource, storageSource, adminRoute, firestoreRules] = await Promise.all([
   readFile("app/api/favorites/route.ts", "utf8"),
   readFile("app/api/favorites/resolve/route.ts", "utf8"),
   readFile("lib/favorites/rateLimit.ts", "utf8"),
   readFile("lib/favorites/aggregate.ts", "utf8"),
   readFile("context/favorites-storage.ts", "utf8"),
   readFile("app/api/admin/favorites/route.ts", "utf8"),
+  readFile("firestore.rules", "utf8"),
 ]);
 
 function transition(state, favorite) {
@@ -103,4 +104,18 @@ test("guest local storage and aggregate-only Admin architecture remain unchanged
   assert.match(storageSource, /localStorage/);
   assert.doesNotMatch(adminRoute, /customerEmail|customerUid|userFavorites/);
   assert.match(adminRoute, /favoriteAggregates/);
+});
+
+test("browser favorites are owner-readable but all mutations stay on the transactional API", () => {
+  for (const collection of ["productFavorites", "lookFavorites"]) {
+    const start = firestoreRules.indexOf(`match /users/{userId}/${collection}/`);
+    assert.notEqual(start, -1);
+    const block = firestoreRules.slice(start, firestoreRules.indexOf("\n    }", start) + 6);
+    assert.match(block, /allow read: if request\.auth != null && request\.auth\.uid == userId;/);
+    assert.match(block, /allow create, update, delete: if false;/);
+    assert.doesNotMatch(block, /allow (?:create|delete): if request\.auth/);
+  }
+  assert.match(mutationRoute, /transaction\.create\(favoriteRef/);
+  assert.match(mutationRoute, /transaction\.delete\(favoriteRef\)/);
+  assert.match(mutationRoute, /applyFavoriteAggregate/);
 });

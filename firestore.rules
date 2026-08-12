@@ -22,23 +22,17 @@ service cloud.firestore {
 
 
     match /users/{userId}/productFavorites/{productId} {
-      allow read, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null
-        && request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(["itemId", "createdAt"])
-        && request.resource.data.itemId == productId
-        && request.resource.data.createdAt == request.time;
-      allow update: if false;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Mutations go through /api/favorites so target validation and the
+      // favoriteAggregates update remain part of one Admin SDK transaction.
+      allow create, update, delete: if false;
     }
 
     match /users/{userId}/lookFavorites/{lookId} {
-      allow read, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null
-        && request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(["itemId", "createdAt"])
-        && request.resource.data.itemId == lookId
-        && request.resource.data.createdAt == request.time;
-      allow update: if false;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Mutations go through /api/favorites so target validation and the
+      // favoriteAggregates update remain part of one Admin SDK transaction.
+      allow create, update, delete: if false;
     }
 
     match /runClubSubmissions/{submissionId} {
