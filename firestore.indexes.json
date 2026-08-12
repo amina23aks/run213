@@ -18,6 +18,15 @@
       ]
     },
     {
+      "collectionGroup": "favoriteAggregates",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "count", "order": "ASCENDING" },
+        { "fieldPath": "__name__", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "lookCollections",
       "queryScope": "COLLECTION",
       "fields": [
