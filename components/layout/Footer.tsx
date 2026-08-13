@@ -12,7 +12,6 @@ export function Footer() {
           <Image src="/brand/logo-213-light.png" alt="213 RUN" width={104} height={52} />
           <p>BUILT.<br />NOT FOUND.</p>
         </div>
-        <small>© 2026 213 RUN. All rights reserved.</small>
       </div>
       <div className="site-footer__columns">
         {footerColumns.map((column) => (
@@ -23,7 +22,7 @@ export function Footer() {
         ))}
         <FooterClubForm />
       </div>
-      <div className="site-footer__legal"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a></div>
+      <div className="site-footer__legal"><div><a href="/privacy">Privacy Policy</a><span aria-hidden="true">·</span><a href="/terms">Terms of Service</a></div><small>© 2026 213 RUN. All rights reserved.</small></div>
     </footer>
   );
 }
