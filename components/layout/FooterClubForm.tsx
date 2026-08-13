@@ -29,7 +29,7 @@ export function FooterClubForm() {
         <input name="email" type="email" placeholder="Enter your email" required maxLength={254} />
         <button type="submit" aria-label="Join the club" disabled={state === "saving"}>→</button>
       </label>
-      <small aria-live="polite">{state === "done" ? "You’re on the list." : state === "error" ? "Could not join. Try again." : "Privacy Policy · Terms of Service"}</small>
+      <small aria-live="polite">{state === "done" ? "You’re on the list." : state === "error" ? "Could not join. Try again." : "No noise. Just new drops."}</small>
     </form>
   );
 }

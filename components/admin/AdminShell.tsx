@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { memo, startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const adminNavItems = [
   { label: "Overview", href: "/admin" },
@@ -28,6 +28,7 @@ type AdminShellProps = {
 export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, children, compactHeader = false }: AdminShellProps) {
   const pathname = usePathname();
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   const activeLabel = useMemo(() => {
     return adminNavItems.find((item) => isActiveAdminPath(pathname, item.href))?.label ?? "Admin";
@@ -40,6 +41,23 @@ export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, chil
   const closeNav = useCallback(() => {
     startTransition(() => setIsNavOpen(false));
   }, []);
+
+  useEffect(() => {
+    if (!isNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeNav();
+        toggleRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [closeNav, isNavOpen]);
 
   return (
     <main className="adminShell">
@@ -55,12 +73,16 @@ export function AdminShell({ title, eyebrow = "213 RUN ADMIN", description, chil
             type="button"
             aria-expanded={isNavOpen}
             aria-controls="admin-navigation"
+            aria-label={isNavOpen ? "Close admin navigation" : "Open admin navigation"}
             onClick={() => setIsNavOpen((current) => !current)}
+            ref={toggleRef}
           >
             <span>{isNavOpen ? "Close" : "Menu"}</span>
             <strong aria-hidden="true">{isNavOpen ? "×" : "☰"}</strong>
           </button>
         </div>
+
+        {isNavOpen ? <button className="adminSidebar__backdrop" type="button" aria-label="Close admin navigation" onClick={closeNav} /> : null}
 
         <div className="adminSidebar__summary">
           <p>Control center</p>

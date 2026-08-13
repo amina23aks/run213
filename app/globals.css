@@ -50,6 +50,12 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .site-header__icons button:hover, .site-header__favorites:hover { background: rgba(255, 250, 240, 0.62); transform: translateY(-1px); }
 .site-header__icons svg { width: 1.2rem; height: 1.2rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
 .site-header__cart span, .site-header__favorites span { position: absolute; right: -0.15rem; top: -0.22rem; display: grid; min-width: 1rem; height: 1rem; place-items: center; border-radius: 999px; background: var(--lime); color: #050505; font-size: 0.6rem; font-weight: 950; padding: 0 0.2rem; }
+.site-header__menu { flex: 0 0 auto; }
+.mobile-nav { position: fixed; inset: 0; z-index: 29; display: none; padding-top: 4.25rem; }
+.mobile-nav__backdrop { position: absolute; inset: 0; width: 100%; border: 0; border-radius: 0; background: rgba(5, 5, 5, 0.56); cursor: default; }
+.mobile-nav__panel { position: relative; display: grid; max-height: calc(100svh - 4.25rem); overflow: hidden; border-top: 1px solid rgba(7, 7, 6, 0.1); background: rgba(247, 242, 232, 0.98); padding: 0.75rem 1rem 1rem; box-shadow: 0 1.4rem 3rem rgba(5, 5, 5, 0.2); }
+.mobile-nav__panel a { display: flex; min-height: 3.25rem; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(7, 7, 6, 0.1); font-size: 0.82rem; font-weight: 950; }
+.mobile-nav__panel a[aria-current="page"] { color: #586d00; }
 
 .hero { position: relative; min-height: min(34.5rem, 84svh); overflow: hidden; background: var(--surface); isolation: isolate; }
 .hero__video { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 68% center; }
@@ -158,6 +164,8 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .site-footer__brand-lockup p { margin: 0; color: var(--foreground); font-size: 0.68rem; font-weight: 950; letter-spacing: -0.035em; line-height: 0.98; }
 .site-footer__identity small, .site-footer__club small { color: rgba(7, 7, 6, 0.78); font-size: 0.68rem; line-height: 1.45; }
 .site-footer__columns { display: grid; gap: 0.85rem; }
+.site-footer__legal { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.site-footer__legal a { font-size: 0.68rem; font-weight: 750; }
 .site-footer nav, .site-footer__club { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
 .site-footer h3 { margin: 0 0 0.42rem; color: var(--foreground); font-size: 0.72rem; font-weight: 950; letter-spacing: -0.005em; line-height: 1; text-transform: uppercase; }
 .site-footer a, .site-footer__club p { margin: 0; color: rgba(7, 7, 6, 0.78); font-size: 0.74rem; font-weight: 650; line-height: 1.42; }
@@ -172,6 +180,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 
 @media (min-width: 760px) {
   .site-header__nav { display: flex; }
+  .site-header__menu { display: none !important; }
   .hero { min-height: 31.5rem; }
   .home-section { grid-template-columns: minmax(11.25rem, 13.75rem) minmax(0, 1fr); align-items: start; column-gap: clamp(1.5rem, 2.4vw, 2.25rem); row-gap: clamp(1rem, 2vw, 1.5rem); }
   .product-row { grid-template-columns: repeat(5, minmax(11.25rem, 13.75rem)); grid-auto-flow: initial; grid-auto-columns: initial; gap: clamp(1.125rem, 1.55vw, 1.5rem); justify-content: start; overflow-x: auto; }
@@ -187,6 +196,23 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .run-club__phrases { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .site-footer { grid-template-columns: minmax(10.2rem, 0.48fr) minmax(0, 2.05fr); align-items: start; }
   .site-footer__columns { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(0.66rem, 1.2vw, 1.25rem); }
+  .site-footer__legal { grid-column: 2; }
+}
+
+@media (max-width: 759px) {
+  .site-header { grid-template-columns: auto minmax(0, 1fr); gap: 0.5rem; padding-inline: clamp(0.75rem, 3vw, 1rem); }
+  .site-header__icons { min-width: 0; }
+  .mobile-nav { display: block; }
+  .club-footer-shell { background-position: 58% center; }
+  .club-footer-shell::before { background: linear-gradient(rgba(247, 242, 232, 0.84), rgba(247, 242, 232, 0.8)); }
+  .site-footer { gap: 1rem; padding-block: 1.15rem; }
+  .site-footer__identity { grid-template-columns: minmax(0, 1fr) auto; column-gap: 1rem; }
+  .site-footer__identity .footer-philosophy { grid-column: 1 / -1; }
+  .site-footer__identity small { align-self: center; text-align: right; }
+  .site-footer__columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.15rem clamp(1rem, 7vw, 2.5rem); }
+  .site-footer__club { grid-column: 1 / -1; }
+  .site-footer__club label { width: 100%; max-width: none; }
+  .site-footer__legal { justify-content: flex-start; }
 }
 
 @media (max-width: 480px) {
@@ -194,6 +220,12 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .button { width: 100%; }
   .hero__actions { width: 100%; }
   .site-header__icons { gap: 0.35rem; }
+}
+
+@media (max-width: 350px) {
+  .site-header__logo img { width: 4.15rem; }
+  .site-header__icons { gap: 0.12rem; }
+  .site-header__icons button, .site-header__favorites, .accountMenu__trigger { width: 1.85rem; min-width: 1.85rem; height: 1.85rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1273,6 +1305,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   min-height: 2.4rem;
   padding: 0 0.8rem;
 }
+.adminSidebar__backdrop { display: none; }
 
 .adminSidebar__toggle span {
   font-size: 0.72rem;
@@ -1485,8 +1518,14 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
     min-height: auto;
     padding: 1rem;
     position: sticky;
+    top: 0;
     z-index: 40;
   }
+
+  .adminSidebar__topline,
+  .adminSidebar__nav.isOpen { position: relative; z-index: 2; }
+
+  .adminSidebar__backdrop { position: fixed; inset: 0; z-index: 1; display: block; border: 0; border-radius: 0; background: rgba(5, 5, 5, 0.58); cursor: default; }
 
   .adminSidebar__toggle {
     display: inline-flex;
@@ -1505,12 +1544,19 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .adminSidebar__nav.isOpen {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: calc(100svh - 5.5rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .adminMain__header {
     align-items: start;
     flex-direction: column;
   }
+
+  .adminMain { min-width: 0; overflow: hidden; }
+  .adminMain__content { max-width: 100%; overflow-x: auto; }
 
   .adminMain--compactHeader .adminMain__header { gap: .45rem; padding: 1.5rem; }
   .adminMain--compactHeader .adminMain__header span { margin-left: 0; text-align: left; }
