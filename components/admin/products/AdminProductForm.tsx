@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import type { FormEvent } from "react";
 import type { ProductCategory } from "@/types/product";
 import { AdminProductField, AdminProductSection } from "@/components/admin/products/AdminProductFields";
@@ -127,7 +128,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
         <UploadButton label="Upload product image" busy={uploadingImage} disabled={!cloudinaryConfigured} onUpload={onUploadImage} />
         <AdminProductImagePreview images={draft.images} colors={draft.colors} onRemove={onRemoveImage} onUpdate={onUpdateImage} onSetPrimary={onSetPrimaryImage} onMove={onMoveImage} />
         <ToggleCard label="Enable size guide" checked={draft.sizeGuideEnabled} onChange={(checked) => onChange("sizeGuideEnabled", checked)} />
-        {draft.sizeGuideEnabled ? <><UploadButton label="Upload size guide" busy={uploadingSizeGuide} disabled={!cloudinaryConfigured} onUpload={onUploadSizeGuide} />{draft.sizeGuideImageUrl ? <figure className="adminSizeGuideThumb"><Image src={draft.sizeGuideImageUrl} alt="Size guide preview" width={120} height={120} unoptimized /><button type="button" onClick={() => { onChange("sizeGuideImageUrl", ""); onChange("sizeGuideImagePublicId", ""); }}>Remove</button></figure> : null}</> : null}
+        {draft.sizeGuideEnabled ? <><UploadButton label="Upload size guide" busy={uploadingSizeGuide} disabled={!cloudinaryConfigured} onUpload={onUploadSizeGuide} />{draft.sizeGuideImageUrl ? <figure className="adminSizeGuideThumb"><Image src={cloudinaryImageUrl(draft.sizeGuideImageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt="Size guide preview" width={120} height={120} unoptimized /><button type="button" onClick={() => { onChange("sizeGuideImageUrl", ""); onChange("sizeGuideImagePublicId", ""); }}>Remove</button></figure> : null}</> : null}
       </AdminProductSection>
 
       <AdminProductSection eyebrow="06" title="Colors and placement">

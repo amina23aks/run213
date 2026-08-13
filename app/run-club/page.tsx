@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import { CommunityGrid } from "@/components/community/CommunityGrid";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -66,7 +67,7 @@ export default async function RunClubPage() {
         <section className="runClubMonthlySummary" aria-labelledby="monthly-status-title">
           <h2 id="monthly-status-title">{runClubMonthStatus.monthLabel.toUpperCase()}</h2>
           <div><strong>{cappedCount} / 26 APPROVED</strong><strong>{remaining} SPOTS REMAIN</strong><strong>{statusLabel}</strong></div>
-          <div className="runClubWinnerPanel"><span className="runClubWinnerBadge">MONTHLY WINNER</span>{monthlyWinners.length ? <div className="runClubWinnerList">{monthlyWinners.map((winner) => <article className="runClubWinnerCard" key={winner.submissionId}><Image src={winner.proofImage.secureUrl} alt={`Monthly winner proof from ${winner.publicName}`} width={160} height={120} /><div><strong>{winner.placement ? `WINNER ${winner.placement}` : "WINNER"}</strong><h3>{winner.publicName}</h3><p>{[winner.publicWilaya, runClubMonthStatus.monthLabel].filter(Boolean).join(" · ")}</p>{winner.publicCaption ? <small>{winner.publicCaption}</small> : null}</div></article>)}</div> : <p>This month’s winner will be announced after the draw.</p>}</div>
+          <div className="runClubWinnerPanel"><span className="runClubWinnerBadge">MONTHLY WINNER</span>{monthlyWinners.length ? <div className="runClubWinnerList">{monthlyWinners.map((winner) => <article className="runClubWinnerCard" key={winner.submissionId}><Image src={cloudinaryImageUrl(winner.proofImage.secureUrl, { width: CLOUDINARY_IMAGE_WIDTHS.communityFeed })} alt={`Monthly winner proof from ${winner.publicName}`} width={160} height={120} sizes="160px" unoptimized /><div><strong>{winner.placement ? `WINNER ${winner.placement}` : "WINNER"}</strong><h3>{winner.publicName}</h3><p>{[winner.publicWilaya, runClubMonthStatus.monthLabel].filter(Boolean).join(" · ")}</p>{winner.publicCaption ? <small>{winner.publicCaption}</small> : null}</div></article>)}</div> : <p>This month’s winner will be announced after the draw.</p>}</div>
         </section>
       </main>
       <div className="club-footer-shell"><Footer /></div>

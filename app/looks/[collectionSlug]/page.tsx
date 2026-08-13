@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
@@ -27,7 +28,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
         <header className="lookCollectionHero">
           <Image
             className="lookCollectionHero__image"
-            src={collection.cardImage.url}
+            src={cloudinaryImageUrl(collection.cardImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookDetail })}
             alt={collection.cardImage.alt || collection.name}
             fill
             sizes="100vw"
@@ -46,7 +47,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
             return (
               <article className="lookEditorialModule" key={look.id}>
                 <Link className="lookEditorialImage" href={getLookHref(look)} aria-label={`View ${look.name}`}>
-                  <Image src={look.heroImage.url} alt={look.heroImage.alt} fill sizes="(max-width: 900px) 100vw, 52vw" unoptimized />
+                  <Image src={cloudinaryImageUrl(look.heroImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookDetail })} alt={look.heroImage.alt} fill sizes="(max-width: 900px) 100vw, 52vw" unoptimized />
                 </Link>
                 <div className="lookEditorialContent">
                   <h2>{look.name}</h2>
@@ -55,7 +56,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                   <div className="lookMiniProducts">
                     {activeProducts.slice(0, 4).map((product) => {
                       const image = product.images[0];
-                      return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={image.url} alt={image.alt || product.name} width={150} height={130} unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "No color"}</span><small>{product.sizes.length ? product.sizes.map((size) => size.label).join(" · ") : "One size"}</small><em>{formatDzd(product.priceDzd)}</em></Link>;
+                      return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={cloudinaryImageUrl(image.url, { width: CLOUDINARY_IMAGE_WIDTHS.productThumbnail })} alt={image.alt || product.name} width={150} height={130} sizes="150px" unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "No color"}</span><small>{product.sizes.length ? product.sizes.map((size) => size.label).join(" · ") : "One size"}</small><em>{formatDzd(product.priceDzd)}</em></Link>;
                     })}
                   </div>
                   <Link className="lookViewButton" href={getLookHref(look)}>VIEW LOOK <span>→</span></Link>

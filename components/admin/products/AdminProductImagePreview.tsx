@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import type { ProductDraftColor, ProductDraftImage } from "@/components/admin/products/types";
 
 type AdminProductImagePreviewProps = {
@@ -27,7 +28,7 @@ export function AdminProductImagePreview({ images, colors, onRemove, onUpdate, o
       {sortedImages.map((image, index) => (
         <figure className="adminProductImageCard" key={image.id}>
           <div>
-            <Image src={image.url} alt={`Product preview ${index + 1}`} width={140} height={140} unoptimized />
+            <Image src={cloudinaryImageUrl(image.url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={`Product preview ${index + 1}`} width={140} height={140} sizes="140px" unoptimized />
             <button type="button" onClick={() => onRemove(image.id)} aria-label={`Remove image ${index + 1}`}>×</button>
           </div>
           <figcaption>{image.isPrimary ? "Primary" : `Image ${index + 1}`}</figcaption>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getLookPromoState } from "@/components/look/LookPriceDisplay";
@@ -155,7 +156,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
                 >
                   <span className="figure-card__title">{displayTitle}</span>
                   {promo.isValidPromo ? <span className="figure-card__promo">PROMO <b>-{promo.discountPercent}%</b></span> : null}
-                  <Image src={(figure.figureImage ?? figure.heroImage).url} alt={(figure.figureImage ?? figure.heroImage).alt || displayTitle} width={260} height={360} onLoad={updateScrollState} unoptimized />
+                  <Image src={cloudinaryImageUrl((figure.figureImage ?? figure.heroImage).url, { width: CLOUDINARY_IMAGE_WIDTHS.lookCard })} alt={(figure.figureImage ?? figure.heroImage).alt || displayTitle} width={260} height={360} sizes="(max-width: 700px) 42vw, 260px" onLoad={updateScrollState} unoptimized />
                 </Link>
               );
             })}
@@ -167,7 +168,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
       <div className="shopLookCards">
         {COLLECTION_SLOTS.map((slot, index) => {
           const collection = collections[index] ?? collections.find((item) => item.slug === slot.slug) ?? null;
-          const content = (<>{collection ? <Image src={collection.cardImage.url} alt={collection.cardImage.alt} fill sizes="(max-width: 900px) 80vw, 25vw" unoptimized /> : <div className="look-card__placeholder" />}<span>{slot.number}</span><div><h3>{collection?.name ?? slot.name}</h3><p>{collection?.subtitle || slot.subtitle}</p></div><small className="look-card__arrow" aria-hidden="true">→</small></>);
+          const content = (<>{collection ? <Image src={cloudinaryImageUrl(collection.cardImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookCard })} alt={collection.cardImage.alt} fill sizes="(max-width: 900px) 80vw, 25vw" unoptimized /> : <div className="look-card__placeholder" />}<span>{slot.number}</span><div><h3>{collection?.name ?? slot.name}</h3><p>{collection?.subtitle || slot.subtitle}</p></div><small className="look-card__arrow" aria-hidden="true">→</small></>);
           return collection ? <Link className="look-card" href={`/looks/${collection.slug}`} key={slot.slug}>{content}</Link> : <article className="look-card look-card--disabled" key={slot.slug}>{content}</article>;
         })}
       </div>
