@@ -23,6 +23,7 @@ export function Footer() {
         ))}
         <FooterClubForm />
       </div>
+      <div className="site-footer__legal"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a></div>
     </footer>
   );
 }

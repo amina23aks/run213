@@ -19,7 +19,7 @@ export function Hero() {
         <h1 id="hero-title">BUILT.<br />NOT FOUND.</h1>
         <p>Running lifestyle for the ones who show up.</p>
         <div className="hero__actions">
-          <a className="button button--lime" href="#drop-001">SHOP DROP_001 <span>→</span></a>
+          <a className="button button--lime" href="/shop">SHOP NOW <span>→</span></a>
           <a className="button button--ghost" href="#shop-the-look">EXPLORE LOOKS <span>→</span></a>
         </div>
       </div>

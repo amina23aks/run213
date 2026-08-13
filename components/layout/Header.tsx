@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCart } from "@/context/cart";
@@ -43,8 +44,32 @@ function IconMenu() {
 
 export function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { itemCount, isHydrated } = useCart();
   const { totalFavoriteCount, isHydrated: favoritesHydrated } = useFavorites();
+
+  useEffect(() => {
+    startTransition(() => setIsMenuOpen(false));
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isMenuOpen]);
 
   return (
     <>
@@ -54,16 +79,36 @@ export function Header() {
       </Link>
       <nav className="site-header__nav" aria-label="Primary navigation">
         {navItems.map((item) => (
-          <Link key={item.label} href={item.href}>{item.label}</Link>
+          <Link aria-current={pathname === item.href ? "page" : undefined} key={item.label} href={item.href}>{item.label}</Link>
         ))}
       </nav>
       <div className="site-header__icons" aria-label="Header actions">
         <Link className="site-header__favorites" href="/favorites" aria-label="Favorites"><IconHeart />{favoritesHydrated && totalFavoriteCount > 0 ? <span>{totalFavoriteCount}</span> : null}</Link>
         <AccountMenu />
         <button className="site-header__cart" type="button" aria-label="Open cart" onClick={() => setIsCartOpen(true)}><IconCart />{isHydrated && itemCount > 0 ? <span>{itemCount}</span> : null}</button>
-        <button type="button" aria-label="Menu"><IconMenu /></button>
+        <button
+          className="site-header__menu"
+          type="button"
+          aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setIsMenuOpen((open) => !open)}
+          ref={menuButtonRef}
+        ><IconMenu /></button>
       </div>
     </header>
+    {isMenuOpen ? (
+      <div className="mobile-nav" id="mobile-navigation">
+        <button className="mobile-nav__backdrop" type="button" aria-label="Close navigation menu" onClick={() => setIsMenuOpen(false)} />
+        <nav className="mobile-nav__panel" aria-label="Mobile navigation">
+          {navItems.map((item) => (
+            <Link aria-current={pathname === item.href ? "page" : undefined} key={item.label} href={item.href} onClick={() => setIsMenuOpen(false)}>
+              <span>{item.label}</span><span aria-hidden="true">→</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+    ) : null}
     <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
