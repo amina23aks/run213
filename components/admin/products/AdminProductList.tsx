@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { FallbackImage } from "@/components/ui/FallbackImage";
 import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import type { Product } from "@/types/product";
 
@@ -43,7 +43,7 @@ function AdminProductListItem({ product, onArchive, onRestore, onEdit }: { produ
   return (
     <article className="adminProductItem">
       <div className="adminProductItem__media">
-        {imageUrl ? <Image src={cloudinaryImageUrl(imageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={product.images[0]?.alt || product.name} width={96} height={112} sizes="96px" unoptimized /> : <span>No image</span>}
+        {imageUrl ? <FallbackImage fallbackSrc="/placeholders/product-placeholder.webp" src={cloudinaryImageUrl(imageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={product.images[0]?.alt || product.name} width={96} height={112} sizes="96px" unoptimized /> : <span>No image</span>}
       </div>
 
       <div className="adminProductItem__main">
