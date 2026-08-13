@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { Product } from "@/types/product";
 import { StockBadge } from "@/components/product/StockBadge";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 
 type ProductGalleryProps = {
   product: Product;
@@ -22,12 +23,12 @@ export function ProductGallery({ product, selectedColorId }: ProductGalleryProps
     <section className="productGallery" aria-label={`${product.name} gallery`}>
       <div className="productGallery__main">
         <StockBadge product={product} />
-        <Image key={activeImage.id} src={activeImage.url} alt={activeImage.alt || `${product.name} main product image`} width={900} height={1080} priority />
+        <Image key={activeImage.id} src={cloudinaryImageUrl(activeImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.productDetail })} alt={activeImage.alt || `${product.name} main product image`} width={900} height={1080} sizes="(max-width: 899px) 100vw, 55vw" priority unoptimized />
       </div>
       <div className="productGallery__thumbs" aria-label="Product thumbnails">
         {images.map((image, index) => (
           <button className={image.id === activeImage.id ? "is-active" : undefined} type="button" key={image.id} aria-label={`View ${product.name} image ${index + 1}`} onClick={() => setManualSelection({ imageId: image.id, colorId: selectedColorId })}>
-            <Image src={image.url} alt={image.alt || `${product.name} thumbnail ${index + 1}`} width={180} height={216} />
+            <Image src={cloudinaryImageUrl(image.url, { width: CLOUDINARY_IMAGE_WIDTHS.productThumbnail })} alt={image.alt || `${product.name} thumbnail ${index + 1}`} width={180} height={216} sizes="90px" unoptimized />
           </button>
         ))}
       </div>

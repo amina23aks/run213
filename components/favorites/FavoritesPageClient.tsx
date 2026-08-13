@@ -11,6 +11,7 @@ import { useFavorites } from "@/context/favorites";
 import type { ProductCardView } from "@/types/product";
 import type { LookImage } from "@/types/look";
 import { StockBadge } from "@/components/product/StockBadge";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 
 type ResolvedProductFavorite = {
   id: string;
@@ -199,7 +200,7 @@ function FavoriteProductCard({ product }: { product: ResolvedProductFavorite }) 
   return (
     <FavoriteSavedCardShell
       className="favoriteCompactCard--product"
-      media={<Link href={href} aria-label={`View product ${product.card.name}`}><Image src={product.card.image} alt={product.sourceProduct.images[0]?.alt || `${product.card.name} product image`} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
+      media={<Link href={href} aria-label={`View product ${product.card.name}`}><Image src={cloudinaryImageUrl(product.card.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} alt={product.sourceProduct.images[0]?.alt || `${product.card.name} product image`} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
       mediaOverlay={<StockBadge product={{ status: "active", stockMode: product.sourceProduct.availability === "in_stock" ? "unlimited" : "limited", stockQty: product.sourceProduct.availability === "in_stock" ? null : 0 }} />}
       favoriteButton={<FavoriteButton itemType="product" itemId={product.id} itemName={product.card.name} variant="card" className="favoriteCompactCard__favorite" />}
       title={<Link href={href}>{product.card.name}</Link>}
@@ -226,7 +227,7 @@ function FavoriteLookCard({ look }: { look: ResolvedLookFavorite }) {
   return (
     <FavoriteSavedCardShell
       className="favoriteCompactCard--look"
-      media={<Link href={look.href} aria-label={`View look ${look.name}`}><Image src={look.image.url} alt={look.image.alt || look.name} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
+      media={<Link href={look.href} aria-label={`View look ${look.name}`}><Image src={cloudinaryImageUrl(look.image.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookCard })} alt={look.image.alt || look.name} fill sizes="(max-width: 329px) 100vw, (max-width: 899px) 50vw, (max-width: 1279px) 33vw, 25vw" unoptimized /></Link>}
       favoriteButton={<FavoriteButton itemType="look" itemId={look.id} itemName={look.name} variant="card" className="favoriteCompactCard__favorite" />}
       meta={look.productCount ? `${look.productCount} PRODUCT${look.productCount === 1 ? "" : "S"}` : undefined}
       title={<Link href={look.href}>{look.name}</Link>}

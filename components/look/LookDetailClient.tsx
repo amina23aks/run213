@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
@@ -109,7 +110,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   return (
     <section className="lookDetailSection">
       <div className="lookDetailHero">
-        <Image src={look.heroImage.url} alt={look.heroImage.alt} width={860} height={980} priority unoptimized />
+        <Image src={cloudinaryImageUrl(look.heroImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookDetail })} alt={look.heroImage.alt} width={860} height={980} sizes="(max-width: 899px) 100vw, 55vw" priority unoptimized />
       </div>
       <div className="lookDetailPanel">
         <h1>{look.name}</h1>
@@ -122,7 +123,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
             const isInvalid = invalidIds.has(productId);
             return (
               <article ref={(node) => { itemRefs.current[productId] = node; }} className={unavailable || !state.enabled ? "lookItem is-muted" : isInvalid ? "lookItem is-invalid" : "lookItem"} key={productId}>
-                {product ? <Image src={product.images[0]?.url ?? "/placeholders/product-placeholder.webp"} alt={product.images[0]?.alt || product.name} width={100} height={100} unoptimized /> : <div className="lookMissingProduct">Unavailable</div>}
+                {product ? <Image src={cloudinaryImageUrl(product.images[0]?.url ?? "/placeholders/product-placeholder.webp", { width: CLOUDINARY_IMAGE_WIDTHS.productThumbnail })} alt={product.images[0]?.alt || product.name} width={100} height={100} sizes="100px" unoptimized /> : <div className="lookMissingProduct">Unavailable</div>}
                 <div>
                   <div className="lookItemHeader">
                     <div>{product ? <Link href={`/product/${product.slug}`}>{product.name}</Link> : <strong>Unavailable product</strong>}{product ? <span>Included in Look</span> : null}</div>

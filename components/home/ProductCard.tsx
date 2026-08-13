@@ -8,6 +8,7 @@ import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
 import { isProductInStock } from "@/lib/products/availability";
 import { StockBadge } from "@/components/product/StockBadge";
+import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 
 type ProductCardItem = {
   name: string;
@@ -84,9 +85,9 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
         {sourceProduct ? <StockBadge product={sourceProduct} /> : null}
         {sourceProduct ? (
           <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
-            <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />
+            <Image src={cloudinaryImageUrl(product.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} alt={`${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />
           </Link>
-        ) : <Image src={product.image} alt={`${product.name} product image`} width={420} height={520} />}
+        ) : <Image src={cloudinaryImageUrl(product.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} alt={`${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />}
         {sourceProduct ? <FavoriteButton className="productCard__favorite" itemType="product" itemId={sourceProduct.id} itemName={product.name} variant="card" /> : null}
       </div>
 
