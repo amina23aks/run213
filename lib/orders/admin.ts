@@ -3,6 +3,7 @@ import "server-only";
 import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import type { VerifiedAdmin } from "@/lib/admin-auth";
+import { DEFAULT_RETURN_COST_DZD } from "@/lib/orders/returns";
 import type { OrderRecord, OrderStatus } from "@/types/order";
 
 const ORDERS_COLLECTION = "orders";
@@ -52,9 +53,10 @@ export async function getAdminOrder(orderId: string): Promise<AdminOrderDetail |
   return snapshot.exists ? toAdminOrderDetail(snapshot.id, snapshot.data() ?? {}) : null;
 }
 
-export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderStatus, admin: VerifiedAdmin, note?: string | null, returnCostDzd?: number): Promise<AdminOrderDetail> {
+export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderStatus, admin: VerifiedAdmin, note?: string | null): Promise<AdminOrderDetail> {
   const db = getAdminDb();
   const orderRef = db.collection(ORDERS_COLLECTION).doc(orderId);
+  const returnEventRef = orderRef.collection("returnEvents").doc();
   await db.runTransaction(async (transaction) => {
     const orderSnapshot = await transaction.get(orderRef);
     if (!orderSnapshot.exists) throw new AdminOrderError("not_found", "Order not found.", 404);
@@ -67,7 +69,7 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
       status: nextStatus,
       updatedAt: new Date().toISOString(),
       updatedAtTimestamp: FieldValue.serverTimestamp(),
-      statusHistory: FieldValue.arrayUnion({ previousStatus: currentStatus, status: nextStatus, at: new Date().toISOString(), actor: "admin", adminUid: admin.uid, adminEmail: admin.email, note: correctionNote(currentStatus, nextStatus, note), ...(nextStatus === "returned" ? { returnCostDzd } : {}) }),
+      statusHistory: FieldValue.arrayUnion({ previousStatus: currentStatus, status: nextStatus, at: new Date().toISOString(), actor: "admin", adminUid: admin.uid, adminEmail: admin.email, note: correctionNote(currentStatus, nextStatus, note), ...(nextStatus === "returned" ? { returnCostDzd: DEFAULT_RETURN_COST_DZD } : {}) }),
     };
 
     if (currentStatus === "cancelled" && nextStatus === "pending") {
@@ -106,7 +108,6 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
 
 
     if (nextStatus === "returned" && (currentStatus === "shipped" || currentStatus === "delivered")) {
-      if (typeof returnCostDzd !== "number" || !Number.isInteger(returnCostDzd) || returnCostDzd < 0 || returnCostDzd > 1_000_000) throw new AdminOrderError("invalid_return_cost", "Return cost must be a whole DZD amount between 0 and 1,000,000.", 400);
       if (!isRestored(data.inventoryRestoredAt) && !isRestored(data.inventoryRestoredAtIso)) {
         await restoreLimitedStock(transaction, data);
         updates.inventoryRestoredAt = FieldValue.serverTimestamp();
@@ -114,11 +115,12 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
         updates.inventoryRestoredBy = admin.email;
         updates.inventoryRestorationReason = `returned_from_${currentStatus}`;
       }
-      updates.returnCostDzd = returnCostDzd;
+      updates.returnCostDzd = DEFAULT_RETURN_COST_DZD;
       updates.returnCostRecordedAt = FieldValue.serverTimestamp();
       updates.returnCostRecordedAtIso = new Date().toISOString();
       updates.returnedAtTimestamp = FieldValue.serverTimestamp();
       updates.returnedAt = new Date().toISOString();
+      transaction.set(returnEventRef, { orderId, returnCostDzd: DEFAULT_RETURN_COST_DZD, occurredAt: new Date().toISOString(), occurredAtTimestamp: FieldValue.serverTimestamp(), previousStatus: currentStatus, actor: "admin", adminUid: admin.uid, adminEmail: admin.email });
     }
 
     transaction.update(orderRef, updates);

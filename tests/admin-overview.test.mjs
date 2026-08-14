@@ -97,7 +97,8 @@ test("KPI cards use SVG library icons, subtle tints, and no emoji decoration", (
 
 test("KPI hierarchy and operational links match real Admin destinations", () => {
   const primary = client.slice(client.indexOf("const primaryCards"), client.indexOf("const operationalCards"));
-  for (const key of ["orders", "merchandiseValueDzd", "estimatedGrossProfitDzd", "costOfGoodsSoldDzd", "pendingOrders", "deliveredOrders", "cancelledOrders", "returnedOrders"]) assert.match(primary, new RegExp(`key: "${key}"`));
+  for (const key of ["orders", "merchandiseValueDzd", "estimatedGrossProfitDzd", "costOfGoodsSoldDzd", "estimatedContributionDzd"]) assert.match(primary, new RegExp(`key: "${key}"`));
+  for (const key of ["pendingOrders", "deliveredOrders", "cancelledOrders", "returnedOrders"]) assert.match(client.slice(client.indexOf("const operationalCards"), client.indexOf("const secondaryCards")), new RegExp(`key: "${key}"`));
   assert.doesNotMatch(primary, /shippingCollected|lowStock|runClubPending/);
   assert.match(client, /key: "lowStock", label: "LOW STOCK", href: "\/admin\/products"/);
   assert.match(client, /key: "runClubPending", label: "RUN CLUB PENDING", href: "\/admin\/run-club"/);
@@ -121,7 +122,25 @@ test("independent partial failures preserve unrelated dashboard sections", () =>
   assert.doesNotMatch(service, /console\.error[^\n]*(?:token|customer|credential|service-account)/i);
 });
 
-test("return costs remain separate from delivered gross-profit accounting", () => {
-  assert.doesNotMatch(service, /returnCostDzd/);
+test("return costs use bounded authoritative return-event timestamps, not order creation dates", () => {
+  const returns = service.slice(service.indexOf("async function loadBoundedReturnCosts"), service.indexOf("async function loadBoundedDeliveredBreakdown"));
+  assert.match(returns, /collectionGroup\("returnEvents"\)/);
+  assert.match(returns, /where\("occurredAtTimestamp", ">=", start\)/);
+  assert.match(returns, /where\("occurredAtTimestamp", "<", end\)/);
+  assert.match(returns, /limit\(OVERVIEW_ORDER_READ_LIMIT \+ 1\)/);
+  assert.match(returns, /select\("returnCostDzd"\)/);
+  assert.doesNotMatch(returns, /createdAtTimestamp|collection\("orders"\)|products/);
+  assert.ok(indexes.fieldOverrides.some((entry) => entry.collectionGroup === "returnEvents" && entry.fieldPath === "occurredAtTimestamp" && entry.indexes.some((index) => index.order === "DESCENDING" && index.queryScope === "COLLECTION_GROUP")));
+});
+
+test("return costs stay separate and estimated contribution subtracts only those costs", () => {
+  assert.match(service, /estimatedGrossProfitDzd - returnFinancials\[0\]\.value/);
+  assert.match(client, /Gross profit less return costs · not net profit/);
+  assert.match(client, /excludes other operating expenses/);
   assert.doesNotMatch(service, /shippingDzd|totals\.totalDzd/);
+});
+
+test("legacy returns without event snapshots contribute no invented fee", () => {
+  assert.doesNotMatch(service, /returnedOrders.*300|status.*returned.*returnCost/);
+  assert.match(service, /doc\.get\("returnCostDzd"\)/);
 });

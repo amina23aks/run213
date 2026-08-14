@@ -5,7 +5,7 @@ import { algiersDayKey, algiersDayKeys, getOverviewDateWindow, type OverviewRang
 
 export const OVERVIEW_ORDER_READ_LIMIT = 500;
 export type ComparedMetric = { value: number; previous: number; percentage: number | null; direction: "up" | "down" | "neutral" };
-export type OverviewMetricKey = "orders" | "merchandiseValueDzd" | "estimatedGrossProfitDzd" | "costOfGoodsSoldDzd" | "pendingOrders" | "deliveredOrders" | "cancelledOrders" | "returnedOrders" | "lowStock" | "outOfStock" | "runClubPending" | "totalFavorites" | "wishlistSignups";
+export type OverviewMetricKey = "orders" | "merchandiseValueDzd" | "estimatedGrossProfitDzd" | "costOfGoodsSoldDzd" | "returnCostsDzd" | "estimatedContributionDzd" | "pendingOrders" | "deliveredOrders" | "cancelledOrders" | "returnedOrders" | "lowStock" | "outOfStock" | "runClubPending" | "totalFavorites" | "wishlistSignups";
 export type OverviewPayload = {
   range: OverviewRangeKey;
   window: { start: string; end: string; previousStart: string; previousEnd: string };
@@ -15,6 +15,7 @@ export type OverviewPayload = {
   financialCoverage: { currentMissingCostOrders: number; previousMissingCostOrders: number } | null;
   unavailable: Array<OverviewMetricKey | "series" | "categories" | "financials">;
   chartTruncated: boolean;
+  returnEventsTruncated: boolean;
   generatedAt: string;
 };
 
@@ -39,39 +40,48 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
     ["totalFavorites", db.collection("favoriteAggregates").aggregate({ value: AggregateField.sum("count") }).get()], ["wishlistSignups", db.collection("wishlistSignups").count().get()],
     ["currentBreakdown", loadBoundedDeliveredBreakdown(current, window.start, window.end)],
     ["previousBreakdown", loadBoundedDeliveredBreakdown(previous, window.previousStart, window.previousEnd)],
+    ["returnCosts", Promise.all([loadBoundedReturnCosts(db, window.start, window.end), loadBoundedReturnCosts(db, window.previousStart, window.previousEnd)])],
   ] as const;
   const settled = await Promise.allSettled(jobs.map(([, promise]) => promise));
   const metrics: OverviewPayload["metrics"] = {}, unavailable: OverviewPayload["unavailable"] = [];
-  let currentBreakdown: Breakdown | null = null, previousBreakdown: Breakdown | null = null;
+  let currentBreakdown: Breakdown | null = null, previousBreakdown: Breakdown | null = null, returnCosts: [ReturnCostBreakdown, ReturnCostBreakdown] | null = null;
   settled.forEach((result, index) => {
     const key = jobs[index][0];
     if (result.status === "rejected") {
       console.error("[admin-overview] metric unavailable", { metric: key, code: firestoreErrorCode(result.reason) });
       if (key === "currentBreakdown") unavailable.push("financials", "series", "categories");
+      else if (key === "returnCosts") unavailable.push("returnCostsDzd", "estimatedContributionDzd");
       else unavailable.push(key === "previousBreakdown" ? "financials" : key);
       return;
     }
     if (key === "currentBreakdown") currentBreakdown = result.value as Breakdown;
     else if (key === "previousBreakdown") previousBreakdown = result.value as Breakdown;
+    else if (key === "returnCosts") returnCosts = result.value as [ReturnCostBreakdown, ReturnCostBreakdown];
     else if (key === "orders" || key === "pendingOrders" || key === "deliveredOrders" || key === "cancelledOrders" || key === "returnedOrders") {
       const pair = result.value as unknown[]; metrics[key] = compareMetric(countValue(pair[0]), countValue(pair[1]));
     } else metrics[key] = key === "totalFavorites" ? sumValue(result.value) : countValue(result.value);
   });
   const currentFinancials = currentBreakdown as Breakdown | null, previousFinancials = previousBreakdown as Breakdown | null;
+  const returnFinancials = returnCosts as [ReturnCostBreakdown, ReturnCostBreakdown] | null;
+  if (returnFinancials) metrics.returnCostsDzd = compareMetric(returnFinancials[0].value, returnFinancials[1].value);
   if (currentFinancials && previousFinancials) {
     metrics.merchandiseValueDzd = compareMetric(currentFinancials.merchandiseValueDzd, previousFinancials.merchandiseValueDzd);
     metrics.costOfGoodsSoldDzd = compareMetric(currentFinancials.costOfGoodsSoldDzd, previousFinancials.costOfGoodsSoldDzd);
     metrics.estimatedGrossProfitDzd = compareMetric(currentFinancials.estimatedGrossProfitDzd, previousFinancials.estimatedGrossProfitDzd);
+    if (returnFinancials) {
+      metrics.estimatedContributionDzd = compareMetric(currentFinancials.estimatedGrossProfitDzd - returnFinancials[0].value, previousFinancials.estimatedGrossProfitDzd - returnFinancials[1].value);
+    }
   } else for (const key of ["merchandiseValueDzd", "costOfGoodsSoldDzd", "estimatedGrossProfitDzd"] as const) unavailable.push(key);
   return {
     range, window: Object.fromEntries(Object.entries(window).map(([key, value]) => [key, value.toISOString()])) as OverviewPayload["window"], metrics,
     series: currentFinancials?.series ?? [], categories: currentFinancials?.categories ?? [],
     financialCoverage: currentFinancials && previousFinancials ? { currentMissingCostOrders: currentFinancials.missingCostOrders, previousMissingCostOrders: previousFinancials.missingCostOrders } : null,
-    unavailable, chartTruncated: Boolean(currentFinancials?.truncated || previousFinancials?.truncated), generatedAt: now.toISOString(),
+    unavailable, chartTruncated: Boolean(currentFinancials?.truncated || previousFinancials?.truncated), returnEventsTruncated: Boolean(returnFinancials?.[0].truncated || returnFinancials?.[1].truncated), generatedAt: now.toISOString(),
   };
 }
 
 type Breakdown = Awaited<ReturnType<typeof loadBoundedDeliveredBreakdown>>;
+type ReturnCostBreakdown = Awaited<ReturnType<typeof loadBoundedReturnCosts>>;
 function rangeQuery(orders: FirebaseFirestore.CollectionReference, start: Date, end: Date) { return orders.where("createdAtTimestamp", ">=", start).where("createdAtTimestamp", "<", end); }
 function statusRangeCount(query: Query, status: string) { return query.where("status", "==", status).orderBy("createdAtTimestamp", "desc").count().get(); }
 function countValue(value: unknown) { return Number((value as { data(): { count?: number } }).data().count ?? 0); }
@@ -80,6 +90,15 @@ function firestoreErrorCode(error: unknown) {
   if (!error || typeof error !== "object" || !("code" in error)) return "unknown";
   const code = (error as { code?: unknown }).code;
   return typeof code === "string" || typeof code === "number" ? String(code) : "unknown";
+}
+
+async function loadBoundedReturnCosts(db: FirebaseFirestore.Firestore, start: Date, end: Date) {
+  const snapshot = await db.collectionGroup("returnEvents").where("occurredAtTimestamp", ">=", start).where("occurredAtTimestamp", "<", end).orderBy("occurredAtTimestamp", "desc").limit(OVERVIEW_ORDER_READ_LIMIT + 1).select("returnCostDzd").get();
+  const value = snapshot.docs.slice(0, OVERVIEW_ORDER_READ_LIMIT).reduce((sum, doc) => {
+    const cost = doc.get("returnCostDzd");
+    return sum + (typeof cost === "number" && Number.isFinite(cost) && cost >= 0 ? cost : 0);
+  }, 0);
+  return { value, truncated: snapshot.size > OVERVIEW_ORDER_READ_LIMIT };
 }
 
 async function loadBoundedDeliveredBreakdown(query: Query, start: Date, end: Date) {
