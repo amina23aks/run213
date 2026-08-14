@@ -120,3 +120,8 @@ test("independent partial failures preserve unrelated dashboard sections", () =>
   assert.match(service, /firestoreErrorCode\(result\.reason\)/);
   assert.doesNotMatch(service, /console\.error[^\n]*(?:token|customer|credential|service-account)/i);
 });
+
+test("return costs remain separate from delivered gross-profit accounting", () => {
+  assert.doesNotMatch(service, /returnCostDzd/);
+  assert.doesNotMatch(service, /shippingDzd|totals\.totalDzd/);
+});
