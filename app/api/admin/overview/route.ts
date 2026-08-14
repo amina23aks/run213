@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (!adminVerification.ok) return adminVerification.response;
   try {
     const requested = new URL(request.url).searchParams.get("range");
-    const range: OverviewRangeKey = requested === "today" || requested === "7d" || requested === "30d" || requested === "month" ? requested : "7d";
+    const range: OverviewRangeKey = requested === "today" || requested === "7d" || requested === "month" ? requested : "7d";
     return Response.json(await getAdminOverview(range), { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[admin-overview] request failed", error instanceof Error ? { name: error.name } : { name: "UnknownError" });

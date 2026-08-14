@@ -16,17 +16,18 @@ test("overview remains private and requires canonical Admin authorization", () =
 
 test("date ranges are Algeria calendar windows with matching previous windows", () => {
   assert.match(time, /Africa\/Algiers/);
-  assert.match(time, /today: 0, "7d": 6, "30d": 29/);
+  assert.match(time, /today: 0, "7d": 6/);
   assert.match(time, /previousStart: new Date\(start\.getTime\(\) - duration\)/);
   assert.match(time, /previousEnd: start/);
-  for (const range of ["today", "7d", "30d", "month"]) assert.match(client, new RegExp(`\\["${range}"`));
+  for (const range of ["today", "7d", "month"]) assert.match(client, new RegExp(`\\["${range}"`));
+  assert.doesNotMatch(client, /30 days/);
 });
 
 test("merchandise and shipping use separate canonical aggregates and never infer profit", () => {
   assert.match(service, /AggregateField\.sum\("totals\.itemsSubtotalDzd"\)/);
   assert.match(service, /AggregateField\.sum\("totals\.shippingDzd"\)/);
   assert.doesNotMatch(service, /totals\.totalDzd|profit/i);
-  assert.match(client, /Merchandise and shipping are reported separately; no profit is inferred/);
+  assert.match(client, /Merchandise value always excludes delivery fees/);
 });
 
 test("range KPIs compare current and immediately previous aggregates", () => {
@@ -49,11 +50,25 @@ test("time series and categories use one bounded selected-range order query", ()
   assert.doesNotMatch(service, /collection\("orders"\)\.get\(\)/);
   assert.match(client, /Orders per day/);
   assert.match(client, /CATEGORY MIX/);
+  assert.match(service, /label: new Intl\.DateTimeFormat/);
+  assert.match(service, /orders: 0, merchandiseValueDzd: 0/);
+  assert.match(client, /Orders<strong>/);
+  assert.match(client, /Merchandise<strong>/);
+  assert.match(client, /percent.*merchandise value/);
+});
+
+test("primary and secondary cards have deliberate hierarchy and destinations", () => {
+  const primary = client.slice(client.indexOf("const primaryCards"), client.indexOf("const secondaryCards"));
+  for (const key of ["orders", "merchandiseValueDzd", "pendingOrders", "deliveredOrders", "cancelledOrders", "lowStock", "runClubPending"]) assert.match(primary, new RegExp(`key: "${key}"`));
+  for (const key of ["shippingCollectedDzd", "totalFavorites", "wishlistSignups", "outOfStock"]) assert.doesNotMatch(primary, new RegExp(`key: "${key}"`));
+  assert.match(client, /key: "lowStock", label: "LOW STOCK", href: "\/admin\/products"/);
+  assert.match(client, /key: "totalFavorites", label: "TOTAL FAVORITES", href: "\/admin\/favorites"/);
+  assert.match(client, /key: "wishlistSignups", label: "WISHLIST SIGNUPS", href: "\/admin\/wishlist"/);
 });
 
 test("overview supports independent partial failures", () => {
   assert.match(service, /Promise\.allSettled/);
   assert.match(service, /unavailable/);
-  assert.match(client, /Showing the last available values/);
+  assert.match(client, /Available sections remain live/);
   assert.match(client, /temporarily unavailable/i);
 });

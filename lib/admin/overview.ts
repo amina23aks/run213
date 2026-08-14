@@ -1,7 +1,7 @@
 import "server-only";
 import { AggregateField, type Query } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { algiersDayKey, getOverviewDateWindow, type OverviewRangeKey } from "@/lib/time/algiers";
+import { algiersDayKey, algiersDayKeys, getOverviewDateWindow, type OverviewRangeKey } from "@/lib/time/algiers";
 
 export const OVERVIEW_ORDER_READ_LIMIT = 500;
 export type RangeMetricKey = "orders" | "merchandiseValueDzd" | "shippingCollectedDzd" | "pendingOrders" | "deliveredOrders" | "cancelledOrders";
@@ -12,7 +12,7 @@ export type OverviewPayload = {
   range: OverviewRangeKey;
   window: { start: string; end: string; previousStart: string; previousEnd: string };
   metrics: Partial<Record<OverviewMetricKey, ComparedMetric | number>>;
-  series: Array<{ date: string; orders: number; merchandiseValueDzd: number }>;
+  series: Array<{ date: string; label: string; orders: number; merchandiseValueDzd: number }>;
   categories: Array<{ category: string; merchandiseValueDzd: number }>;
   unavailable: Array<OverviewMetricKey | "series" | "categories">;
   chartTruncated: boolean;
@@ -46,7 +46,7 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
     ["runClubPending", db.collection("runClubSubmissions").where("status", "==", "pending").count().get()],
     ["totalFavorites", db.collection("favoriteAggregates").aggregate({ value: AggregateField.sum("count") }).get()],
     ["wishlistSignups", db.collection("wishlistSignups").count().get()],
-    ["series", loadBoundedBreakdown(current)],
+    ["series", loadBoundedBreakdown(current, window.start, window.end)],
   ];
   const settled = await Promise.allSettled(jobs.map(([, promise]) => promise));
   const metrics: OverviewPayload["metrics"] = {};
@@ -83,7 +83,7 @@ function countValue(value: unknown) { return Number((value as { data(): { count?
 function sumValue(value: unknown) { return Number((value as { data(): { value?: number } }).data().value ?? 0); }
 function parseTotals(value: unknown): Totals { const data = (value as { data(): Partial<Totals> }).data(); return { orders: Number(data.orders ?? 0), merchandiseValueDzd: Number(data.merchandiseValueDzd ?? 0), shippingCollectedDzd: Number(data.shippingCollectedDzd ?? 0) }; }
 
-async function loadBoundedBreakdown(query: Query) {
+async function loadBoundedBreakdown(query: Query, start: Date, end: Date) {
   const snapshot = await query.orderBy("createdAtTimestamp", "asc").limit(OVERVIEW_ORDER_READ_LIMIT + 1).select("createdAtTimestamp", "totals.itemsSubtotalDzd", "items").get();
   const daily = new Map<string, { orders: number; merchandiseValueDzd: number }>();
   const categories = new Map<string, number>();
@@ -100,7 +100,7 @@ async function loadBoundedBreakdown(query: Query) {
     }
   }
   return {
-    series: [...daily].map(([date, values]) => ({ date, ...values })),
+    series: algiersDayKeys(start, end).map((date) => ({ date, label: new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Algiers", weekday: "short", day: "numeric" }).format(new Date(`${date}T12:00:00+01:00`)), ...(daily.get(date) ?? { orders: 0, merchandiseValueDzd: 0 }) })),
     categories: [...categories].map(([category, merchandiseValueDzd]) => ({ category, merchandiseValueDzd })).sort((a, b) => b.merchandiseValueDzd - a.merchandiseValueDzd).slice(0, 5),
     truncated: snapshot.size > OVERVIEW_ORDER_READ_LIMIT,
   };
