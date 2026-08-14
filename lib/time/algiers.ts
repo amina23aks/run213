@@ -1,6 +1,6 @@
 export const ALGIERS_TIME_ZONE = "Africa/Algiers";
 
-export type OverviewRangeKey = "today" | "7d" | "month";
+export type OverviewRangeKey = "today" | "7d" | "30d" | "month";
 
 export type DateWindow = {
   start: Date;
@@ -41,7 +41,7 @@ export function getOverviewDateWindow(range: OverviewRangeKey, now = new Date())
   const end = zonedMidnightUtc(year, month - 1, day + 1);
   const start = range === "month"
     ? zonedMidnightUtc(year, month - 1, 1)
-    : zonedMidnightUtc(year, month - 1, day - ({ today: 0, "7d": 6 }[range]));
+    : zonedMidnightUtc(year, month - 1, day - ({ today: 0, "7d": 6, "30d": 29 }[range]));
   const duration = end.getTime() - start.getTime();
   return { start, end, previousStart: new Date(start.getTime() - duration), previousEnd: start };
 }
