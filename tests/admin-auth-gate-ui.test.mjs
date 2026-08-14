@@ -45,10 +45,10 @@ test("authorized child navigation preserves the layout gate without reverifying 
   assert.deepEqual(nestedGates, []);
 });
 
-test("sidebar and internal placeholder navigation use Next client Links", async () => {
+test("sidebar and remaining internal placeholder navigation use Next client Links", async () => {
   assert.match(shell, /import Link from "next\/link"/);
   assert.match(shell, /<Link className=.*adminSidebar__item/);
-  for (const file of ["app/admin/page.tsx", "components/admin/AdminPlaceholderPage.tsx"]) {
+  for (const file of ["components/admin/AdminPlaceholderPage.tsx"]) {
     const source = await readFile(file, "utf8");
     assert.match(source, /import Link from "next\/link"/);
     assert.doesNotMatch(source, /<a[^>]+href="\/admin/);

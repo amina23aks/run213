@@ -1,17 +1,5 @@
-import Link from "next/link";
-import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminOverviewClient } from "@/components/admin/AdminOverviewClient";
 
 export default function AdminPage() {
-  return (
-    <AdminShell title="Overview" description="Admin overview is a placeholder until the products flow is stable.">
-        <section className="adminCard adminPlaceholderCard">
-          <div className="adminCard__heading">
-          <p>SPRINT SCOPE</p>
-          <h2>Products first</h2>
-          <span>Orders, analytics, favorites, wishlist, and settings stay placeholders in this sprint.</span>
-          </div>
-          <Link className="adminPrimary adminPlaceholderCard__link" href="/admin/products">Open products →</Link>
-        </section>
-    </AdminShell>
-  );
+  return <AdminOverviewClient />;
 }
