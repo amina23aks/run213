@@ -28,7 +28,9 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
   const db = getAdminDb(), window = getOverviewDateWindow(range, now), orders = db.collection("orders");
   const products = db.collection("products").where("status", "==", "active").where("stockMode", "==", "limited");
   const current = rangeQuery(orders, window.start, window.end), previous = rangeQuery(orders, window.previousStart, window.previousEnd);
-  const statusPair = (status: string) => Promise.all([current.where("status", "==", status).count().get(), previous.where("status", "==", status).count().get()]);
+  // Explicit descending order matches the deployed status/date Orders index.
+  // Without it, Firestore infers ascending order from the timestamp inequality.
+  const statusPair = (status: string) => Promise.all([statusRangeCount(current, status), statusRangeCount(previous, status)]);
   const jobs = [
     ["orders", Promise.all([current.count().get(), previous.count().get()])],
     ["pendingOrders", statusPair("pending")], ["deliveredOrders", statusPair("delivered")], ["cancelledOrders", statusPair("cancelled")], ["returnedOrders", statusPair("returned")],
@@ -44,6 +46,7 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
   settled.forEach((result, index) => {
     const key = jobs[index][0];
     if (result.status === "rejected") {
+      console.error("[admin-overview] metric unavailable", { metric: key, code: firestoreErrorCode(result.reason) });
       if (key === "currentBreakdown") unavailable.push("financials", "series", "categories");
       else unavailable.push(key === "previousBreakdown" ? "financials" : key);
       return;
@@ -70,8 +73,14 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
 
 type Breakdown = Awaited<ReturnType<typeof loadBoundedDeliveredBreakdown>>;
 function rangeQuery(orders: FirebaseFirestore.CollectionReference, start: Date, end: Date) { return orders.where("createdAtTimestamp", ">=", start).where("createdAtTimestamp", "<", end); }
+function statusRangeCount(query: Query, status: string) { return query.where("status", "==", status).orderBy("createdAtTimestamp", "desc").count().get(); }
 function countValue(value: unknown) { return Number((value as { data(): { count?: number } }).data().count ?? 0); }
 function sumValue(value: unknown) { return Number((value as { data(): { value?: number } }).data().value ?? 0); }
+function firestoreErrorCode(error: unknown) {
+  if (!error || typeof error !== "object" || !("code" in error)) return "unknown";
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" || typeof code === "number" ? String(code) : "unknown";
+}
 
 async function loadBoundedDeliveredBreakdown(query: Query, start: Date, end: Date) {
   const snapshot = await query.orderBy("createdAtTimestamp", "desc").limit(OVERVIEW_ORDER_READ_LIMIT + 1).select("createdAtTimestamp", "status", "totals.itemsSubtotalDzd", "admin.costOfGoodsDzd", "admin.estimatedProfitDzd", "items").get();

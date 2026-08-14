@@ -23,6 +23,24 @@ test("all four Algeria ranges have matching immediately previous windows", () =>
   for (const range of ["today", "7d", "30d", "month"]) assert.match(client, new RegExp(`\\["${range}"`));
 });
 
+test("all status KPIs count selected and previous windows through the deployed descending index shape", () => {
+  assert.match(service, /const current = rangeQuery\(orders, window\.start, window\.end\), previous = rangeQuery\(orders, window\.previousStart, window\.previousEnd\)/);
+  assert.match(service, /statusRangeCount\(current, status\), statusRangeCount\(previous, status\)/);
+  for (const [key, status] of [["pendingOrders", "pending"], ["deliveredOrders", "delivered"], ["cancelledOrders", "cancelled"], ["returnedOrders", "returned"]]) {
+    assert.match(service, new RegExp(`\\["${key}", statusPair\\("${status}"\\)\\]`));
+  }
+  assert.match(service, /where\("status", "==", status\)\.orderBy\("createdAtTimestamp", "desc"\)\.count\(\)\.get\(\)/);
+  assert.ok(indexes.indexes.some((index) => index.collectionGroup === "orders" && index.queryScope === "COLLECTION" && JSON.stringify(index.fields) === JSON.stringify([
+    { fieldPath: "status", order: "ASCENDING" },
+    { fieldPath: "createdAtTimestamp", order: "DESCENDING" },
+    { fieldPath: "__name__", order: "DESCENDING" },
+  ])));
+});
+
+test("general Orders count remains status-agnostic", () => {
+  assert.match(service, /\["orders", Promise\.all\(\[current\.count\(\)\.get\(\), previous\.count\(\)\.get\(\)\]\)\]/);
+});
+
 test("FYS-style delta uses absolute percentage and a neutral zero baseline", () => {
   assert.match(service, /previous === 0.*percentage: null.*direction: "neutral"/);
   assert.match(service, /Math\.round\(Math\.abs\(difference\) \/ previous \* 100\)/);
@@ -98,4 +116,7 @@ test("independent partial failures preserve unrelated dashboard sections", () =>
   assert.match(service, /unavailable/);
   assert.match(client, /Available sections remain live/);
   assert.match(client, /other data is unaffected/i);
+  assert.match(service, /metric unavailable/);
+  assert.match(service, /firestoreErrorCode\(result\.reason\)/);
+  assert.doesNotMatch(service, /console\.error[^\n]*(?:token|customer|credential|service-account)/i);
 });
