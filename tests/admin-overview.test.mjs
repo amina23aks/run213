@@ -8,40 +8,52 @@ const time = readFileSync("lib/time/algiers.ts", "utf8");
 const client = readFileSync("components/admin/AdminOverviewClient.tsx", "utf8");
 const indexes = JSON.parse(readFileSync("firestore.indexes.json", "utf8"));
 
-test("overview requires canonical Admin authorization", () => {
+test("overview remains private and requires canonical Admin authorization", () => {
   assert.match(route, /verifyAdminRequest\(request\)/);
-  assert.ok(route.indexOf("verifyAdminRequest(request)") < route.indexOf("getAdminOverview()"));
+  assert.ok(route.indexOf("verifyAdminRequest(request)") < route.indexOf("getAdminOverview(range)"));
+  assert.match(route, /private, no-store/);
 });
 
-test("order metrics use Algeria half-open day/month boundaries and canonical total", () => {
+test("date ranges are Algeria calendar windows with matching previous windows", () => {
   assert.match(time, /Africa\/Algiers/);
-  for (const boundary of ["dayStart", "nextDayStart", "monthStart", "nextMonthStart"]) assert.match(service, new RegExp(boundary));
-  assert.match(service, /status", "==", "pending"\)\.count\(\)/);
-  assert.match(service, /createdAtTimestamp", ">=", dayStart/);
-  assert.match(service, /createdAtTimestamp", "<", nextDayStart/);
-  assert.match(service, /AggregateField\.sum\("totals\.totalDzd"\)/);
+  assert.match(time, /today: 0, "7d": 6, "30d": 29/);
+  assert.match(time, /previousStart: new Date\(start\.getTime\(\) - duration\)/);
+  assert.match(time, /previousEnd: start/);
+  for (const range of ["today", "7d", "30d", "month"]) assert.match(client, new RegExp(`\\["${range}"`));
 });
 
-test("inventory metrics exclude unlimited and archived products", () => {
+test("merchandise and shipping use separate canonical aggregates and never infer profit", () => {
+  assert.match(service, /AggregateField\.sum\("totals\.itemsSubtotalDzd"\)/);
+  assert.match(service, /AggregateField\.sum\("totals\.shippingDzd"\)/);
+  assert.doesNotMatch(service, /totals\.totalDzd|profit/i);
+  assert.match(client, /Merchandise and shipping are reported separately; no profit is inferred/);
+});
+
+test("range KPIs compare current and immediately previous aggregates", () => {
+  assert.match(service, /compareMetric\(resolvedCurrent\.orders, resolvedPrevious\.orders\)/);
+  assert.match(service, /previous === 0/);
+  for (const status of ["pending", "delivered", "cancelled"]) assert.match(service, new RegExp(`statusCount\\(current, "${status}"\\)`));
+});
+
+test("inventory excludes unlimited, made-to-order, draft and archived products", () => {
   assert.match(service, /where\("status", "==", "active"\)\.where\("stockMode", "==", "limited"\)/);
-  assert.match(service, /where\("stockQty", ">", 0\)\.where\("stockQty", "<", 5\)\.count\(\)/);
-  assert.match(service, /where\("stockQty", "==", 0\)\.count\(\)/);
+  assert.match(service, /where\("stockQty", ">", 0\)\.where\("stockQty", "<", 5\)/);
+  assert.match(service, /where\("stockQty", "==", 0\)/);
   assert.ok(indexes.indexes.some((index) => index.collectionGroup === "products" && index.fields.map((field) => field.fieldPath).join(",") === "status,stockMode,stockQty"));
 });
 
-test("community, favorites and wishlist use aggregations without user favorite scans", () => {
-  assert.match(service, /runClubSubmissions[\s\S]*status", "==", "pending"\)\.count\(\)/);
-  assert.match(service, /favoriteAggregates\.aggregate\(\{ value: AggregateField\.sum\("count"\)/);
-  assert.match(service, /wishlistSignups"\)\.count\(\)/);
-  assert.doesNotMatch(service, /collectionGroup\(["']favorites|users.*favorites/is);
+test("time series and categories use one bounded selected-range order query", () => {
+  assert.match(service, /OVERVIEW_ORDER_READ_LIMIT = 500/);
+  assert.match(service, /limit\(OVERVIEW_ORDER_READ_LIMIT \+ 1\)/);
+  assert.match(service, /select\("createdAtTimestamp", "totals\.itemsSubtotalDzd", "items"\)/);
+  assert.doesNotMatch(service, /collection\("orders"\)\.get\(\)/);
+  assert.match(client, /Orders per day/);
+  assert.match(client, /CATEGORY MIX/);
 });
 
-test("overview stays bounded, supports partial errors, and links to operational pages", () => {
+test("overview supports independent partial failures", () => {
   assert.match(service, /Promise\.allSettled/);
-  assert.doesNotMatch(service, /collection\("(?:orders|products|runClubSubmissions|wishlistSignups)"\)\.get\(\)/);
-  assert.match(service, /limit\(1\)/);
-  for (const href of ["/admin/orders", "/admin/products", "/admin/run-club"]) assert.match(client, new RegExp(`href: "${href}"`));
+  assert.match(service, /unavailable/);
   assert.match(client, /Showing the last available values/);
-  assert.match(client, /TRY AGAIN/);
+  assert.match(client, /temporarily unavailable/i);
 });
-

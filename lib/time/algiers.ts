@@ -1,36 +1,32 @@
-const ALGIERS_TIME_ZONE = "Africa/Algiers";
+export const ALGIERS_TIME_ZONE = "Africa/Algiers";
 
-type AlgeriaBoundaries = {
-  dayStart: Date;
-  nextDayStart: Date;
-  monthStart: Date;
-  nextMonthStart: Date;
+export type OverviewRangeKey = "today" | "7d" | "30d" | "month";
+
+export type DateWindow = {
+  start: Date;
+  end: Date;
+  previousStart: Date;
+  previousEnd: Date;
 };
 
 function partsAt(date: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: ALGIERS_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23",
   }).formatToParts(date);
   const value = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((part) => part.type === type)?.value);
   return { year: value("year"), month: value("month"), day: value("day"), hour: value("hour") };
 }
 
-// Algeria currently uses UTC+01:00 year-round. Deriving the offset through Intl
-// keeps this helper correct if the IANA timezone rules change later.
+// Resolve a local Algeria midnight through Intl rather than hard-coding UTC+01.
 function zonedMidnightUtc(year: number, monthIndex: number, day: number) {
   const calendarDate = new Date(Date.UTC(year, monthIndex, day, 12));
   const normalized = partsAt(calendarDate);
   const localNoonAsUtc = Date.UTC(normalized.year, normalized.month - 1, normalized.day, normalized.hour);
-  const offset = localNoonAsUtc - calendarDate.getTime();
-  return new Date(Date.UTC(year, monthIndex, day) - offset);
+  return new Date(Date.UTC(year, monthIndex, day) - (localNoonAsUtc - calendarDate.getTime()));
 }
 
-export function getAlgeriaCalendarBoundaries(now = new Date()): AlgeriaBoundaries {
+export function getAlgeriaCalendarBoundaries(now = new Date()) {
   const { year, month, day } = partsAt(now);
   return {
     dayStart: zonedMidnightUtc(year, month - 1, day),
@@ -38,4 +34,18 @@ export function getAlgeriaCalendarBoundaries(now = new Date()): AlgeriaBoundarie
     monthStart: zonedMidnightUtc(year, month - 1, 1),
     nextMonthStart: zonedMidnightUtc(year, month, 1),
   };
+}
+
+export function getOverviewDateWindow(range: OverviewRangeKey, now = new Date()): DateWindow {
+  const { year, month, day } = partsAt(now);
+  const end = zonedMidnightUtc(year, month - 1, day + 1);
+  const start = range === "month"
+    ? zonedMidnightUtc(year, month - 1, 1)
+    : zonedMidnightUtc(year, month - 1, day - ({ today: 0, "7d": 6, "30d": 29 }[range]));
+  const duration = end.getTime() - start.getTime();
+  return { start, end, previousStart: new Date(start.getTime() - duration), previousEnd: start };
+}
+
+export function algiersDayKey(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: ALGIERS_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 }
