@@ -1126,24 +1126,96 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 }
 
 /* Compact operational overview */
-.adminOverviewToolbar { align-items: center; color: #5f5f5f; display: flex; font-size: .78rem; justify-content: space-between; margin-bottom: .8rem; }
+.adminOverviewTop { align-items: end; background: transparent !important; border: 0 !important; box-shadow: none !important; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: .8rem; }
+.adminOverviewTop > div:first-child { display: grid; gap: .45rem; }
+.adminOverviewTop p, .adminSectionLabel p { color: #6f7f00; font-size: .66rem; font-weight: 900; letter-spacing: .14em; margin: 0; }
+.adminRangePills, .adminChartSwitch { background: #e9e3d6; border-radius: 999px; display: flex; gap: .2rem; padding: .25rem; }
+.adminRangePills button, .adminChartSwitch button { background: transparent; border: 0; border-radius: 999px; color: #5f5f5f; cursor: pointer; font-size: .68rem; font-weight: 900; padding: .58rem .78rem; white-space: nowrap; }
+.adminRangePills button.isActive, .adminChartSwitch button.isActive { background: #050505; color: #c7f400; }
+.adminOverviewToolbar { align-items: center; color: #5f5f5f; display: flex; font-size: .78rem; gap: .75rem; }
 .adminOverviewToolbar button, .adminOverviewError button { background: #050505; border: 0; border-radius: 999px; color: #f4f4f0; cursor: pointer; font-size: .7rem; font-weight: 900; padding: .65rem .9rem; }
 .adminOverviewToolbar button:disabled { cursor: wait; opacity: .55; }
 .adminOverviewError { align-items: center; background: #fff3d6; border: 1px solid rgba(0,0,0,.1); border-radius: 1rem; display: flex; font-size: .82rem; justify-content: space-between; margin-bottom: .8rem; padding: .7rem .85rem; }
 .adminOverviewGrid { display: grid; gap: .7rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.adminOverviewMetric { background: rgba(251,248,240,.94); border: 1px solid rgba(0,0,0,.1); border-radius: 1.15rem; display: grid; gap: .45rem; min-height: 7.2rem; padding: .9rem; }
-.adminOverviewMetric > span { color: #6f7f00; font-size: .66rem; font-weight: 900; letter-spacing: .1em; }
+.adminOverviewGrid--primary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.adminOverviewGrid--secondary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.adminOverviewGrid--operational { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.adminSectionLabel { align-items: end; display: flex; justify-content: space-between; margin: .15rem 0 .6rem; }
+.adminSectionLabel span { color: #777268; font-size: .7rem; }
+.adminOverviewMetric { --metric-tint: rgba(199,244,0,.10); background: linear-gradient(135deg, var(--metric-tint), rgba(251,248,240,.96) 68%); border: 1px solid rgba(0,0,0,.1); border-radius: 1.15rem; color: #050505; display: grid; gap: .45rem; min-height: 8.2rem; padding: .9rem; text-decoration: none; transition: border-color .2s ease, transform .2s ease; }
+.adminOverviewMetric--green, .adminOverviewMetric--profit, .adminOverviewMetric--delivered { --metric-tint: rgba(34,197,94,.11); }
+.adminOverviewMetric--warm { --metric-tint: rgba(158,139,104,.12); }
+.adminOverviewMetric--amber { --metric-tint: rgba(245,158,11,.13); }
+.adminOverviewMetric--cancelled { --metric-tint: rgba(225,64,64,.10); }
+.adminOverviewMetric--returned { --metric-tint: rgba(234,112,32,.11); }
+.adminOverviewMetric:hover, .adminOverviewMetric:focus-visible { border-color: rgba(95,117,0,.55); outline: none; transform: translateY(-2px); }
+.adminMetricHead { align-items: center; color: #4f5900; display: grid; font-size: .64rem; font-weight: 900; gap: .45rem; grid-template-columns: auto 1fr auto; letter-spacing: .08em; }
+.adminMetricIcon { align-items: center; background: rgba(255,255,255,.54); border: 1px solid rgba(0,0,0,.06); border-radius: 50%; display: inline-flex; height: 2rem; justify-content: center; width: 2rem; }
 .adminOverviewMetric strong { align-self: end; font-family: var(--font-display); font-size: clamp(1.35rem, 3vw, 2.15rem); line-height: .95; overflow-wrap: anywhere; }
 .adminOverviewMetric small { color: #6b6b64; font-size: .68rem; }
+.adminCompare { align-items: center; display: flex; flex-wrap: wrap; gap: .25rem .45rem; letter-spacing: .04em; }
+.adminCompare b { align-items: center; color: #526000; display: inline-flex; gap: .2rem; }
+.adminCompare--down b { color: #9c3428; }
+.adminCompare--flat b { color: #6b6b64; }
+.adminMetricUnavailable { color: #8c3f34 !important; line-height: 1.35; }
+.adminMetricDetail { line-height: 1.25; }
+.adminFinancialCoverage { align-items: center; background: rgba(245,158,11,.1); border-radius: .75rem; color: #754b00; display: flex; font-size: .7rem; gap: .35rem; margin: .6rem 0 0; padding: .55rem .7rem; width: fit-content; }
 .adminOverviewSkeleton { align-self: end; animation: adminOverviewPulse 1.2s ease-in-out infinite; background: #e6e0d3; border-radius: .5rem; height: 2rem; width: 65%; }
+.adminChartPanel, .adminDonutPanel { margin-top: .8rem; min-width: 0; padding: clamp(1rem, 2vw, 1.35rem); }
+.adminDonutRow { display: grid; grid-template-columns: minmax(0, .72fr); }
+.adminPanelHeader { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }
+.adminPanelHeader p { color: #6f7f00; font-size: .68rem; font-weight: 900; letter-spacing: .14em; margin: 0 0 .25rem; }
+.adminPanelHeader h2 { font-family: var(--font-display); font-size: 1.45rem; margin: 0; }
+.adminPanelHeader span { color: #777268; display: block; font-size: .7rem; margin-top: .25rem; }
+.adminLineChart { margin-top: 1rem; min-height: 19rem; padding-left: 6.5rem; position: relative; }
+.adminLineChart svg { height: 16rem; overflow: visible; touch-action: manipulation; width: 100%; }
+.adminChartGrid { fill: none; stroke: rgba(0,0,0,.09); stroke-width: .35; vector-effect: non-scaling-stroke; }
+.adminChartArea { fill: rgba(199,244,0,.18); stroke: none; }
+.adminChartLine { fill: none; stroke: #566500; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.adminChartPoint { fill: #050505; opacity: 0; stroke: #c7f400; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.adminChartHit { cursor: pointer; fill: transparent; stroke: none; }
+.adminLineChart g.isActive .adminChartPoint, .adminLineChart g:focus .adminChartPoint { opacity: 1; }
+.adminYAxis { bottom: 2.8rem; color: #777268; display: flex; flex-direction: column; font-size: .61rem; justify-content: space-between; left: 0; position: absolute; top: .35rem; }
+.adminXAxis { height: 2rem; margin-top: -.2rem; position: relative; }
+.adminXAxis span { color: #777268; font-size: .62rem; position: absolute; text-align: center; transform: translateX(-50%); white-space: nowrap; }
+.adminXAxis span.isHidden { display: none; }
+.adminChartTooltip { background: #050505; border: 1px solid rgba(199,244,0,.55); border-radius: .85rem; box-shadow: 0 .8rem 2rem rgba(0,0,0,.2); color: #f4f4f0; display: grid; gap: .35rem; min-width: 12rem; padding: .7rem .8rem; pointer-events: none; position: absolute; transform: translate(-50%, -100%); z-index: 3; }
+.adminChartTooltip > b { color: #c7f400; font-size: .72rem; text-transform: uppercase; }
+.adminChartTooltip > small { color: #9fa190; font-size: .55rem; font-weight: 900; letter-spacing: .12em; }
+.adminChartTooltip span { align-items: center; display: grid; font-size: .68rem; gap: .4rem; grid-template-columns: .35rem 1fr auto; }
+.adminChartTooltip span i { background: #c7f400; border-radius: 50%; height: .35rem; width: .35rem; }
+.adminChartTooltip span:last-child i { background: #f4f4f0; }
+.adminChartEmpty { align-items: center; color: #777268; display: flex; font-size: .82rem; justify-content: center; min-height: 13rem; text-align: center; }
+.adminDataNote { color: #777268; display: block; font-size: .66rem; margin-top: .35rem; }
+.adminDonutContent { align-items: center; display: grid; gap: 1.5rem; grid-template-columns: minmax(10rem, .8fr) 1fr; margin-top: 1rem; }
+.adminDonutVisual { margin-inline: auto; max-width: 14rem; position: relative; width: 100%; }
+.adminDonut { display: block; transform: rotate(-90deg); width: 100%; }
+.adminDonut circle[role="button"] { cursor: pointer; transition: opacity .2s ease, stroke-width .2s ease; }
+.adminDonut circle[role="button"].isActive, .adminDonut circle[role="button"]:focus { outline: none; stroke-width: 8.5; }
+.adminDonutCenter { display: grid; left: 50%; pointer-events: none; position: absolute; text-align: center; top: 50%; transform: translate(-50%,-50%); }
+.adminDonutCenter span { color: #777268; font-size: .6rem; font-weight: 900; text-transform: uppercase; }
+.adminDonutCenter strong { font-family: var(--font-display); font-size: .78rem; white-space: nowrap; }
+.adminDonutTooltip { background: #050505; border: 1px solid rgba(199,244,0,.55); border-radius: .75rem; bottom: -.8rem; color: #f4f4f0; display: grid; left: 50%; min-width: 10.5rem; padding: .6rem .7rem; position: absolute; transform: translate(-50%, 100%); z-index: 2; }
+.adminDonutTooltip b { color: #c7f400; font-size: .68rem; text-transform: uppercase; }
+.adminDonutTooltip span { font-size: .72rem; font-weight: 900; }
+.adminDonutTooltip small { color: #b5b5ae; font-size: .6rem; }
+.adminDonutTooltip > small:first-child { font-size: .52rem; font-weight: 900; letter-spacing: .12em; }
+.adminDonutLegend { display: grid; }
+.adminDonutLegend > button { align-items: flex-start; background: transparent; border: 0; border-bottom: 1px solid rgba(0,0,0,.08); color: #050505; cursor: pointer; display: flex; gap: .55rem; padding: .6rem 0; text-align: left; }
+.adminDonutLegend > button:hover b, .adminDonutLegend > button:focus b { color: #657400; }
+.adminDonutLegend i { border-radius: 50%; flex: 0 0 auto; height: .55rem; margin-top: .18rem; width: .55rem; }
+.adminDonutLegend span { display: grid; gap: .15rem; min-width: 0; }
+.adminDonutLegend b { font-size: .69rem; text-transform: uppercase; }
+.adminDonutLegend small { color: #6b6b64; font-size: .62rem; overflow-wrap: anywhere; }
 .adminAttention { margin-top: .8rem; padding: 1rem; }
 .adminAttention > div:last-child { display: grid; margin-top: .75rem; }
 .adminAttention a { align-items: center; border-top: 1px solid rgba(0,0,0,.09); color: #050505; display: flex; justify-content: space-between; padding: .7rem .1rem; text-decoration: none; }
 .adminAttention a b { color: #6f7f00; font-size: 1.2rem; }
 .adminAttention__clear { color: #5f5f5f; font-size: .85rem; margin: .75rem 0 0; }
 @keyframes adminOverviewPulse { 50% { opacity: .45; } }
-@media (max-width: 1100px) { .adminOverviewGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .adminOverviewMetric { min-height: 6.5rem; padding: .75rem; } .adminOverviewError { align-items: flex-start; flex-direction: column; gap: .6rem; } }
+@media (max-width: 1100px) { .adminOverviewGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .adminDonutRow { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .adminOverviewTop { align-items: stretch; flex-direction: column; } .adminRangePills { max-width: 100%; overflow-x: auto; } .adminOverviewToolbar { justify-content: space-between; } .adminPanelHeader { align-items: flex-start; flex-direction: column; } .adminChartSwitch { max-width: 100%; overflow-x: auto; } .adminDonutContent { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .adminOverviewMetric { min-height: 6.5rem; padding: .75rem; } .adminOverviewError { align-items: flex-start; flex-direction: column; gap: .6rem; } .adminDonutContent { grid-template-columns: 1fr; } .adminDonutVisual { margin-bottom: 3.5rem; max-width: 11rem; } .adminChartSwitch button { padding-inline: .55rem; } .adminLineChart { min-height: 16rem; padding-left: 5.25rem; } .adminLineChart svg { height: 13rem; } .adminChartTooltip { min-width: 10.5rem; } .adminSectionLabel span { display: none; } }
 @media (prefers-reduced-motion: reduce) { .adminOverviewSkeleton { animation: none; } }
 
 @media (max-width: 900px) {
