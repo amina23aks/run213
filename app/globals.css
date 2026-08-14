@@ -1125,6 +1125,27 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   width: fit-content;
 }
 
+/* Compact operational overview */
+.adminOverviewToolbar { align-items: center; color: #5f5f5f; display: flex; font-size: .78rem; justify-content: space-between; margin-bottom: .8rem; }
+.adminOverviewToolbar button, .adminOverviewError button { background: #050505; border: 0; border-radius: 999px; color: #f4f4f0; cursor: pointer; font-size: .7rem; font-weight: 900; padding: .65rem .9rem; }
+.adminOverviewToolbar button:disabled { cursor: wait; opacity: .55; }
+.adminOverviewError { align-items: center; background: #fff3d6; border: 1px solid rgba(0,0,0,.1); border-radius: 1rem; display: flex; font-size: .82rem; justify-content: space-between; margin-bottom: .8rem; padding: .7rem .85rem; }
+.adminOverviewGrid { display: grid; gap: .7rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.adminOverviewMetric { background: rgba(251,248,240,.94); border: 1px solid rgba(0,0,0,.1); border-radius: 1.15rem; display: grid; gap: .45rem; min-height: 7.2rem; padding: .9rem; }
+.adminOverviewMetric > span { color: #6f7f00; font-size: .66rem; font-weight: 900; letter-spacing: .1em; }
+.adminOverviewMetric strong { align-self: end; font-family: var(--font-display); font-size: clamp(1.35rem, 3vw, 2.15rem); line-height: .95; overflow-wrap: anywhere; }
+.adminOverviewMetric small { color: #6b6b64; font-size: .68rem; }
+.adminOverviewSkeleton { align-self: end; animation: adminOverviewPulse 1.2s ease-in-out infinite; background: #e6e0d3; border-radius: .5rem; height: 2rem; width: 65%; }
+.adminAttention { margin-top: .8rem; padding: 1rem; }
+.adminAttention > div:last-child { display: grid; margin-top: .75rem; }
+.adminAttention a { align-items: center; border-top: 1px solid rgba(0,0,0,.09); color: #050505; display: flex; justify-content: space-between; padding: .7rem .1rem; text-decoration: none; }
+.adminAttention a b { color: #6f7f00; font-size: 1.2rem; }
+.adminAttention__clear { color: #5f5f5f; font-size: .85rem; margin: .75rem 0 0; }
+@keyframes adminOverviewPulse { 50% { opacity: .45; } }
+@media (max-width: 1100px) { .adminOverviewGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .adminOverviewMetric { min-height: 6.5rem; padding: .75rem; } .adminOverviewError { align-items: flex-start; flex-direction: column; gap: .6rem; } }
+@media (prefers-reduced-motion: reduce) { .adminOverviewSkeleton { animation: none; } }
+
 @media (max-width: 900px) {
   .adminShell {
     grid-template-columns: 1fr;

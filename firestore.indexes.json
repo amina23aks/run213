@@ -1,6 +1,15 @@
 {
   "indexes": [
     {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "stockMode", "order": "ASCENDING" },
+        { "fieldPath": "stockQty", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "favoriteAggregates",
       "queryScope": "COLLECTION",
       "fields": [
