@@ -3,6 +3,7 @@ import "server-only";
 import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import type { VerifiedAdmin } from "@/lib/admin-auth";
+import { DEFAULT_RETURN_COST_DZD } from "@/lib/orders/returns";
 import type { OrderRecord, OrderStatus } from "@/types/order";
 
 const ORDERS_COLLECTION = "orders";
@@ -55,6 +56,7 @@ export async function getAdminOrder(orderId: string): Promise<AdminOrderDetail |
 export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderStatus, admin: VerifiedAdmin, note?: string | null): Promise<AdminOrderDetail> {
   const db = getAdminDb();
   const orderRef = db.collection(ORDERS_COLLECTION).doc(orderId);
+  const returnEventRef = orderRef.collection("returnEvents").doc();
   await db.runTransaction(async (transaction) => {
     const orderSnapshot = await transaction.get(orderRef);
     if (!orderSnapshot.exists) throw new AdminOrderError("not_found", "Order not found.", 404);
@@ -67,12 +69,24 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
       status: nextStatus,
       updatedAt: new Date().toISOString(),
       updatedAtTimestamp: FieldValue.serverTimestamp(),
-      statusHistory: FieldValue.arrayUnion({ previousStatus: currentStatus, status: nextStatus, at: new Date().toISOString(), actor: "admin", adminUid: admin.uid, adminEmail: admin.email, note: correctionNote(currentStatus, nextStatus, note) }),
+      statusHistory: FieldValue.arrayUnion({ previousStatus: currentStatus, status: nextStatus, at: new Date().toISOString(), actor: "admin", adminUid: admin.uid, adminEmail: admin.email, note: correctionNote(currentStatus, nextStatus, note), ...(nextStatus === "returned" ? { returnCostDzd: DEFAULT_RETURN_COST_DZD } : {}) }),
     };
 
     if (currentStatus === "cancelled" && nextStatus === "pending") {
       if (!isRestored(data.inventoryRestoredAt) && !isRestored(data.inventoryRestoredAtIso)) throw new AdminOrderError("already_reserved", "Inventory is already reserved for this order.", 409);
       await reserveLimitedStock(transaction, data);
+      updates.inventoryRestoredAt = null;
+      updates.inventoryRestoredAtIso = null;
+      updates.inventoryRestoredBy = null;
+      updates.inventoryRestorationReason = null;
+      updates.inventoryReservedAgainAt = FieldValue.serverTimestamp();
+      updates.inventoryReservedAgainAtIso = new Date().toISOString();
+      updates.inventoryReservedAgainBy = admin.email;
+    }
+
+    if (currentStatus === "returned" && nextStatus === "delivered") {
+      if (!isRestored(data.inventoryRestoredAt) && !isRestored(data.inventoryRestoredAtIso)) throw new AdminOrderError("already_reserved", "Inventory is already reserved for this order.", 409);
+      await reserveLimitedStock(transaction, data, "Not enough stock is available to restore this order to delivered.");
       updates.inventoryRestoredAt = null;
       updates.inventoryRestoredAtIso = null;
       updates.inventoryRestoredBy = null;
@@ -92,6 +106,23 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
       }
     }
 
+
+    if (nextStatus === "returned" && (currentStatus === "shipped" || currentStatus === "delivered")) {
+      if (!isRestored(data.inventoryRestoredAt) && !isRestored(data.inventoryRestoredAtIso)) {
+        await restoreLimitedStock(transaction, data);
+        updates.inventoryRestoredAt = FieldValue.serverTimestamp();
+        updates.inventoryRestoredAtIso = new Date().toISOString();
+        updates.inventoryRestoredBy = admin.email;
+        updates.inventoryRestorationReason = `returned_from_${currentStatus}`;
+      }
+      updates.returnCostDzd = DEFAULT_RETURN_COST_DZD;
+      updates.returnCostRecordedAt = FieldValue.serverTimestamp();
+      updates.returnCostRecordedAtIso = new Date().toISOString();
+      updates.returnedAtTimestamp = FieldValue.serverTimestamp();
+      updates.returnedAt = new Date().toISOString();
+      transaction.set(returnEventRef, { orderId, returnCostDzd: DEFAULT_RETURN_COST_DZD, occurredAt: new Date().toISOString(), occurredAtTimestamp: FieldValue.serverTimestamp(), previousStatus: currentStatus, actor: "admin", adminUid: admin.uid, adminEmail: admin.email });
+    }
+
     transaction.update(orderRef, updates);
   });
   const updated = await getAdminOrder(orderId);
@@ -99,7 +130,7 @@ export async function updateAdminOrderStatus(orderId: string, nextStatus: OrderS
   return updated;
 }
 
-async function reserveLimitedStock(transaction: FirebaseFirestore.Transaction, data: FirebaseFirestore.DocumentData): Promise<void> {
+async function reserveLimitedStock(transaction: FirebaseFirestore.Transaction, data: FirebaseFirestore.DocumentData, insufficientMessage = "Not enough stock is available to restore this order to pending."): Promise<void> {
   const quantities = new Map<string, number>();
   const items = Array.isArray(data.items) ? data.items : [];
   for (const item of items) {
@@ -108,16 +139,17 @@ async function reserveLimitedStock(transaction: FirebaseFirestore.Transaction, d
     quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + quantity);
   }
   const db = getAdminDb();
-  for (const [productId, quantity] of quantities) {
-    const productRef = db.collection(PRODUCTS_COLLECTION).doc(productId);
-    const snapshot = await transaction.get(productRef);
+  const entries = [...quantities].map(([productId, quantity]) => ({ quantity, ref: db.collection(PRODUCTS_COLLECTION).doc(productId) }));
+  const snapshots = entries.length ? await transaction.getAll(...entries.map(({ ref }) => ref)) : [];
+  snapshots.forEach((snapshot, index) => {
+    const { quantity, ref: productRef } = entries[index];
     if (!snapshot.exists) throw new AdminOrderError("product_unavailable", "A product in this order is no longer available.", 409);
     const currentStock = snapshot.get("stockQty");
     const stockQty = typeof currentStock === "number" && Number.isFinite(currentStock) ? currentStock : 0;
-    if (stockQty < quantity) throw new AdminOrderError("insufficient_stock", "Not enough stock is available to restore this order to pending.", 409);
+    if (stockQty < quantity) throw new AdminOrderError("insufficient_stock", insufficientMessage, 409);
     const nextStock = stockQty - quantity;
     transaction.update(productRef, { stockQty: nextStock, inStock: nextStock > 0, updatedAt: FieldValue.serverTimestamp() });
-  }
+  });
 }
 
 function correctionNote(currentStatus: OrderStatus, nextStatus: OrderStatus, note?: string | null) {
@@ -136,14 +168,15 @@ async function restoreLimitedStock(transaction: FirebaseFirestore.Transaction, d
     quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + quantity);
   }
   const db = getAdminDb();
-  for (const [productId, quantity] of quantities) {
-    const productRef = db.collection(PRODUCTS_COLLECTION).doc(productId);
-    const snapshot = await transaction.get(productRef);
-    if (!snapshot.exists) continue;
+  const entries = [...quantities].map(([productId, quantity]) => ({ quantity, ref: db.collection(PRODUCTS_COLLECTION).doc(productId) }));
+  const snapshots = entries.length ? await transaction.getAll(...entries.map(({ ref }) => ref)) : [];
+  snapshots.forEach((snapshot, index) => {
+    const { quantity, ref: productRef } = entries[index];
+    if (!snapshot.exists) return;
     const currentStock = snapshot.get("stockQty");
     const nextStock = (typeof currentStock === "number" && Number.isFinite(currentStock) ? currentStock : 0) + quantity;
     transaction.update(productRef, { stockQty: nextStock, inStock: nextStock > 0, updatedAt: FieldValue.serverTimestamp() });
-  }
+  });
 }
 
 export class AdminOrderError extends Error {
@@ -184,6 +217,8 @@ function toAdminOrderDetail(id: string, data: FirebaseFirestore.DocumentData) {
     items: (Array.isArray(data.items) ? data.items : []).map(toAdminOrderItem),
     statusHistory: (Array.isArray(data.statusHistory) ? data.statusHistory : []).flatMap(toStatusHistoryEntry),
     inventoryRestoredAt: toIsoString(data.inventoryRestoredAt) ?? toIsoString(data.inventoryRestoredAtIso),
+    returnCostDzd: numberOrNull(data.returnCostDzd),
+    returnCostRecordedAt: toIsoString(data.returnCostRecordedAt) ?? toIsoString(data.returnCostRecordedAtIso),
   };
 }
 

@@ -5,7 +5,10 @@ import type { OrderStatus } from "@/types/order";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
-const bodySchema = z.object({ status: z.enum(["pending", "confirmed", "preparing", "shipped", "delivered", "cancelled", "returned"]), note: z.string().trim().max(240).nullable().optional() });
+const bodySchema = z.object({
+  status: z.enum(["pending", "confirmed", "preparing", "shipped", "delivered", "cancelled", "returned"]),
+  note: z.string().trim().max(240).nullable().optional(),
+}).strict();
 
 export async function POST(request: Request, { params }: Params) {
   const adminVerification = await verifyAdminRequest(request);

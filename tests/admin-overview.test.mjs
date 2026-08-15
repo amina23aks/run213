@@ -95,13 +95,27 @@ test("KPI cards use SVG library icons, subtle tints, and no emoji decoration", (
   assert.doesNotMatch(client, /⚡|💰|📦|🚚|❌|↗|▲|▼/);
 });
 
-test("KPI hierarchy and operational links match real Admin destinations", () => {
-  const primary = client.slice(client.indexOf("const primaryCards"), client.indexOf("const operationalCards"));
+test("Overview hierarchy keeps primary, adjustment, operational, and secondary cards distinct", () => {
+  const primary = client.slice(client.indexOf("const primaryCards"), client.indexOf("const financialAdjustmentCards"));
+  const adjustments = client.slice(client.indexOf("const financialAdjustmentCards"), client.indexOf("const operationalCards"));
+  const operational = client.slice(client.indexOf("const operationalCards"), client.indexOf("const secondaryCards"));
+  const secondary = client.slice(client.indexOf("const secondaryCards"), client.indexOf("const categoryColors"));
   for (const key of ["orders", "merchandiseValueDzd", "estimatedGrossProfitDzd", "costOfGoodsSoldDzd", "pendingOrders", "deliveredOrders", "cancelledOrders", "returnedOrders"]) assert.match(primary, new RegExp(`key: "${key}"`));
-  assert.doesNotMatch(primary, /shippingCollected|lowStock|runClubPending/);
-  assert.match(client, /key: "lowStock", label: "LOW STOCK", href: "\/admin\/products"/);
-  assert.match(client, /key: "runClubPending", label: "RUN CLUB PENDING", href: "\/admin\/run-club"/);
-  assert.match(client, /key: "totalFavorites", label: "TOTAL FAVORITES", href: "\/admin\/favorites"/);
+  assert.doesNotMatch(primary, /estimatedContributionDzd|returnCostsDzd|lowStock|runClubPending/);
+  for (const key of ["returnCostsDzd", "estimatedContributionDzd"]) assert.match(adjustments, new RegExp(`key: "${key}"`));
+  assert.match(adjustments, /Not net profit/);
+  for (const key of ["lowStock", "runClubPending"]) assert.match(operational, new RegExp(`key: "${key}"`));
+  assert.doesNotMatch(operational, /pendingOrders|deliveredOrders|cancelledOrders|returnedOrders/);
+  for (const key of ["outOfStock", "totalFavorites", "wishlistSignups"]) assert.match(secondary, new RegExp(`key: "${key}"`));
+  assert.doesNotMatch(secondary, /returnCostsDzd|estimatedContributionDzd/);
+});
+
+test("Overview section order and responsive primary grid remain exact", () => {
+  const labels = ["PERFORMANCE", "DAILY TREND", "CATEGORY MIX", "FINANCIAL ADJUSTMENTS", "OPERATIONAL SIGNALS", "SECONDARY SIGNALS", "NEEDS ATTENTION"];
+  let position = -1;
+  for (const label of labels) { const next = client.indexOf(label, position + 1); assert.ok(next > position, `${label} must follow the previous section`); position = next; }
+  assert.match(css, /adminOverviewGrid--primary \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(max-width: 1100px\) \{ \.adminOverviewGrid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
 test("category donut uses merchandise value percentages and full-value tooltip", () => {
@@ -119,4 +133,27 @@ test("independent partial failures preserve unrelated dashboard sections", () =>
   assert.match(service, /metric unavailable/);
   assert.match(service, /firestoreErrorCode\(result\.reason\)/);
   assert.doesNotMatch(service, /console\.error[^\n]*(?:token|customer|credential|service-account)/i);
+});
+
+test("return costs use bounded authoritative return-event timestamps, not order creation dates", () => {
+  const returns = service.slice(service.indexOf("async function loadBoundedReturnCosts"), service.indexOf("async function loadBoundedDeliveredBreakdown"));
+  assert.match(returns, /collectionGroup\("returnEvents"\)/);
+  assert.match(returns, /where\("occurredAtTimestamp", ">=", start\)/);
+  assert.match(returns, /where\("occurredAtTimestamp", "<", end\)/);
+  assert.match(returns, /limit\(OVERVIEW_ORDER_READ_LIMIT \+ 1\)/);
+  assert.match(returns, /select\("returnCostDzd"\)/);
+  assert.doesNotMatch(returns, /createdAtTimestamp|collection\("orders"\)|products/);
+  assert.ok(indexes.fieldOverrides.some((entry) => entry.collectionGroup === "returnEvents" && entry.fieldPath === "occurredAtTimestamp" && entry.indexes.some((index) => index.order === "DESCENDING" && index.queryScope === "COLLECTION_GROUP")));
+});
+
+test("return costs stay separate and estimated contribution subtracts only those costs", () => {
+  assert.match(service, /estimatedGrossProfitDzd - returnFinancials\[0\]\.value/);
+  assert.match(client, /Gross profit less return costs · Not net profit./);
+  assert.match(client, /excludes other operating expenses/);
+  assert.doesNotMatch(service, /shippingDzd|totals\.totalDzd/);
+});
+
+test("legacy returns without event snapshots contribute no invented fee", () => {
+  assert.doesNotMatch(service, /returnedOrders.*300|status.*returned.*returnCost/);
+  assert.match(service, /doc\.get\("returnCostDzd"\)/);
 });

@@ -109,6 +109,9 @@ export type OrderRecord = {
   inventoryRestoredAt?: string | null;
   inventoryRestoredBy?: string | null;
   inventoryRestorationReason?: string | null;
+  returnCostDzd?: number | null;
+  returnCostRecordedAt?: string | null;
+  returnedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
