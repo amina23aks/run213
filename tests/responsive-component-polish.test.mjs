@@ -21,7 +21,8 @@ test("account uses explicit light and dark icon assets and puts sign out first",
 
 test("admin view store is the final navigation item without an external glyph", () => {
   const shell = read("components/admin/AdminShell.tsx");
-  assert.match(shell, /\{ label: "Settings"[\s\S]*?\{ label: "View Store", href: "\/" \}/);
+  assert.match(shell, /\{ label: "Wishlist"[\s\S]*?\{ label: "View Store", href: "\/" \}/);
+  assert.doesNotMatch(shell, /Settings|\/admin\/settings/);
   assert.doesNotMatch(shell, /↗|external-link/i);
   assert.doesNotMatch(shell, /adminSidebar__store/);
 });
