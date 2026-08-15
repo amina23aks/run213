@@ -22,7 +22,7 @@ const primaryCards: CardDefinition[] = [
 ];
 const financialAdjustmentCards: CardDefinition[] = [
   { key: "returnCostsDzd", label: "RETURN COSTS", href: "/admin/orders", icon: RotateCcw, tone: "returned", money: true, compare: true, detail: "Historical return-event carrier costs in this Algeria-time period" },
-  { key: "estimatedContributionDzd", label: "ESTIMATED CONTRIBUTION", href: "/admin/orders", icon: TrendingUp, tone: "profit", money: true, compare: true, detail: "Gross profit less return costs · Not net profit." },
+  { key: "estimatedContributionDzd", label: "EST. PROFIT AFTER RETURNS", href: "/admin/orders", icon: TrendingUp, tone: "profit", money: true, compare: true, detail: "Gross profit minus return costs. Not net profit." },
 ];
 const operationalCards: CardDefinition[] = [
   { key: "lowStock", label: "LOW STOCK", href: "/admin/products", icon: AlertTriangle, tone: "amber" },
