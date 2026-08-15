@@ -1139,7 +1139,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .adminOverviewGrid { display: grid; gap: .7rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .adminOverviewGrid--primary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .adminOverviewGrid--secondary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.adminOverviewGrid--operational { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.adminOverviewGrid--operational, .adminOverviewGrid--financialAdjustments { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .adminSectionLabel { align-items: end; display: flex; justify-content: space-between; margin: .15rem 0 .6rem; }
 .adminSectionLabel span { color: #777268; font-size: .7rem; }
 .adminOverviewMetric { --metric-tint: rgba(199,244,0,.10); background: linear-gradient(135deg, var(--metric-tint), rgba(251,248,240,.96) 68%); border: 1px solid rgba(0,0,0,.1); border-radius: 1.15rem; color: #050505; display: grid; gap: .45rem; min-height: 8.2rem; padding: .9rem; text-decoration: none; transition: border-color .2s ease, transform .2s ease; }
