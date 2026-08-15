@@ -148,7 +148,8 @@ test("return costs use bounded authoritative return-event timestamps, not order 
 
 test("return costs stay separate and estimated contribution subtracts only those costs", () => {
   assert.match(service, /estimatedGrossProfitDzd - returnFinancials\[0\]\.value/);
-  assert.match(client, /Gross profit less return costs · Not net profit./);
+  assert.match(client, /label: "EST\. PROFIT AFTER RETURNS"/);
+  assert.match(client, /Gross profit minus return costs\. Not net profit\./);
   assert.match(client, /excludes other operating expenses/);
   assert.doesNotMatch(service, /shippingDzd|totals\.totalDzd/);
 });
