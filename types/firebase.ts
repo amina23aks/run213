@@ -129,5 +129,4 @@ export type FirestoreCollection =
   | "contactMessages"
   | "communitySubmissions"
   | "adminStats"
-  | "adminStatsDaily"
-  | "settings";
+  | "adminStatsDaily";

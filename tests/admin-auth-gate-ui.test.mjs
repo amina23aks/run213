@@ -45,14 +45,10 @@ test("authorized child navigation preserves the layout gate without reverifying 
   assert.deepEqual(nestedGates, []);
 });
 
-test("sidebar and remaining internal placeholder navigation use Next client Links", async () => {
+test("sidebar navigation uses Next client Links and exposes no placeholder settings", () => {
   assert.match(shell, /import Link from "next\/link"/);
   assert.match(shell, /<Link className=.*adminSidebar__item/);
-  for (const file of ["components/admin/AdminPlaceholderPage.tsx"]) {
-    const source = await readFile(file, "utf8");
-    assert.match(source, /import Link from "next\/link"/);
-    assert.doesNotMatch(source, /<a[^>]+href="\/admin/);
-  }
+  assert.doesNotMatch(shell, /Settings|\/admin\/settings/);
 });
 
 test("protected API denial invalidates the mounted gate immediately", () => {
