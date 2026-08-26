@@ -446,7 +446,7 @@ function parseProductImages(value: unknown, productName: string): ProductImage[]
   }).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 function isProductSize(value: unknown): value is ProductSize { return isRecord(value) && isString(value.label); }
-function isCategory(value: unknown): value is ProductCategory { return value === "tshirts" || value === "pants" || value === "hoodies" || value === "accessories"; }
+function isCategory(value: unknown): value is ProductCategory { return value === "tshirts" || value === "tops" || value === "pants" || value === "hoodies" || value === "accessories"; }
 function isStockMode(value: unknown): value is ProductStockMode { return value === "unlimited" || value === "limited" || value === "made_to_order"; }
 function isImage(value: unknown): value is { url: string; alt: string } { return isRecord(value) && isString(value.url) && isString(value.alt); }
 function isString(value: unknown): value is string { return typeof value === "string" && value.trim().length > 0; }

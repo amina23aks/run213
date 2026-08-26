@@ -1,4 +1,4 @@
-export type ProductCategory = "tshirts" | "pants" | "hoodies" | "accessories";
+export type ProductCategory = "tshirts" | "tops" | "pants" | "hoodies" | "accessories";
 
 export type ProductStatus = "draft" | "active" | "archived";
 

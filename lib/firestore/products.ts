@@ -259,7 +259,7 @@ function parseStringArray(value: unknown): string[] {
 }
 
 function isCategory(value: unknown): value is ProductCategory {
-  return value === "tshirts" || value === "pants" || value === "hoodies" || value === "accessories";
+  return value === "tshirts" || value === "tops" || value === "pants" || value === "hoodies" || value === "accessories";
 }
 
 function isStockMode(value: unknown): value is ProductStockMode {

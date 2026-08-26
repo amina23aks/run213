@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 
-const categories = ["tshirts", "pants", "hoodies", "accessories"];
+const categories = ["tshirts", "tops", "pants", "hoodies", "accessories"];
 const stockModes = ["unlimited", "limited"];
 const text = z.string().trim().min(1);
 const stagingColorSchema = z.object({
@@ -22,6 +22,7 @@ export const stagingProductSchema = z.object({
   stockQty: z.number().int().min(0).max(100_000).nullable().optional(),
   sizes: z.array(text.max(20)).min(1).max(12),
   colors: z.array(stagingColorSchema).min(1).max(12),
+  status: z.literal("active"),
 }).strict().superRefine((product, context) => {
   if (product.stockMode === "limited" && product.stockQty == null) {
     context.addIssue({ code: "custom", path: ["stockQty"], message: "stockQty is required for limited stock" });
@@ -30,9 +31,14 @@ export const stagingProductSchema = z.object({
   if (imageCount > 8) context.addIssue({ code: "custom", path: ["colors"], message: "at most 8 images are allowed by the canonical Admin Product schema" });
   const colorIds = product.colors.map((color) => color.id);
   if (new Set(colorIds).size !== colorIds.length) context.addIssue({ code: "custom", path: ["colors"], message: "color ids must be unique" });
+  const imageUrls = product.colors.flatMap((color) => color.images);
+  if (new Set(imageUrls).size !== imageUrls.length) context.addIssue({ code: "custom", path: ["colors"], message: "image URLs must be unique within a Product" });
 });
 
-export const stagingCatalogSchema = z.array(z.unknown()).min(1);
+export const stagingCatalogSchema = z.union([
+  z.array(z.unknown()).min(1),
+  z.object({ products: z.array(z.unknown()).min(1) }).passthrough(),
+]);
 
 export function parseCloudinaryPublicId(rawUrl) {
   let url;
@@ -81,7 +87,8 @@ export function mapCanonicalColors(stagingColors, existing, externalColorIds = [
       throw new Error(`referenced existing color id ${protectedId} would be removed`);
     }
   }
-  return { colors, idMap };
+  const legacyMappings = [...idMap].filter(([importId, finalId]) => importId !== finalId).map(([importId, finalId]) => ({ importId, finalId }));
+  return { colors, idMap, legacyMappings };
 }
 
 export function toCanonicalPatch(product, existing = null, externalColorIds = []) {
@@ -96,7 +103,7 @@ export function toCanonicalPatch(product, existing = null, externalColorIds = []
   return {
     name: product.name, slug: product.slug, description: product.description, category: product.category,
     basePriceDzd: product.basePriceDzd, priceDzd: product.basePriceDzd, costPriceDzd: product.costPriceDzd,
-    stockMode: product.stockMode, stockQty: product.stockMode === "limited" ? product.stockQty : null,
+    status: product.status, stockMode: product.stockMode, stockQty: product.stockMode === "limited" ? product.stockQty : null,
     inStock: product.stockMode === "unlimited" || product.stockQty > 0,
     sizes: product.sizes.map((label) => ({ label })), colors, images,
   };
@@ -104,7 +111,7 @@ export function toCanonicalPatch(product, existing = null, externalColorIds = []
 
 export function canonicalCreate(product) {
   return {
-    ...toCanonicalPatch(product), status: "draft", compareAtPriceDzd: null, discountPercent: 0,
+    ...toCanonicalPatch(product), compareAtPriceDzd: null, discountPercent: 0,
     isPromo: false, featured: false, sizeGuideEnabled: false, sizeGuideImageUrl: null,
     sizeGuideImagePublicId: null, dropSlug: null, showInDrop001: false, showInFeaturedDrop: false,
     showInShopTheLook: false, featuredSortOrder: null, lookGroupSlug: null,
@@ -114,10 +121,11 @@ export function canonicalCreate(product) {
 export function validateCatalog(input) {
   const container = stagingCatalogSchema.safeParse(input);
   if (!container.success) return { entries: [], duplicates: [], catalogIssues: container.error.issues.map(formatIssue) };
+  const products = Array.isArray(input) ? input : input.products;
   const counts = new Map();
-  for (const raw of input) if (raw && typeof raw === "object" && typeof raw.slug === "string") counts.set(raw.slug, (counts.get(raw.slug) ?? 0) + 1);
+  for (const raw of products) if (raw && typeof raw === "object" && typeof raw.slug === "string") counts.set(raw.slug, (counts.get(raw.slug) ?? 0) + 1);
   const duplicates = [...counts].filter(([, count]) => count > 1).map(([slug]) => slug);
-  const entries = input.map((raw, index) => {
+  const entries = products.map((raw, index) => {
     const parsed = stagingProductSchema.safeParse(raw);
     const slug = raw && typeof raw === "object" && typeof raw.slug === "string" ? raw.slug : `[index ${index}]`;
     const issues = parsed.success ? [] : parsed.error.issues.map(formatIssue);
@@ -125,7 +133,10 @@ export function validateCatalog(input) {
     if (parsed.success) parsed.data.colors.forEach((color, colorIndex) => color.images.forEach((url, imageIndex) => {
       if (!parseCloudinaryPublicId(url)) issues.push(`colors.${colorIndex}.images.${imageIndex}: invalid HTTPS Cloudinary URL`);
     }));
-    return { slug, product: parsed.success ? parsed.data : null, issues };
+    const imageCount = raw && typeof raw === "object" && Array.isArray(raw.colors)
+      ? raw.colors.reduce((total, color) => total + (color && typeof color === "object" && Array.isArray(color.images) ? color.images.length : 0), 0)
+      : 0;
+    return { slug, product: parsed.success ? parsed.data : null, issues, imageCount };
   });
   return { entries, duplicates, catalogIssues: [] };
 }
@@ -136,18 +147,20 @@ export async function planImport(input, repository) {
   const validation = validateCatalog(input);
   const plans = [];
   for (const entry of validation.entries) {
-    if (!entry.product || entry.issues.length) { plans.push({ slug: entry.slug, action: "SKIP", issues: entry.issues, imageCount: 0 }); continue; }
+    if (!entry.product || entry.issues.length) { plans.push({ slug: entry.slug, action: "SKIP", issues: entry.issues, imageCount: entry.imageCount, legacyMappings: [] }); continue; }
     const matches = await repository.findBySlug(entry.slug);
-    if (matches.length > 1) { plans.push({ slug: entry.slug, action: "SKIP", issues: ["multiple existing canonical Products use this slug"], imageCount: 0 }); continue; }
+    if (matches.length > 1) { plans.push({ slug: entry.slug, action: "SKIP", issues: ["multiple existing canonical Products use this slug"], imageCount: 0, legacyMappings: [] }); continue; }
     try {
       const existing = matches[0] ?? null;
-      const patch = existing ? toCanonicalPatch(entry.product, existing, await repository.getReferencedColorIds(existing.id)) : canonicalCreate(entry.product);
-      plans.push({ slug: entry.slug, action: existing ? "UPDATE" : "CREATE", issues: [], imageCount: patch.images.length, id: existing?.id, patch });
+      const references = existing ? await repository.getReferencedColorIds(existing.id) : [];
+      const patch = existing ? toCanonicalPatch(entry.product, existing, references) : canonicalCreate(entry.product);
+      const { legacyMappings } = mapCanonicalColors(entry.product.colors, existing, references);
+      plans.push({ slug: entry.slug, action: existing ? "UPDATE" : "CREATE", issues: [], imageCount: patch.images.length, legacyMappings, id: existing?.id, patch });
     } catch (error) {
-      plans.push({ slug: entry.slug, action: "SKIP", issues: [error instanceof Error ? error.message : "conversion failed"], imageCount: 0 });
+      plans.push({ slug: entry.slug, action: "SKIP", issues: [error instanceof Error ? error.message : "conversion failed"], imageCount: 0, legacyMappings: [] });
     }
   }
-  return { total: Array.isArray(input) ? input.length : 0, duplicates: validation.duplicates, catalogIssues: validation.catalogIssues, plans };
+  return { total: validation.entries.length, duplicates: validation.duplicates, catalogIssues: validation.catalogIssues, plans };
 }
 
 export async function executePlan(report, repository, write = false) {

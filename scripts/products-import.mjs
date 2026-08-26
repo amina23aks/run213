@@ -41,5 +41,11 @@ console.log(`CREATE: ${counts("CREATE")} | UPDATE: ${counts("UPDATE")} | SKIP: $
 console.log(`Duplicate slugs: ${report.duplicates.length ? report.duplicates.join(", ") : "none"}`);
 report.catalogIssues.forEach((issue) => console.log(`CATALOG SKIP — ${issue}`));
 for (const plan of report.plans) console.log(`${plan.slug}: ${plan.action} | images=${plan.imageCount}${plan.issues.length ? ` | ${plan.issues.join("; ")}` : ""}`);
+for (const plan of report.plans) {
+  const stock = plan.patch?.stockMode === "unlimited" ? "stockQty=null" : `stockQty=${plan.patch?.stockQty ?? "n/a"}`;
+  console.log(`${plan.slug}: final status=${plan.patch?.status ?? "n/a"} | stockMode=${plan.patch?.stockMode ?? "n/a"} | ${stock}`);
+  console.log(`${plan.slug}: legacy color mappings=${plan.legacyMappings?.length ? plan.legacyMappings.map(({ importId, finalId }) => `${importId}->${finalId}`).join(", ") : "none"}`);
+}
+console.log("Invalid URLs and image-limit blockers are listed on each SKIP plan above; none means no blockers.");
 const writes = await executePlan(report, repository, write);
 console.log(`Firestore writes: ${writes}`);

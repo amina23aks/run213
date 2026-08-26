@@ -7,7 +7,7 @@ const url = (name) => `https://res.cloudinary.com/run213/image/upload/q_auto/v12
 const valid = (overrides = {}) => ({
   name: "Tshirt Oversized", slug: "tshirt-oversized", category: "tshirts", description: "Premium cotton oversized tee.",
   basePriceDzd: 3000, costPriceDzd: 1400, stockMode: "limited", stockQty: 8, sizes: ["S", "M", "L", "XL", "XXL"],
-  colors: [{ id: "noir", name: "Noir", hex: "#111111", images: [url("front"), url("back")] }], ...overrides,
+  colors: [{ id: "noir", name: "Noir", hex: "#111111", images: [url("front"), url("back")] }], status: "active", ...overrides,
 });
 const repository = (existing = []) => ({
   writes: [], async findBySlug(slug) { return existing.filter((product) => product.slug === slug); },
@@ -53,7 +53,8 @@ test("existing Product receives a narrow patch while unrelated fields and refere
   const repo = repository([existing]); repo.getReferencedColorIds = async () => ["color-1"];
   const report = await planImport([valid()], repo); const plan = report.plans[0];
   assert.equal(plan.action, "UPDATE"); assert.equal(plan.patch.colors[0].id, "color-1");
-  for (const key of ["featured", "sizeGuideEnabled", "createdAt", "customMetadata", "status"]) assert.equal(Object.hasOwn(plan.patch, key), false);
+  for (const key of ["featured", "sizeGuideEnabled", "createdAt", "customMetadata"]) assert.equal(Object.hasOwn(plan.patch, key), false);
+  assert.equal(plan.patch.status, "active");
   assert.ok(plan.patch.images.every((image) => image.colorId === "color-1"));
 });
 
@@ -64,8 +65,14 @@ test("removing a referenced existing color is refused", async () => {
   assert.equal(report.plans[0].action, "SKIP"); assert.match(report.plans[0].issues[0], /referenced existing color id/);
 });
 
-test("new Products use canonical defaults and remain draft", () => {
-  const created = canonicalCreate(valid()); assert.equal(created.status, "draft"); assert.equal(created.featured, false); assert.equal(created.showInDrop001, false);
+test("new imported Products use canonical defaults and merchant-approved active unlimited stock", () => {
+  const created = canonicalCreate(valid({ category: "tops", stockMode: "unlimited", stockQty: 0 }));
+  assert.equal(created.category, "tops"); assert.equal(created.status, "active"); assert.equal(created.stockMode, "unlimited");
+  assert.equal(created.stockQty, null); assert.equal(created.inStock, true); assert.equal(created.featured, false); assert.equal(created.showInDrop001, false);
+});
+
+test("TU is preserved as the canonical one-size label", () => {
+  assert.deepEqual(toCanonicalPatch(valid({ sizes: ["TU"] })).sizes, [{ label: "TU" }]);
 });
 
 test("dry run makes zero writes and write mode touches Products only", async () => {
