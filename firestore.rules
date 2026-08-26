@@ -6,7 +6,10 @@ service cloud.firestore {
     }
 
     match /products/{productId} {
-      allow read: if resource.data.status == "active";
+      // Product documents include private merchandising fields (notably costPriceDzd).
+      // Storefront reads are performed by trusted server code and projected to the
+      // public Product shape; Firestore rules cannot project individual fields.
+      allow read: if isAdmin();
       allow write: if isAdmin();
     }
 
@@ -16,7 +19,8 @@ service cloud.firestore {
     }
 
     match /looks/{lookId} {
-      allow read: if resource.data.status == "active";
+      // Active Look documents also contain a private aggregate cost snapshot.
+      allow read: if isAdmin();
       allow write: if isAdmin();
     }
 

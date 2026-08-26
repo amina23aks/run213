@@ -208,7 +208,6 @@ function parseProduct(id: string, data: Record<string, unknown>): Product | null
     priceDzd: data.priceDzd,
     basePriceDzd: isNumber(data.basePriceDzd) ? data.basePriceDzd : null,
     compareAtPriceDzd: isNumber(data.compareAtPriceDzd) ? data.compareAtPriceDzd : null,
-    costPriceDzd: isNumber(data.costPriceDzd) ? data.costPriceDzd : null,
     discountPercent: isNumber(data.discountPercent) ? data.discountPercent : 0,
     images,
     colors,
