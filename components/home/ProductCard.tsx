@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
@@ -43,15 +44,51 @@ function getInitialSize(product?: Product): string | null {
 /** Keeps card imagery on the canonical image/color relationship used by product data. */
 export function getProductCardImages(product: Product | undefined, selectedColorId: string | null): { primary: ProductImage | null; hover: ProductImage | null } {
   if (!product) return { primary: null, hover: null };
-  const canonicalPrimary = product.images.find((image) => image.isPrimary) ?? product.images[0] ?? null;
-  const activeColorId = selectedColorId ?? canonicalPrimary?.colorId ?? null;
-  const colorImages = activeColorId ? product.images.filter((image) => image.colorId === activeColorId) : [];
+  const images = product.images.filter((image) => image.url.trim());
+  const canonicalPrimary = images.find((image) => image.isPrimary) ?? images[0] ?? null;
+  const colorImages = selectedColorId ? images.filter((image) => image.colorId === selectedColorId) : [];
   const primary = selectedColorId ? colorImages[0] ?? canonicalPrimary : canonicalPrimary;
   if (!primary) return { primary: null, hover: null };
-  const sameColorImages = primary.colorId ? product.images.filter((image) => image.colorId === primary.colorId) : [];
-  const primaryIndex = sameColorImages.findIndex((image) => image.id === primary.id);
-  const hover = primaryIndex >= 0 ? sameColorImages[primaryIndex + 1] ?? null : null;
+  const distinctImages = images.filter((image) => image.id !== primary.id && image.url !== primary.url);
+  const sameColorHover = primary.colorId ? distinctImages.find((image) => image.colorId === primary.colorId) : null;
+  const hover = sameColorHover ?? distinctImages[0] ?? null;
   return { primary, hover };
+}
+
+const CARD_IMAGE_SIZES = "(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px";
+const CARD_IMAGE_TRANSITION_MS = 240;
+
+function ProductCardImages({ normalSrc, hoverSrc, alt }: { normalSrc: string; hoverSrc: string | null; alt: string }) {
+  const [displayedSrc, setDisplayedSrc] = useState(normalSrc);
+  const [requestedSrc, setRequestedSrc] = useState(normalSrc);
+  const [transitionSrc, setTransitionSrc] = useState<string | null>(null);
+  const [transitionReady, setTransitionReady] = useState(false);
+  const [loadedHoverSrc, setLoadedHoverSrc] = useState<string | null>(null);
+
+  if (normalSrc !== requestedSrc) {
+    setRequestedSrc(normalSrc);
+    setTransitionReady(false);
+    setTransitionSrc(normalSrc);
+  }
+
+  useEffect(() => {
+    if (!transitionReady || !transitionSrc) return;
+    const nextSrc = transitionSrc;
+    const timer = window.setTimeout(() => {
+      setDisplayedSrc(nextSrc);
+      setTransitionSrc(null);
+      setTransitionReady(false);
+    }, CARD_IMAGE_TRANSITION_MS);
+    return () => window.clearTimeout(timer);
+  }, [transitionReady, transitionSrc]);
+
+  return (
+    <>
+      <FallbackImage className="productCard__primaryImage" src={displayedSrc} fallbackSrc="/placeholders/product-placeholder.webp" alt={alt} width={420} height={520} sizes={CARD_IMAGE_SIZES} unoptimized />
+      {transitionSrc ? <Image className={transitionReady ? "productCard__selectedImage is-loaded" : "productCard__selectedImage"} src={transitionSrc} alt="" aria-hidden="true" width={420} height={520} sizes={CARD_IMAGE_SIZES} onLoad={(event) => { if (event.currentTarget.naturalWidth > 0) setTransitionReady(true); }} onError={() => { setTransitionSrc(null); setTransitionReady(false); }} unoptimized /> : null}
+      {hoverSrc ? <Image className={loadedHoverSrc === hoverSrc ? "productCard__hoverImage is-loaded" : "productCard__hoverImage"} src={hoverSrc} alt="" aria-hidden="true" width={420} height={520} sizes={CARD_IMAGE_SIZES} loading="lazy" onLoad={(event) => { if (event.currentTarget.naturalWidth > 0) setLoadedHoverSrc(hoverSrc); }} onError={() => { if (loadedHoverSrc === hoverSrc) setLoadedHoverSrc(null); }} unoptimized /> : null}
+    </>
+  );
 }
 
 export function ProductCard({ product, promo = false, sourceProduct }: ProductCardProps) {
@@ -64,7 +101,8 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const isUnavailable = Boolean(sourceProduct && !isProductInStock(sourceProduct));
   const cardImages = getProductCardImages(sourceProduct, selectedColorId);
   const primaryImageUrl = cardImages.primary?.url ?? product.image;
-  const hasHoverImage = Boolean(cardImages.hover && cardImages.hover.url !== primaryImageUrl);
+  const normalImageSrc = cloudinaryImageUrl(primaryImageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.productCard });
+  const hoverImageSrc = cardImages.hover ? cloudinaryImageUrl(cardImages.hover.url, { width: CLOUDINARY_IMAGE_WIDTHS.productCard }) : null;
 
   function handleColorSelect(colorId: string) {
     setSelectedColorId(colorId);
@@ -103,8 +141,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
         {sourceProduct ? <StockBadge product={sourceProduct} /> : null}
         {sourceProduct ? (
           <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
-            <FallbackImage className="productCard__primaryImage" src={cloudinaryImageUrl(primaryImageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt={cardImages.primary?.alt || `${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />
-            {hasHoverImage ? <FallbackImage className="productCard__hoverImage" src={cloudinaryImageUrl(cardImages.hover!.url, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt="" aria-hidden="true" width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" loading="lazy" unoptimized /> : null}
+            <ProductCardImages normalSrc={normalImageSrc} hoverSrc={hoverImageSrc} alt={cardImages.primary?.alt || `${product.name} product image`} />
           </Link>
         ) : <FallbackImage src={cloudinaryImageUrl(product.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt={`${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />}
         {sourceProduct ? <FavoriteButton className="productCard__favorite" itemType="product" itemId={sourceProduct.id} itemName={product.name} variant="card" /> : null}

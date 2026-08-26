@@ -4283,18 +4283,19 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 }
 
 .productCard__mediaLink .productCard__primaryImage,
+.productCard__mediaLink .productCard__selectedImage,
 .productCard__mediaLink .productCard__hoverImage { position: absolute; inset: 0; height: 100%; width: 100%; object-fit: contain; object-position: center; }
+.productCard__mediaLink .productCard__selectedImage,
 .productCard__mediaLink .productCard__hoverImage { opacity: 0; }
+.productCard__mediaLink .productCard__selectedImage.is-loaded { opacity: 1; transition: opacity 240ms ease; }
 
 @media (hover: hover) and (pointer: fine) {
-  .productCard__mediaLink .productCard__primaryImage,
   .productCard__mediaLink .productCard__hoverImage { transition: opacity 280ms ease; }
-  .productCard__mediaLink:hover .productCard__primaryImage { opacity: 0; }
-  .productCard__mediaLink:hover .productCard__hoverImage { opacity: 1; }
+  .productCard__mediaLink:hover .productCard__hoverImage.is-loaded { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .productCard__mediaLink .productCard__primaryImage,
+  .productCard__mediaLink .productCard__selectedImage.is-loaded,
   .productCard__mediaLink .productCard__hoverImage { transition: none; }
 }
 
