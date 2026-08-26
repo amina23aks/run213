@@ -9,6 +9,7 @@ import { AdminProductList } from "@/components/admin/products/AdminProductList";
 import type { ProductDraft, ProductDraftColor, ProductDraftImage } from "@/components/admin/products/types";
 import { extractFirebaseAuthCode, getAuthErrorMessage } from "@/lib/auth-errors";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
+import { PRODUCT_IMAGE_LIMIT } from "@/lib/products/constants.mjs";
 import type { Product } from "@/types/product";
 
 type AdminProductsResponse = {
@@ -417,6 +418,7 @@ function validateDraft(draft: ProductDraft): string[] {
   const discount = Number(draft.discountPercent || 0);
   if (!Number.isFinite(discount) || discount < 0 || discount > 100) errors.push("Discount must be between 0 and 100.");
   if (!draft.images.length) errors.push("Upload at least one product image.");
+  if (draft.images.length > PRODUCT_IMAGE_LIMIT) errors.push(`Upload at most ${PRODUCT_IMAGE_LIMIT} product images.`);
   if (!draft.colors.some((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))) errors.push("Add at least one color with a name and valid #HEX value.");
   if (draft.stockMode === "limited" && !draft.stockQty.trim()) errors.push("Stock quantity is required when stock mode is limited.");
   return errors;
