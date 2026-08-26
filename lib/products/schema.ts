@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const productCategorySchema = z.enum(["tshirts", "pants", "hoodies", "accessories"]);
+export const productCategorySchema = z.enum(["tshirts", "tops", "pants", "hoodies", "accessories"]);
 export const productStatusSchema = z.enum(["draft", "active", "archived"]);
 export const productStockModeSchema = z.enum(["unlimited", "limited"]);
 

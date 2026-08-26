@@ -6,13 +6,14 @@ export type ShopCategoryGroup = "tops" | "bottoms" | "accessories";
 export const SHOP_CATEGORY_FILTERS: { label: string; value: ShopCategoryFilter }[] = [
   { label: "ALL PRODUCTS", value: "all" },
   { label: "T-SHIRTS", value: "tshirts" },
+  { label: "TOPS", value: "tops" },
   { label: "PANTS", value: "pants" },
   { label: "HOODIES", value: "hoodies" },
   { label: "ACCESSORIES", value: "accessories" },
 ];
 
 export const SHOP_CATEGORY_GROUPS: Record<ShopCategoryGroup, ProductCategory[]> = {
-  tops: ["tshirts", "hoodies"],
+  tops: ["tshirts", "tops", "hoodies"],
   bottoms: ["pants"],
   accessories: ["accessories"],
 };

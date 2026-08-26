@@ -107,7 +107,7 @@ function isImage(value: unknown): boolean {
 }
 
 function isProductCategory(value: unknown): boolean {
-  return value === "tshirts" || value === "pants" || value === "hoodies" || value === "accessories";
+  return value === "tshirts" || value === "tops" || value === "pants" || value === "hoodies" || value === "accessories";
 }
 
 function rateLimited(reset: number) {

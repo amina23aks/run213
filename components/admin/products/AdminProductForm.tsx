@@ -6,9 +6,10 @@ import { AdminProductField, AdminProductSection } from "@/components/admin/produ
 import { AdminProductImagePreview } from "@/components/admin/products/AdminProductImagePreview";
 import type { ProductDraft, ProductDraftColor, ProductDraftImage } from "@/components/admin/products/types";
 
-const sizeOptions = ["S", "M", "L", "XL", "XXL"] as const;
+const sizeOptions = ["TU", "XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 const categories: { value: ProductCategory; label: string }[] = [
   { value: "tshirts", label: "T-Shirts" },
+  { value: "tops", label: "Tops" },
   { value: "hoodies", label: "Hoodies" },
   { value: "pants", label: "Pants" },
   { value: "accessories", label: "Accessories" },
