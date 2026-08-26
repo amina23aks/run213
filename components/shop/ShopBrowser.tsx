@@ -6,8 +6,8 @@ import { ShopGrid } from "@/components/shop/ShopGrid";
 import { isShopCategoryFilter, isShopCategoryGroup, SHOP_CATEGORY_FILTERS, SHOP_CATEGORY_GROUPS, type ShopCategoryFilter, type ShopCategoryGroup } from "@/constants/shop";
 import type { Product } from "@/types/product";
 
-const INITIAL_BATCH_SIZE = 12;
-const LOAD_MORE_SIZE = 12;
+export const INITIAL_BATCH_SIZE = 8;
+export const LOAD_MORE_SIZE = 8;
 
 export function ShopBrowser({ products }: { products: Product[] }) {
   const router = useRouter();

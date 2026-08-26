@@ -9,6 +9,7 @@ import { isProductInStock } from "@/lib/products/availability";
 import { StockBadge } from "@/components/product/StockBadge";
 import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import { FallbackImage } from "@/components/ui/FallbackImage";
+import type { ProductImage } from "@/types/product";
 
 type ProductCardItem = {
   name: string;
@@ -39,6 +40,20 @@ function getInitialSize(product?: Product): string | null {
   return product?.sizes.length === 1 ? product.sizes[0]?.label ?? null : null;
 }
 
+/** Keeps card imagery on the canonical image/color relationship used by product data. */
+export function getProductCardImages(product: Product | undefined, selectedColorId: string | null): { primary: ProductImage | null; hover: ProductImage | null } {
+  if (!product) return { primary: null, hover: null };
+  const canonicalPrimary = product.images.find((image) => image.isPrimary) ?? product.images[0] ?? null;
+  const activeColorId = selectedColorId ?? canonicalPrimary?.colorId ?? null;
+  const colorImages = activeColorId ? product.images.filter((image) => image.colorId === activeColorId) : [];
+  const primary = selectedColorId ? colorImages[0] ?? canonicalPrimary : canonicalPrimary;
+  if (!primary) return { primary: null, hover: null };
+  const sameColorImages = primary.colorId ? product.images.filter((image) => image.colorId === primary.colorId) : [];
+  const primaryIndex = sameColorImages.findIndex((image) => image.id === primary.id);
+  const hover = primaryIndex >= 0 ? sameColorImages[primaryIndex + 1] ?? null : null;
+  return { primary, hover };
+}
+
 export function ProductCard({ product, promo = false, sourceProduct }: ProductCardProps) {
   const { addItem } = useCart();
   const [selectedColorId, setSelectedColorId] = useState<string | null>(() => getInitialColorId(sourceProduct));
@@ -47,6 +62,9 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
   const isUnavailable = Boolean(sourceProduct && !isProductInStock(sourceProduct));
+  const cardImages = getProductCardImages(sourceProduct, selectedColorId);
+  const primaryImageUrl = cardImages.primary?.url ?? product.image;
+  const hasHoverImage = Boolean(cardImages.hover && cardImages.hover.url !== primaryImageUrl);
 
   function handleColorSelect(colorId: string) {
     setSelectedColorId(colorId);
@@ -85,7 +103,8 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
         {sourceProduct ? <StockBadge product={sourceProduct} /> : null}
         {sourceProduct ? (
           <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
-            <FallbackImage src={cloudinaryImageUrl(product.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt={`${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />
+            <FallbackImage className="productCard__primaryImage" src={cloudinaryImageUrl(primaryImageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt={cardImages.primary?.alt || `${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />
+            {hasHoverImage ? <FallbackImage className="productCard__hoverImage" src={cloudinaryImageUrl(cardImages.hover!.url, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt="" aria-hidden="true" width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" loading="lazy" unoptimized /> : null}
           </Link>
         ) : <FallbackImage src={cloudinaryImageUrl(product.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt={`${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />}
         {sourceProduct ? <FavoriteButton className="productCard__favorite" itemType="product" itemId={sourceProduct.id} itemName={product.name} variant="card" /> : null}
