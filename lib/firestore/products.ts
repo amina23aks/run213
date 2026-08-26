@@ -8,7 +8,8 @@ import type { Product, ProductCategory, ProductImage, ProductSize, ProductStockM
 const PRODUCTS_COLLECTION = "products";
 const DEFAULT_PRODUCT_LIMIT = 12;
 const MAX_PRODUCT_LIMIT = 60;
-const ACTIVE_PRODUCT_READ_LIMIT = 60;
+export const SHOP_CATALOG_LIMIT = 48;
+const ACTIVE_PRODUCT_READ_LIMIT = SHOP_CATALOG_LIMIT;
 
 export async function listActiveProducts(requestedLimit = DEFAULT_PRODUCT_LIMIT): Promise<Product[]> {
   const limit = clampLimit(requestedLimit);
