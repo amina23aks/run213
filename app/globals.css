@@ -4284,7 +4284,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 
 .productCard__mediaLink .productCard__primaryImage,
 .productCard__mediaLink .productCard__selectedImage,
-.productCard__mediaLink .productCard__hoverImage { position: absolute; inset: 0; height: 100%; width: 100%; object-fit: contain; object-position: center; }
+.productCard__mediaLink .productCard__hoverImage { position: absolute; inset: 0; height: 100%; width: 100%; max-height: none; max-width: none; object-fit: cover; object-position: center; }
 .productCard__mediaLink .productCard__selectedImage,
 .productCard__mediaLink .productCard__hoverImage { opacity: 0; }
 .productCard__mediaLink .productCard__selectedImage.is-loaded { opacity: 1; transition: opacity 240ms ease; }
@@ -5099,7 +5099,11 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 
 .productCard .productCard__media,
 .productCard .productImageWrap {
+  aspect-ratio: 1 / 0.82;
+  min-height: 0;
+  max-height: none;
   margin-bottom: 0.28rem;
+  overflow: hidden;
   padding: 0.22rem;
   border-radius: 0.72rem;
 }

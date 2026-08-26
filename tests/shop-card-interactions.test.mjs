@@ -63,6 +63,11 @@ test("base stays visible until successful image load and failed previews remain 
   assert.match(css, /hoverImage\.is-loaded \{ opacity: 1/);
 });
 
+test("all card image layers share one fixed ecommerce crop regardless of source dimensions", () => {
+  assert.match(css, /productCard__primaryImage,[\s\S]*?productCard__selectedImage,[\s\S]*?productCard__hoverImage \{[^}]*position: absolute;[^}]*inset: 0;[^}]*height: 100%;[^}]*width: 100%;[^}]*object-fit: cover;[^}]*object-position: center/);
+  assert.match(css, /\.productCard \.productCard__media,[\s\S]*?\.productCard \.productImageWrap \{[^}]*aspect-ratio: 1 \/ 0\.82;[^}]*min-height: 0;[^}]*max-height: none;[^}]*overflow: hidden/);
+});
+
 test("swatches isolate clicks and selected images crossfade without hover dependency", () => {
   assert.match(card, /event\.preventDefault\(\); event\.stopPropagation\(\); handleColorSelect\(color\.id\)/);
   assert.match(card, /loading="lazy"/);
