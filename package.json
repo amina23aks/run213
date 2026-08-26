@@ -10,7 +10,8 @@
     "test": "node scripts/run-tests.mjs",
     "admin:grant": "node --env-file=.env.local scripts/admin-claims.mjs grant",
     "admin:revoke": "node --env-file=.env.local scripts/admin-claims.mjs revoke",
-    "migrate:wishlist-ids": "node --env-file=.env.local scripts/migrate-wishlist-ids.mjs"
+    "migrate:wishlist-ids": "node --env-file=.env.local scripts/migrate-wishlist-ids.mjs",
+    "products:import": "node --env-file=.env.local scripts/products-import.mjs"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.8",
