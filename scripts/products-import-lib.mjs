@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { PRODUCT_IMAGE_LIMIT } from "../lib/products/constants.mjs";
 
 const categories = ["tshirts", "tops", "pants", "hoodies", "accessories"];
 const stockModes = ["unlimited", "limited"];
@@ -28,7 +29,7 @@ export const stagingProductSchema = z.object({
     context.addIssue({ code: "custom", path: ["stockQty"], message: "stockQty is required for limited stock" });
   }
   const imageCount = product.colors.reduce((total, color) => total + color.images.length, 0);
-  if (imageCount > 8) context.addIssue({ code: "custom", path: ["colors"], message: "at most 8 images are allowed by the canonical Admin Product schema" });
+  if (imageCount > PRODUCT_IMAGE_LIMIT) context.addIssue({ code: "custom", path: ["colors"], message: `at most ${PRODUCT_IMAGE_LIMIT} images are allowed by the canonical Admin Product schema` });
   const colorIds = product.colors.map((color) => color.id);
   if (new Set(colorIds).size !== colorIds.length) context.addIssue({ code: "custom", path: ["colors"], message: "color ids must be unique" });
   const imageUrls = product.colors.flatMap((color) => color.images);

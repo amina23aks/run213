@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { PRODUCT_IMAGE_LIMIT } from "../lib/products/constants.mjs";
 import { canonicalCreate, executePlan, parseCloudinaryPublicId, planImport, toCanonicalPatch, validateCatalog } from "../scripts/products-import-lib.mjs";
 
 const url = (name) => `https://res.cloudinary.com/run213/image/upload/q_auto/v123/run213/products/${name}.jpg`;
@@ -32,6 +33,27 @@ test("one or multiple images per color become ordered canonical records with one
   assert.deepEqual(patch.images.map(({ isPrimary }) => isPrimary), [true, false, false]);
   assert.deepEqual(patch.images.map(({ sortOrder }) => sortOrder), [0, 1, 2]);
   assert.equal(new Set(patch.images.map(({ id }) => id)).size, 3);
+});
+
+test("canonical image limit accepts 1 through 12 images and rejects 13", async () => {
+  assert.equal(PRODUCT_IMAGE_LIMIT, 12);
+  for (let count = 1; count <= PRODUCT_IMAGE_LIMIT; count++) {
+    const images = Array.from({ length: count }, (_, index) => url(`gallery-${count}-${index}`));
+    const entry = validateCatalog([valid({ colors: [{ id: "noir", name: "Noir", hex: "#111111", images }] })]).entries[0];
+    assert.equal(entry.issues.length, 0, `${count} images should be valid`);
+  }
+
+  const images = Array.from({ length: PRODUCT_IMAGE_LIMIT + 1 }, (_, index) => url(`too-many-${index}`));
+  const rejected = await planImport([valid({ colors: [{ id: "noir", name: "Noir", hex: "#111111", images }] })], repository());
+  assert.equal(rejected.plans[0].action, "SKIP");
+  assert.match(rejected.plans[0].issues.join(" "), /at most 12 images/);
+});
+
+test("the 12-image importer output permits repeated color IDs and retains exactly one primary", () => {
+  const images = Array.from({ length: PRODUCT_IMAGE_LIMIT }, (_, index) => url(`same-color-${index}`));
+  const patch = toCanonicalPatch(valid({ colors: [{ id: "noir", name: "Noir", hex: "#111111", images }] }));
+  assert.ok(patch.images.every((image) => image.colorId === "noir"));
+  assert.equal(patch.images.filter((image) => image.isPrimary).length, 1);
 });
 
 test("Cloudinary public ID parser handles transformations, versions, folders, and invalid hosts", () => {
