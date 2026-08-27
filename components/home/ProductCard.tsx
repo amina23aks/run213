@@ -41,6 +41,16 @@ function getInitialSize(product?: Product): string | null {
   return product?.sizes.length === 1 ? product.sizes[0]?.label ?? null : null;
 }
 
+export function isLightProductColor(hex: string): boolean {
+  const value = hex.trim().replace(/^#/, "");
+  const expanded = value.length === 3 ? value.split("").map((character) => character + character).join("") : value;
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) return false;
+  const red = Number.parseInt(expanded.slice(0, 2), 16);
+  const green = Number.parseInt(expanded.slice(2, 4), 16);
+  const blue = Number.parseInt(expanded.slice(4, 6), 16);
+  return (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255 >= 0.78;
+}
+
 /** Keeps card imagery on the canonical image/color relationship used by product data. */
 export function getProductCardImages(product: Product | undefined, selectedColorId: string | null): { primary: ProductImage | null; hover: ProductImage | null } {
   if (!product) return { primary: null, hover: null };
@@ -165,7 +175,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
               aria-pressed={color.id === selectedColorId}
               onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleColorSelect(color.id); }}
             >
-              <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
+              <span className={isLightProductColor(color.hex) ? "productSwatch__color productSwatch__color--light" : "productSwatch__color"} style={{ backgroundColor: color.hex }} />
             </button>
           )) : product.colors.map((color, index) => (
             <span
@@ -173,7 +183,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
               key={color}
               aria-hidden="true"
             >
-              <span className="productSwatch__color" style={{ backgroundColor: color }} />
+              <span className={isLightProductColor(color) ? "productSwatch__color productSwatch__color--light" : "productSwatch__color"} style={{ backgroundColor: color }} />
             </span>
           ))}
         </div>

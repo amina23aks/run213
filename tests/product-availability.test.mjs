@@ -85,7 +85,8 @@ test("product cards keep a tight media frame and compact refined controls", () =
   const css = readFileSync("app/globals.css", "utf8");
   assert.match(css, /\/\* Product Card compact controls: final scoped source-of-truth\. \*\/[\s\S]*?\.productCard \{[\s\S]*?padding: 0\.45rem;/);
   assert.match(css, /\.productCard \.productCard__media,[\s\S]*?margin-bottom: 0\.28rem;[\s\S]*?padding: 0\.22rem;[\s\S]*?border-radius: 0\.72rem;/);
-  assert.match(css, /\.productCard \.swatchesRow \.productSwatch__color \{[\s\S]*?width: 0\.68rem !important;[\s\S]*?height: 0\.68rem !important;[\s\S]*?border: 0\.75px solid/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch__color \{[\s\S]*?width: 0\.68rem !important;[\s\S]*?height: 0\.68rem !important;[\s\S]*?border: 1px solid rgba\(7, 7, 6, 0\.32\)/);
+  assert.match(css, /\.productCard \.swatchesRow \.productSwatch__color--light \{[\s\S]*?border-color: rgba\(7, 7, 6, 0\.62\)/);
   assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\],[\s\S]*?outline: 1px solid #111 !important;[\s\S]*?outline-offset: 0\.5px !important;/);
   assert.match(css, /\.productCard \.swatchesRow \.productSwatch\[aria-pressed="true"\] \.productSwatch__color,[\s\S]*?width: 0\.78rem !important;[\s\S]*?height: 0\.78rem !important;/);
   assert.match(css, /\.productCard \.sizeChips button,[\s\S]*?min-width: 1\.5rem !important;[\s\S]*?height: 1\.3rem !important;[\s\S]*?border-radius: 0\.35rem !important;[\s\S]*?font-size: 0\.6rem !important;/);

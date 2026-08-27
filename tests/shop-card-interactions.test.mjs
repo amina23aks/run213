@@ -63,9 +63,16 @@ test("base stays visible until successful image load and failed previews remain 
   assert.match(css, /hoverImage\.is-loaded \{ opacity: 1/);
 });
 
-test("all card image layers share one fixed ecommerce crop regardless of source dimensions", () => {
-  assert.match(css, /productCard__primaryImage,[\s\S]*?productCard__selectedImage,[\s\S]*?productCard__hoverImage \{[^}]*position: absolute;[^}]*inset: 0;[^}]*height: 100%;[^}]*width: 100%;[^}]*object-fit: cover;[^}]*object-position: center/);
+test("all card image layers share one opaque padded stage regardless of source dimensions", () => {
+  assert.match(css, /productCard__primaryImage,[\s\S]*?productCard__selectedImage,[\s\S]*?productCard__hoverImage \{[^}]*position: absolute;[^}]*inset: 0;[^}]*height: 100%;[^}]*width: 100%;[^}]*background: var\(--surface\);[^}]*object-fit: contain;[^}]*object-position: center;[^}]*padding: 3\.5%/);
   assert.match(css, /\.productCard \.productCard__media,[\s\S]*?\.productCard \.productImageWrap \{[^}]*aspect-ratio: 1 \/ 0\.82;[^}]*min-height: 0;[^}]*max-height: none;[^}]*overflow: hidden/);
+});
+
+test("light swatches gain neutral contrast without changing their actual Product color", () => {
+  assert.match(card, /isLightProductColor\(color\.hex\)/);
+  assert.match(card, /style=\{\{ backgroundColor: color\.hex \}\}/);
+  assert.match(css, /productSwatch__color--light \{[\s\S]*?border-color: rgba\(7, 7, 6, 0\.62\)/);
+  assert.match(css, /productSwatch\[aria-pressed="true"\][\s\S]*?outline: 1px solid #111/);
 });
 
 test("swatches isolate clicks and selected images crossfade without hover dependency", () => {
