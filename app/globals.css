@@ -4279,6 +4279,24 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   height: 100%;
   justify-content: center;
   width: 100%;
+  position: relative;
+}
+
+.productCard__mediaLink .productCard__primaryImage,
+.productCard__mediaLink .productCard__selectedImage,
+.productCard__mediaLink .productCard__hoverImage { position: absolute; inset: 0; box-sizing: border-box; height: 100%; width: 100%; max-height: none; max-width: none; background: var(--surface); object-fit: contain; object-position: center; padding: 3.5%; }
+.productCard__mediaLink .productCard__selectedImage,
+.productCard__mediaLink .productCard__hoverImage { opacity: 0; }
+.productCard__mediaLink .productCard__selectedImage.is-loaded { opacity: 1; transition: opacity 240ms ease; }
+
+@media (hover: hover) and (pointer: fine) {
+  .productCard__mediaLink .productCard__hoverImage { transition: opacity 280ms ease; }
+  .productCard__mediaLink:hover .productCard__hoverImage.is-loaded { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .productCard__mediaLink .productCard__selectedImage.is-loaded,
+  .productCard__mediaLink .productCard__hoverImage { transition: none; }
 }
 
 .productCard__favorite {
@@ -5081,7 +5099,11 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 
 .productCard .productCard__media,
 .productCard .productImageWrap {
+  aspect-ratio: 1 / 0.82;
+  min-height: 0;
+  max-height: none;
   margin-bottom: 0.28rem;
+  overflow: hidden;
   padding: 0.22rem;
   border-radius: 0.72rem;
 }
@@ -5124,9 +5146,13 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   display: block;
   width: 0.68rem !important;
   height: 0.68rem !important;
-  border: 0.75px solid rgba(0, 0, 0, 0.18) !important;
+  border: 1px solid rgba(7, 7, 6, 0.32) !important;
   border-radius: 999px !important;
   box-shadow: none !important;
+}
+
+.productCard .swatchesRow .productSwatch__color--light {
+  border-color: rgba(7, 7, 6, 0.62) !important;
 }
 
 .productCard .swatchesRow .productSwatch[aria-pressed="true"],

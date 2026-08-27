@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { useCart } from "@/context/cart";
 import type { Product } from "@/types/product";
@@ -9,6 +10,7 @@ import { isProductInStock } from "@/lib/products/availability";
 import { StockBadge } from "@/components/product/StockBadge";
 import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import { FallbackImage } from "@/components/ui/FallbackImage";
+import type { ProductImage } from "@/types/product";
 
 type ProductCardItem = {
   name: string;
@@ -39,6 +41,66 @@ function getInitialSize(product?: Product): string | null {
   return product?.sizes.length === 1 ? product.sizes[0]?.label ?? null : null;
 }
 
+export function isLightProductColor(hex: string): boolean {
+  const value = hex.trim().replace(/^#/, "");
+  const expanded = value.length === 3 ? value.split("").map((character) => character + character).join("") : value;
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) return false;
+  const red = Number.parseInt(expanded.slice(0, 2), 16);
+  const green = Number.parseInt(expanded.slice(2, 4), 16);
+  const blue = Number.parseInt(expanded.slice(4, 6), 16);
+  return (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255 >= 0.78;
+}
+
+/** Keeps card imagery on the canonical image/color relationship used by product data. */
+export function getProductCardImages(product: Product | undefined, selectedColorId: string | null): { primary: ProductImage | null; hover: ProductImage | null } {
+  if (!product) return { primary: null, hover: null };
+  const images = product.images.filter((image) => image.url.trim());
+  const canonicalPrimary = images.find((image) => image.isPrimary) ?? images[0] ?? null;
+  const colorImages = selectedColorId ? images.filter((image) => image.colorId === selectedColorId) : [];
+  const primary = selectedColorId ? colorImages[0] ?? canonicalPrimary : canonicalPrimary;
+  if (!primary) return { primary: null, hover: null };
+  const distinctImages = images.filter((image) => image.id !== primary.id && image.url !== primary.url);
+  const sameColorHover = primary.colorId ? distinctImages.find((image) => image.colorId === primary.colorId) : null;
+  const hover = sameColorHover ?? distinctImages[0] ?? null;
+  return { primary, hover };
+}
+
+const CARD_IMAGE_SIZES = "(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px";
+const CARD_IMAGE_TRANSITION_MS = 240;
+
+function ProductCardImages({ normalSrc, hoverSrc, alt }: { normalSrc: string; hoverSrc: string | null; alt: string }) {
+  const [displayedSrc, setDisplayedSrc] = useState(normalSrc);
+  const [requestedSrc, setRequestedSrc] = useState(normalSrc);
+  const [transitionSrc, setTransitionSrc] = useState<string | null>(null);
+  const [transitionReady, setTransitionReady] = useState(false);
+  const [loadedHoverSrc, setLoadedHoverSrc] = useState<string | null>(null);
+
+  if (normalSrc !== requestedSrc) {
+    setRequestedSrc(normalSrc);
+    setTransitionReady(false);
+    setTransitionSrc(normalSrc);
+  }
+
+  useEffect(() => {
+    if (!transitionReady || !transitionSrc) return;
+    const nextSrc = transitionSrc;
+    const timer = window.setTimeout(() => {
+      setDisplayedSrc(nextSrc);
+      setTransitionSrc(null);
+      setTransitionReady(false);
+    }, CARD_IMAGE_TRANSITION_MS);
+    return () => window.clearTimeout(timer);
+  }, [transitionReady, transitionSrc]);
+
+  return (
+    <>
+      <FallbackImage className="productCard__primaryImage" src={displayedSrc} fallbackSrc="/placeholders/product-placeholder.webp" alt={alt} width={420} height={520} sizes={CARD_IMAGE_SIZES} unoptimized />
+      {transitionSrc ? <Image className={transitionReady ? "productCard__selectedImage is-loaded" : "productCard__selectedImage"} src={transitionSrc} alt="" aria-hidden="true" width={420} height={520} sizes={CARD_IMAGE_SIZES} onLoad={(event) => { if (event.currentTarget.naturalWidth > 0) setTransitionReady(true); }} onError={() => { setTransitionSrc(null); setTransitionReady(false); }} unoptimized /> : null}
+      {hoverSrc ? <Image className={loadedHoverSrc === hoverSrc ? "productCard__hoverImage is-loaded" : "productCard__hoverImage"} src={hoverSrc} alt="" aria-hidden="true" width={420} height={520} sizes={CARD_IMAGE_SIZES} loading="lazy" onLoad={(event) => { if (event.currentTarget.naturalWidth > 0) setLoadedHoverSrc(hoverSrc); }} onError={() => { if (loadedHoverSrc === hoverSrc) setLoadedHoverSrc(null); }} unoptimized /> : null}
+    </>
+  );
+}
+
 export function ProductCard({ product, promo = false, sourceProduct }: ProductCardProps) {
   const { addItem } = useCart();
   const [selectedColorId, setSelectedColorId] = useState<string | null>(() => getInitialColorId(sourceProduct));
@@ -47,6 +109,10 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
   const requiresColorSelection = Boolean(sourceProduct && sourceProduct.colors.length > 1);
   const requiresSizeSelection = Boolean(sourceProduct && sourceProduct.sizes.length > 1);
   const isUnavailable = Boolean(sourceProduct && !isProductInStock(sourceProduct));
+  const cardImages = getProductCardImages(sourceProduct, selectedColorId);
+  const primaryImageUrl = cardImages.primary?.url ?? product.image;
+  const normalImageSrc = cloudinaryImageUrl(primaryImageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.productCard });
+  const hoverImageSrc = cardImages.hover ? cloudinaryImageUrl(cardImages.hover.url, { width: CLOUDINARY_IMAGE_WIDTHS.productCard }) : null;
 
   function handleColorSelect(colorId: string) {
     setSelectedColorId(colorId);
@@ -85,7 +151,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
         {sourceProduct ? <StockBadge product={sourceProduct} /> : null}
         {sourceProduct ? (
           <Link className="productCard__mediaLink" href={`/product/${sourceProduct.slug}`} aria-label={`View ${product.name}`}>
-            <FallbackImage src={cloudinaryImageUrl(product.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt={`${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />
+            <ProductCardImages normalSrc={normalImageSrc} hoverSrc={hoverImageSrc} alt={cardImages.primary?.alt || `${product.name} product image`} />
           </Link>
         ) : <FallbackImage src={cloudinaryImageUrl(product.image, { width: CLOUDINARY_IMAGE_WIDTHS.productCard })} fallbackSrc="/placeholders/product-placeholder.webp" alt={`${product.name} product image`} width={420} height={520} sizes="(max-width: 700px) 50vw, (max-width: 1100px) 33vw, 280px" unoptimized />}
         {sourceProduct ? <FavoriteButton className="productCard__favorite" itemType="product" itemId={sourceProduct.id} itemName={product.name} variant="card" /> : null}
@@ -109,7 +175,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
               aria-pressed={color.id === selectedColorId}
               onClick={(event) => { event.preventDefault(); event.stopPropagation(); handleColorSelect(color.id); }}
             >
-              <span className="productSwatch__color" style={{ backgroundColor: color.hex }} />
+              <span className={isLightProductColor(color.hex) ? "productSwatch__color productSwatch__color--light" : "productSwatch__color"} style={{ backgroundColor: color.hex }} />
             </button>
           )) : product.colors.map((color, index) => (
             <span
@@ -117,7 +183,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
               key={color}
               aria-hidden="true"
             >
-              <span className="productSwatch__color" style={{ backgroundColor: color }} />
+              <span className={isLightProductColor(color) ? "productSwatch__color productSwatch__color--light" : "productSwatch__color"} style={{ backgroundColor: color }} />
             </span>
           ))}
         </div>
