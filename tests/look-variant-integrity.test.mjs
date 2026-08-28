@@ -79,10 +79,10 @@ test("cart, checkout, Account and Admin render stored historical name, hex, and 
   assert.doesNotMatch(adminSerializer.slice(adminSerializer.indexOf("function toAdminOrder")), /collection\("products"\)|productSnap/);
 });
 
-test("Look Collection page renders canonical name, subtitle, and optional description distinctly", async () => {
+test("Look Collection public Hero renders canonical name and description without subtitle", async () => {
   const page = await read("app/looks/[collectionSlug]/page.tsx");
   assert.match(page, /<h1>\{collection\.name\}<\/h1>/);
-  assert.equal(page.match(/\{collection\.subtitle\}/g)?.length, 1);
-  assert.match(page, /collection\.subtitle \|\| collection\.description \? <section className="lookCollectionIntro"/);
-  assert.match(page, /<p className="lookCollectionIntro__description">\{collection\.description\}<\/p>/);
+  assert.match(page, /collection\.description \? <p>\{collection\.description\}<\/p> : null/);
+  assert.doesNotMatch(page, /collection\.subtitle/);
+  assert.equal(page.match(/\{collection\.description\}/g)?.length, 1);
 });
