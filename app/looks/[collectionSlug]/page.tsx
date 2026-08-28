@@ -38,10 +38,12 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
           />
           <div className="lookCollectionHero__overlay">
             <h1>{collection.name}</h1>
-            <p>{collection.subtitle}</p>
           </div>
         </header>
-        {collection.description ? <section className="lookCollectionDescription" aria-label="Collection description"><p>{collection.description}</p></section> : null}
+        {collection.subtitle || collection.description ? <section className="lookCollectionIntro" aria-label="Collection introduction">
+          {collection.subtitle ? <p className="lookCollectionIntro__subtitle">{collection.subtitle}</p> : null}
+          {collection.description ? <p className="lookCollectionIntro__description">{collection.description}</p> : null}
+        </section> : null}
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
           {looks.length ? looks.map((look) => {
             const activeProducts = look.products.flatMap((entry) => entry.product ? [entry.product] : []);

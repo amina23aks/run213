@@ -255,12 +255,22 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .shopFilters button:hover { transform: translateY(-1px); }
 .shopProducts { margin-top: clamp(1.05rem, 2.4vw, 1.6rem); }
 .shopGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(10.75rem, 100%), 1fr)); gap: clamp(1rem, 2vw, 1.35rem); }
+.ensembleGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(0.85rem, 2vw, 1.35rem); }
+.ensembleCard { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); }
+.ensembleCard__image { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: var(--surface-soft); }
+.ensembleCard__image img { object-fit: cover; transition: transform 220ms ease; }
+.ensembleCard:hover .ensembleCard__image img { transform: scale(1.018); }
+.ensembleCard__favorite { position: absolute; top: 0.65rem; right: 0.65rem; z-index: 2; }
+.ensembleCard__content { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 0.65rem; padding: 0.75rem 0.85rem; }
+.ensembleCard__content a { overflow: hidden; font-size: 0.78rem; font-weight: 950; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.ensembleCard__content strong { flex: 0 0 auto; font-size: 0.74rem; }
 .shopLoadMore { display: flex; justify-content: center; margin-top: clamp(1.5rem, 4vw, 2.4rem); }
 .shopLoadMore button { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.75rem; border: 1px solid var(--foreground); border-radius: 0.65rem; background: rgba(255, 250, 240, 0.82); color: var(--foreground); padding: 0.75rem 1.3rem; font-size: 0.72rem; font-weight: 950; line-height: 1; text-transform: uppercase; transition: background 160ms ease, transform 160ms ease; }
 .shopLoadMore button:hover { background: var(--lime); transform: translateY(-2px); }
 
 @media (min-width: 1120px) {
   .shopGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ensembleGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 @media (max-width: 480px) {
@@ -5056,34 +5066,38 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   left: clamp(1.25rem, 4vw, 4rem);
   bottom: clamp(1.25rem, 4vw, 3.5rem);
   z-index: 2;
-  max-width: min(34rem, 72vw);
+  max-width: calc(100% - clamp(2.5rem, 8vw, 8rem));
   color: #fff;
 }
 
 .lookCollectionHero__overlay h1 {
-  max-width: 13ch;
+  max-width: 100%;
   margin: 0;
   font-family: var(--font-display), var(--font-sans), sans-serif;
-  font-size: clamp(2rem, 5vw, 4.8rem);
-  line-height: 0.95;
+  font-size: clamp(1.8rem, 4.2vw, 4rem);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1;
   text-transform: uppercase;
   overflow-wrap: normal;
+  white-space: nowrap;
 }
 
-.lookCollectionHero__overlay p {
-  max-width: 34rem;
-  margin: 0.75rem 0 0;
-  font-size: clamp(1rem, 1.8vw, 1.35rem);
-  font-weight: 750;
-  line-height: 1.25;
-}
-
-.lookCollectionDescription {
+.lookCollectionIntro {
   width: min(100% - clamp(1rem, 4vw, 3rem), 72rem);
   margin: 0 auto clamp(1.5rem, 3vw, 2.5rem);
 }
 
-.lookCollectionDescription p {
+.lookCollectionIntro__subtitle {
+  max-width: 48rem;
+  margin: 0 0 0.55rem;
+  color: var(--foreground);
+  font-size: clamp(1rem, 1.7vw, 1.3rem);
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.lookCollectionIntro__description {
   max-width: 68ch;
   margin: 0;
   color: var(--muted);
@@ -5108,8 +5122,8 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   }
 
   .lookCollectionHero__overlay h1 {
-    max-width: 12ch;
-    font-size: clamp(2rem, 12vw, 3.4rem);
+    max-width: 100%;
+    font-size: clamp(1.55rem, 8vw, 2.5rem);
   }
 }
 

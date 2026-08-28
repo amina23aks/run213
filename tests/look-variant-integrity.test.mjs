@@ -83,7 +83,6 @@ test("Look Collection page renders canonical name, subtitle, and optional descri
   const page = await read("app/looks/[collectionSlug]/page.tsx");
   assert.match(page, /<h1>\{collection\.name\}<\/h1>/);
   assert.equal(page.match(/\{collection\.subtitle\}/g)?.length, 1);
-  assert.match(page, /collection\.description \? <section className="lookCollectionDescription"/);
-  assert.match(page, /<p>\{collection\.description\}<\/p>/);
-  assert.doesNotMatch(page, /collection\.description\s*\|\|\s*collection\.subtitle|collection\.subtitle\s*\|\|\s*collection\.description/);
+  assert.match(page, /collection\.subtitle \|\| collection\.description \? <section className="lookCollectionIntro"/);
+  assert.match(page, /<p className="lookCollectionIntro__description">\{collection\.description\}<\/p>/);
 });

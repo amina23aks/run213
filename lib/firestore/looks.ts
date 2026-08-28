@@ -38,6 +38,24 @@ export async function listHomepageLooks(limit = 20): Promise<Look[]> {
   }
 }
 
+export async function listActiveLooks(limit = 20): Promise<Look[]> {
+  noStore();
+  if (!isConfigured()) return [];
+  try {
+    const { getAdminDb } = await import("@/lib/firebase/admin");
+    const snapshot = await getAdminDb().collection(LOOKS).where("status", "==", "active").limit(READ_LIMIT).get();
+    const uniqueLooks = new Map<string, Look>();
+    snapshot.docs.forEach((doc) => {
+      const look = parseLook(doc.id, doc.data());
+      if (look && !uniqueLooks.has(look.id)) uniqueLooks.set(look.id, look);
+    });
+    return [...uniqueLooks.values()].sort(comparePublicLooks).slice(0, limit);
+  } catch (error) {
+    warnLooks("Active looks query failed.", error);
+    return [];
+  }
+}
+
 export async function getActiveLookCollectionBySlug(slug: string): Promise<LookCollection | null> {
   noStore();
   if (!isConfigured()) return null;
@@ -167,6 +185,10 @@ function compareHomepageLooks(a: Look, b: Look): number {
   return (a.homepageFigureOrder ?? a.sortOrder) - (b.homepageFigureOrder ?? b.sortOrder)
     || a.sortOrder - b.sortOrder
     || a.id.localeCompare(b.id);
+}
+
+function comparePublicLooks(a: Look, b: Look): number {
+  return a.sortOrder - b.sortOrder || a.id.localeCompare(b.id);
 }
 
 function isConfigured() { return getMissingFirebaseAdminEnv().length === 0; }
