@@ -13,6 +13,12 @@ export const dynamic = "force-dynamic";
 
 type LooksCollectionPageProps = { params: Promise<{ collectionSlug: string }> };
 
+const launchCollectionDescriptions: Record<string, string> = {
+  "campus-mode": "Student-ready looks built for class, campus and everyday movement.",
+  "daily-motion": "Versatile streetwear looks made for the city, work and everyday movement.",
+  "warm-days": "Lightweight outfits for warm days, relaxed movement and everyday comfort.",
+};
+
 export default async function LooksCollectionPage({ params }: LooksCollectionPageProps) {
   const { collectionSlug } = await params;
   const collection = await getActiveLookCollectionBySlug(collectionSlug);
@@ -20,6 +26,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
   if (!collection) notFound();
 
   const looks = await listActiveLooksByCollection(collection);
+  const publicDescription = launchCollectionDescriptions[collection.slug] ?? collection.description;
 
   return (
     <>
@@ -38,7 +45,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
           />
           <div className="lookCollectionHero__overlay">
             <h1>{collection.name}</h1>
-            {collection.description ? <p>{collection.description}</p> : null}
+            {publicDescription ? <p>{publicDescription}</p> : null}
           </div>
         </header>
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
@@ -52,7 +59,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                 <div className="lookEditorialContent">
                   <h2>{look.name}</h2>
                   <p>{look.description}</p>
-                  <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="You save {amount} with this Look." />
+                  <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="Save {amount} when you buy the complete Look." />
                   <div className="lookMiniProducts">
                     {activeProducts.slice(0, 4).map((product) => {
                       const image = product.images[0];

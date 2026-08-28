@@ -14,7 +14,7 @@ export function getLookPromoState({ priceDzd, compareAtPriceDzd, discountPercent
   const hasValidCompareAt = typeof compareAtPriceDzd === "number" && Number.isFinite(compareAtPriceDzd) && compareAtPriceDzd > priceDzd;
   const hasValidDiscount = typeof discountPercent === "number" && Number.isFinite(discountPercent) && discountPercent > 0;
   const isValidPromo = isPromo === true && hasValidCompareAt && hasValidDiscount;
-  const savingsDzd = isValidPromo ? Math.max((compareAtPriceDzd ?? 0) - priceDzd, 0) : 0;
+  const savingsDzd = hasValidCompareAt ? Math.max((compareAtPriceDzd ?? 0) - priceDzd, 0) : 0;
   return { isValidPromo, savingsDzd, discountPercent: isValidPromo ? Math.round(discountPercent ?? 0) : 0 };
 }
 
