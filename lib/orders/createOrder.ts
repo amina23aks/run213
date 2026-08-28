@@ -252,9 +252,8 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById, looks
   const baseItems = input.items.map((item) => {
     const product = products.get(item.productId);
     if (!product) throw new OrderCreationError("product_unavailable", "One product in your cart is no longer available.", 409);
-    const selectedColor = item.selectedColor ?? null;
     const selectedSize = item.selectedSize ?? null;
-    validateVariant(product, selectedColor, selectedSize);
+    const selectedColor = validateVariant(product, item.selectedColorId ?? null, item.selectedColor ?? null, selectedSize);
     validateQuantity(product, item.quantity);
     const canonicalLook = item.lookGroupId && item.lookId ? looks.get(item.lookId) : null;
     return {
@@ -262,10 +261,11 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById, looks
       slug: product.slug,
       name: product.name,
       category: product.category,
-      image: product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
+      image: product.images.find((image) => image.colorId === selectedColor?.id)?.url ?? product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
       selectedSize,
-      selectedColor,
-      selectedColorHex: selectedColor ? product.colors.find((color) => color.name === selectedColor)?.hex ?? null : null,
+      selectedColorId: selectedColor?.id ?? null,
+      selectedColor: selectedColor?.name ?? null,
+      selectedColorHex: selectedColor?.hex ?? null,
       quantity: item.quantity,
       unitPriceDzd: product.priceDzd,
       lineTotalDzd: item.lookGroupId ? 0 : product.priceDzd * item.quantity,
@@ -368,11 +368,15 @@ function validateLookGroups(input: CreateOrderRequest, products: ProductById, lo
   }
 }
 
-function validateVariant(product: Product, selectedColor: string | null, selectedSize: string | null): void {
-  if (product.colors.length > 0 && !selectedColor) throw new OrderCreationError("invalid_color", `Choose a color for ${product.name}.`, 400);
-  if (selectedColor && !product.colors.some((color) => color.name === selectedColor)) throw new OrderCreationError("invalid_color", `Choose a valid color for ${product.name}.`, 400);
+function validateVariant(product: Product, selectedColorId: string | null, legacyColorName: string | null, selectedSize: string | null): Product["colors"][number] | null {
+  const selectedColor = selectedColorId
+    ? product.colors.find((color) => color.id === selectedColorId)
+    : legacyColorName ? product.colors.find((color) => color.name === legacyColorName) : null;
+  if (product.colors.length > 0 && !selectedColor) throw new OrderCreationError("invalid_color", `Choose a valid color for ${product.name}.`, 400);
+  if (!product.colors.length && (selectedColorId || legacyColorName)) throw new OrderCreationError("invalid_color", `Choose a valid color for ${product.name}.`, 400);
   if (product.sizes.length > 0 && !selectedSize) throw new OrderCreationError("invalid_size", `Choose a size for ${product.name}.`, 400);
   if (selectedSize && !product.sizes.some((size) => size.label === selectedSize)) throw new OrderCreationError("invalid_size", `Choose a valid size for ${product.name}.`, 400);
+  return selectedColor ?? null;
 }
 
 function validateQuantity(product: Product, quantity: number): void {

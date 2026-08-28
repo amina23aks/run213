@@ -5078,6 +5078,20 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   line-height: 1.25;
 }
 
+.lookCollectionDescription {
+  width: min(100% - clamp(1rem, 4vw, 3rem), 72rem);
+  margin: 0 auto clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.lookCollectionDescription p {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.9rem, 1.3vw, 1.05rem);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
 .looksEditorialList {
   margin-top: 0 !important;
 }
@@ -6011,6 +6025,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .orderSuccessNotice p { margin: .15rem 0 0; font-weight: 750; }
 .orderSuccessNotice button { position: absolute; right: .65rem; top: .45rem; border: 1px solid rgba(0,0,0,.14); border-radius: 999px; background: #fbf8f0; width: 1.55rem; height: 1.55rem; font-weight: 950; }
 .inlineSwatch { display: inline-block; flex: 0 0 auto; width: .8rem; height: .8rem; border-radius: 999px; border: 1px solid rgba(0,0,0,.22); vertical-align: middle; }
+.orderVariantColor { display: inline-flex; align-items: center; gap: .3rem; }
 .customerOrderItem small, .adminOrderItem small { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
 .lookOrderGroup { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: .8rem; border: 1px solid var(--border); border-radius: 1rem; background: rgba(255,250,240,.62); padding: .75rem; margin: .65rem 0; }
 .lookOrderGroup > img, .lookOrderGroup > span { width: 5rem; height: 5rem; border-radius: .85rem; object-fit: cover; background: var(--surface-soft); }

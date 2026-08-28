@@ -14,6 +14,8 @@ const MIN_QUANTITY = 1;
 type AddToCartInput = {
   product: Product;
   selectedSize?: string | null;
+  selectedColorId?: string | null;
+  /** Legacy compatibility only; new callers select by canonical color ID. */
   selectedColor?: string | null;
   quantity?: number;
 };
@@ -32,7 +34,7 @@ type LookGroupInput = {
   items: AddToCartInput[];
 };
 
-type LineKeyInput = Pick<CartItem, "productId" | "selectedSize" | "selectedColor"> & Partial<Pick<CartItem, "lookGroupId">>;
+type LineKeyInput = Pick<CartItem, "productId" | "selectedSize" | "selectedColor"> & Partial<Pick<CartItem, "lookGroupId" | "selectedColorId">>;
 
 type CartContextValue = {
   items: CartItem[];
@@ -51,7 +53,7 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 function getLineKey(item: LineKeyInput): string {
-  return [item.lookGroupId ?? "single", item.productId, item.selectedSize ?? "no-size", item.selectedColor ?? "no-color"].join("::");
+  return [item.lookGroupId ?? "single", item.productId, item.selectedSize ?? "no-size", item.selectedColorId ?? item.selectedColor ?? "no-color"].join("::");
 }
 
 function clampQuantity(quantity: number, maxQuantity?: number): number {
@@ -108,7 +110,9 @@ function normalizeStoredItems(value: string | null): CartItem[] {
         priceDzd: candidate.priceDzd,
         image: candidate.image,
         selectedSize: typeof candidate.selectedSize === "string" ? candidate.selectedSize : null,
+        selectedColorId: typeof candidate.selectedColorId === "string" ? candidate.selectedColorId : null,
         selectedColor: typeof candidate.selectedColor === "string" ? candidate.selectedColor : null,
+        selectedColorHex: typeof candidate.selectedColorHex === "string" ? candidate.selectedColorHex : null,
         quantity: clampQuantity(candidate.quantity, maxQuantity),
         ...(typeof maxQuantity === "number" ? { maxQuantity } : {}),
         ...(typeof candidate.lookGroupId === "string" ? { lookGroupId: candidate.lookGroupId } : {}),
@@ -149,11 +153,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (maxQuantity === 0) return false;
 
     const selectedSize = input.selectedSize ?? null;
-    const selectedColor = input.selectedColor ?? null;
+    const canonicalColor = input.selectedColorId
+      ? input.product.colors.find((color) => color.id === input.selectedColorId)
+      : input.selectedColor ? input.product.colors.find((color) => color.name === input.selectedColor) : null;
+    const selectedColorId = canonicalColor?.id ?? null;
+    const selectedColor = canonicalColor?.name ?? null;
+    const selectedColorHex = canonicalColor?.hex ?? null;
     if (!hasRequiredSelections(input.product, selectedSize, selectedColor)) return false;
 
     const quantity = clampQuantity(input.quantity ?? MIN_QUANTITY, maxQuantity);
-    const lineKey = getLineKey({ productId: input.product.id, selectedSize, selectedColor });
+    const lineKey = getLineKey({ productId: input.product.id, selectedSize, selectedColorId, selectedColor });
 
     setItems((currentItems) => {
       const existingItem = currentItems.find((item) => getLineKey(item) === lineKey);
@@ -165,9 +174,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
             slug: input.product.slug,
             name: input.product.name,
             priceDzd: input.product.priceDzd,
-            image: input.product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
+            image: input.product.images.find((image) => image.colorId === selectedColorId)?.url ?? input.product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
             selectedSize,
+            selectedColorId,
             selectedColor,
+            selectedColorHex,
             quantity,
             ...(typeof maxQuantity === "number" ? { maxQuantity } : {}),
           },
@@ -192,16 +203,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const maxQuantity = getMaxQuantity(entry.product);
       if (maxQuantity === 0) return false;
       const selectedSize = entry.selectedSize ?? null;
-      const selectedColor = entry.selectedColor ?? null;
+      const canonicalColor = entry.selectedColorId
+        ? entry.product.colors.find((color) => color.id === entry.selectedColorId)
+        : entry.selectedColor ? entry.product.colors.find((color) => color.name === entry.selectedColor) : null;
+      const selectedColorId = canonicalColor?.id ?? null;
+      const selectedColor = canonicalColor?.name ?? null;
+      const selectedColorHex = canonicalColor?.hex ?? null;
       if (!hasRequiredSelections(entry.product, selectedSize, selectedColor)) return false;
       preparedItems.push({
         productId: entry.product.id,
         slug: entry.product.slug,
         name: entry.product.name,
         priceDzd: entry.product.priceDzd,
-        image: entry.product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
+        image: entry.product.images.find((image) => image.colorId === selectedColorId)?.url ?? entry.product.images[0]?.url ?? "/placeholders/product-placeholder.webp",
         selectedSize,
+        selectedColorId,
         selectedColor,
+        selectedColorHex,
         quantity: clampQuantity(entry.quantity ?? MIN_QUANTITY, maxQuantity),
         ...(typeof maxQuantity === "number" ? { maxQuantity } : {}),
         lookGroupId: input.group.id,

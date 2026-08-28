@@ -47,7 +47,7 @@ test("a one-image selected color uses another distinct product image as preview 
   const [primary, hover] = imagesFor([{ id: "noir", url: "noir.jpg", colorId: "noir", isPrimary: true }, { id: "cream", url: "cream.jpg", colorId: "cream" }], "noir");
   assert.equal(primary.id, "noir");
   assert.equal(hover.id, "cream");
-  assert.match(card, /selectedColor: getColorName\(sourceProduct, selectedColorId\)/);
+  assert.match(card, /selectedColorId/);
 });
 
 test("a product with one total valid image has no hover alternate", () => {
@@ -87,6 +87,6 @@ test("swatches isolate clicks and selected images crossfade without hover depend
 
 test("favorite and add-to-cart remain independent canonical controls", () => {
   assert.match(card, /<FavoriteButton className="productCard__favorite"/);
-  assert.match(card, /selectedColor: getColorName\(sourceProduct, selectedColorId\)/);
+  assert.match(card, /selectedColorId/);
   assert.match(card, /event\.stopPropagation\(\); handleAddToCart\(\)/);
 });

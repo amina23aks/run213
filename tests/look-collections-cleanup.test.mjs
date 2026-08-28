@@ -47,8 +47,7 @@ test("Look color selection keys thumbnails by colorId while preserving the edito
   const source = await read("components/look/LookDetailClient.tsx");
   assert.match(source, /product\.images\.find\(\(image\) => image\.colorId === selectedColorId\)/);
   assert.match(source, /colorId: color\.id/);
-  assert.match(source, /product\.colors\.find\(\(color\) => color\.id === state\.colorId\)\?\.name/);
-  assert.match(source, /preparedItems\.push\(\{ product, selectedColor,/);
+  assert.match(source, /preparedItems\.push\(\{ product, selectedColorId: state\.colorId,/);
   assert.match(source, /addLookGroup\(/);
   assert.match(source, /src=\{cloudinaryImageUrl\(look\.heroImage\.url/);
   assert.equal(source.match(/src=\{cloudinaryImageUrl\(look\.heroImage\.url/g)?.length, 1);

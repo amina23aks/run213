@@ -1,7 +1,7 @@
 import type { CartItem } from "@/types/cart";
 
 type CartVariantDisplayProps = {
-  item: Pick<CartItem, "selectedColor" | "selectedSize">;
+  item: Pick<CartItem, "selectedColor" | "selectedColorHex" | "selectedSize">;
 };
 
 const COLOR_HEX_BY_NAME: Record<string, string> = {
@@ -13,8 +13,8 @@ const COLOR_HEX_BY_NAME: Record<string, string> = {
   white: "#ffffff",
 };
 
-function getColorDotStyle(colorName: string): { backgroundColor: string } {
-  return { backgroundColor: COLOR_HEX_BY_NAME[colorName.toLowerCase()] ?? colorName };
+function getColorDotStyle(colorName: string, colorHex?: string | null): { backgroundColor: string } {
+  return { backgroundColor: colorHex ?? COLOR_HEX_BY_NAME[colorName.toLowerCase()] ?? "transparent" };
 }
 
 export function CartVariantDisplay({ item }: CartVariantDisplayProps) {
@@ -22,7 +22,7 @@ export function CartVariantDisplay({ item }: CartVariantDisplayProps) {
 
   return (
     <div className="cartVariantDisplay" aria-label="Selected variant">
-      {item.selectedColor ? <span className="cartVariantDisplay__color" style={getColorDotStyle(item.selectedColor)} aria-label={item.selectedColor} title={item.selectedColor} /> : null}
+      {item.selectedColor ? <><span className="cartVariantDisplay__color" style={getColorDotStyle(item.selectedColor, item.selectedColorHex)} aria-label={`Color ${item.selectedColor}`} title={item.selectedColor} /><span>{item.selectedColor}</span></> : null}
       {item.selectedSize ? <span className="cartVariantDisplay__size">{item.selectedSize}</span> : null}
     </div>
   );

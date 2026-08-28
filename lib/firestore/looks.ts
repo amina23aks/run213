@@ -26,7 +26,12 @@ export async function listHomepageLooks(limit = 20): Promise<Look[]> {
   try {
     const { getAdminDb } = await import("@/lib/firebase/admin");
     const snapshot = await getAdminDb().collection(LOOKS).where("status", "==", "active").where("showAsHomepageFigure", "==", true).limit(READ_LIMIT).get();
-    return snapshot.docs.map((doc) => parseLook(doc.id, doc.data())).filter((item): item is Look => item !== null).sort((a, b) => (a.homepageFigureOrder ?? a.sortOrder) - (b.homepageFigureOrder ?? b.sortOrder)).slice(0, limit);
+    const uniqueLooks = new Map<string, Look>();
+    snapshot.docs.forEach((doc) => {
+      const look = parseLook(doc.id, doc.data());
+      if (look && !uniqueLooks.has(look.id)) uniqueLooks.set(look.id, look);
+    });
+    return [...uniqueLooks.values()].sort(compareHomepageLooks).slice(0, limit);
   } catch (error) {
     warnLooks("Homepage looks query failed.", error);
     return [];
@@ -156,6 +161,12 @@ function chunkIds(ids: string[], size: number): string[][] {
   const chunks: string[][] = [];
   for (let index = 0; index < ids.length; index += size) chunks.push(ids.slice(index, index + size));
   return chunks;
+}
+
+function compareHomepageLooks(a: Look, b: Look): number {
+  return (a.homepageFigureOrder ?? a.sortOrder) - (b.homepageFigureOrder ?? b.sortOrder)
+    || a.sortOrder - b.sortOrder
+    || a.id.localeCompare(b.id);
 }
 
 function isConfigured() { return getMissingFirebaseAdminEnv().length === 0; }

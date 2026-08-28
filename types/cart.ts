@@ -5,7 +5,9 @@ export type CartItem = {
   priceDzd: number;
   image: string;
   selectedSize: string | null;
+  selectedColorId?: string | null;
   selectedColor: string | null;
+  selectedColorHex?: string | null;
   quantity: number;
   maxQuantity?: number;
   lookGroupId?: string;

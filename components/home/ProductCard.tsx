@@ -32,11 +32,6 @@ function getInitialColorId(product?: Product): string | null {
   return product?.colors.length === 1 ? product.colors[0]?.id ?? null : null;
 }
 
-function getColorName(product: Product | undefined, colorId: string | null): string | null {
-  if (!product || !colorId) return null;
-  return product.colors.find((color) => color.id === colorId)?.name ?? null;
-}
-
 function getInitialSize(product?: Product): string | null {
   return product?.sizes.length === 1 ? product.sizes[0]?.label ?? null : null;
 }
@@ -140,7 +135,7 @@ export function ProductCard({ product, promo = false, sourceProduct }: ProductCa
       return;
     }
 
-    const wasAdded = addItem({ product: sourceProduct, selectedColor: getColorName(sourceProduct, selectedColorId), selectedSize, quantity: 1 });
+    const wasAdded = addItem({ product: sourceProduct, selectedColorId, selectedSize, quantity: 1 });
     setHelperMessage(wasAdded ? "Added to cart." : "This product is unavailable.");
   }
 

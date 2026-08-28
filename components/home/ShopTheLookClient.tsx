@@ -29,7 +29,7 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   const isPausedRef = useRef(false);
   const isUserPausedRef = useRef(false);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const renderedFigures = useMemo(() => hasOverflow ? [...figures, ...figures] : figures, [figures, hasOverflow]);
+  const logicalFigures = useMemo(() => [...new Map(figures.map((figure) => [figure.id, figure])).values()], [figures]);
 
   const clearResetTimer = useCallback(() => {
     if (resetTimerRef.current === null) return;
@@ -48,12 +48,11 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
   const updateScrollState = useCallback(() => {
     const row = rowRef.current;
     if (!row) return;
-    const naturalWidth = hasOverflow ? row.scrollWidth / 2 : row.scrollWidth;
-    const overflow = naturalWidth > row.clientWidth + 2;
+    const overflow = row.scrollWidth > row.clientWidth + 2;
     setHasOverflow(overflow);
     setCanScrollPrev(overflow && row.scrollLeft > 2);
     setCanScrollNext(overflow);
-  }, [hasOverflow]);
+  }, []);
 
   const pauseAfterInteraction = useCallback(() => {
     isUserPausedRef.current = true;
@@ -88,21 +87,21 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
       if (rafTwo !== null) window.cancelAnimationFrame(rafTwo);
       window.removeEventListener("resize", updateScrollState);
     };
-  }, [figures.length, updateScrollState]);
+  }, [logicalFigures.length, updateScrollState]);
 
   useEffect(() => {
-    if (!figures.length || !hasOverflow || prefersReducedMotion) return undefined;
+    if (!logicalFigures.length || !hasOverflow || prefersReducedMotion) return undefined;
     const interval = window.setInterval(() => {
       const row = rowRef.current;
       if (!row || document.hidden || isPausedRef.current || isUserPausedRef.current) return;
-      const resetPoint = row.scrollWidth / 2;
+      const resetPoint = row.scrollWidth - row.clientWidth;
       const step = window.innerWidth < 700 ? MOBILE_STEP_PX : DESKTOP_STEP_PX;
-      if (resetPoint <= row.clientWidth + 2) return;
-      if (row.scrollLeft >= resetPoint) row.scrollLeft -= resetPoint;
+      if (resetPoint <= 2) return;
+      if (row.scrollLeft >= resetPoint - 1) row.scrollLeft = 0;
       else row.scrollLeft += step;
     }, AUTO_TICK_MS);
     return () => window.clearInterval(interval);
-  }, [figures.length, hasOverflow, prefersReducedMotion]);
+  }, [logicalFigures.length, hasOverflow, prefersReducedMotion]);
 
   useEffect(() => () => {
     clearResetTimer();
@@ -128,23 +127,19 @@ export function ShopTheLookClient({ figures, collections }: ShopTheLookClientPro
         >
           {hasOverflow ? <button className="figure-nav figure-nav--prev" type="button" aria-label="Scroll to previous looks" disabled={!canScrollPrev} onClick={() => scrollByFigure(-1)}>←</button> : null}
           <div className="figure-row" aria-label="Shop the look figures" ref={rowRef} onScroll={updateScrollState} onPointerDown={pauseAfterInteraction} onWheel={pauseAfterInteraction}>
-            {renderedFigures.map((figure, renderedIndex) => {
-              const originalIndex = renderedIndex % Math.max(figures.length, 1);
-              const isDuplicate = renderedIndex >= figures.length;
+            {logicalFigures.map((figure, originalIndex) => {
               const promo = getLookPromoState(figure);
               const displayTitle = `${String(originalIndex + 1).padStart(2, "0")}. ${figure.name}`;
               return (
                 <Link
-                  aria-hidden={isDuplicate || undefined}
                   className={originalIndex === highlightedFigure ? "figure-card is-active" : "figure-card"}
                   href={getLookHref(figure)}
-                  key={`${figure.id}-${isDuplicate ? "duplicate" : "original"}`}
+                  key={figure.id}
                   onFocus={() => { setHighlightedFigure(originalIndex); }}
                   onBlur={() => { setHighlightedFigure(null); }}
                   onMouseEnter={() => { setHighlightedFigure(originalIndex); }}
                   onMouseLeave={() => { setHighlightedFigure(null); }}
                   onClick={pauseAfterInteraction}
-                  tabIndex={isDuplicate ? -1 : undefined}
                   title={displayTitle}
                 >
                   <span className="figure-card__title">{displayTitle}</span>

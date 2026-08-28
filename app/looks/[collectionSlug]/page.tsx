@@ -41,6 +41,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
             <p>{collection.subtitle}</p>
           </div>
         </header>
+        {collection.description ? <section className="lookCollectionDescription" aria-label="Collection description"><p>{collection.description}</p></section> : null}
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
           {looks.length ? looks.map((look) => {
             const activeProducts = look.products.flatMap((entry) => entry.product ? [entry.product] : []);

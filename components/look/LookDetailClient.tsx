@@ -62,7 +62,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
 
   function addSelectedLook() {
     const invalid = new Set<string>();
-    const preparedItems: Array<{ product: Product; selectedColor: string | null; selectedSize: string | null; quantity: number }> = [];
+    const preparedItems: Array<{ product: Product; selectedColorId: string | null; selectedSize: string | null; quantity: number }> = [];
 
     for (const { productId, product } of look.products) {
       const state = selected[productId];
@@ -75,8 +75,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         invalid.add(productId);
         continue;
       }
-      const selectedColor = state.colorId ? product.colors.find((color) => color.id === state.colorId)?.name ?? null : null;
-      preparedItems.push({ product, selectedColor, selectedSize: state.size, quantity: 1 });
+      preparedItems.push({ product, selectedColorId: state.colorId, selectedSize: state.size, quantity: 1 });
     }
 
     if (!hasValidLookPrice) {
