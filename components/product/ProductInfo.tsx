@@ -15,7 +15,7 @@ type ProductInfoProps = {
 
 export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
   const { addItem } = useCart();
-  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(product.colors.length === 1 ? product.colors[0]?.id ?? null : null);
   const [selectedSize, setSelectedSize] = useState<string | null>(product.sizes.length === 1 ? product.sizes[0]?.label ?? null : null);
   const [quantity, setQuantity] = useState(1);
   const [cartMessage, setCartMessage] = useState<string | null>(null);
@@ -70,8 +70,7 @@ export function ProductInfo({ product, onColorIdChange }: ProductInfoProps) {
       return;
     }
 
-    const selectedColor = product.colors.find((color) => color.id === selectedColorId)?.name ?? null;
-    const wasAdded = addItem({ product, selectedColor, selectedSize, quantity });
+    const wasAdded = addItem({ product, selectedColorId, selectedSize, quantity });
     setCartMessage(wasAdded ? "Added to cart." : typeof maxQuantity === "number" ? `Only ${maxQuantity} available.` : "This product is currently unavailable.");
   }
 

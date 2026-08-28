@@ -39,6 +39,7 @@ export const createOrderRequestSchema = z.object({
   items: z.array(z.object({
     productId: z.string().trim().min(1).max(120),
     selectedSize: z.string().trim().min(1).max(24).nullable().optional(),
+    selectedColorId: z.string().trim().min(1).max(120).nullable().optional(),
     selectedColor: z.string().trim().min(1).max(40).nullable().optional(),
     quantity: z.number().int().min(1).max(20),
     lookGroupId: z.string().trim().min(1).max(160).nullable().optional(),

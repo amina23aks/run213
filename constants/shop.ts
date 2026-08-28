@@ -1,6 +1,7 @@
 import type { ProductCategory } from "@/types/product";
 
 export type ShopCategoryFilter = ProductCategory | "all";
+export type ShopMode = "products" | "ensembles";
 export type ShopCategoryGroup = "tops" | "bottoms" | "accessories";
 
 export const SHOP_CATEGORY_FILTERS: { label: string; value: ShopCategoryFilter }[] = [

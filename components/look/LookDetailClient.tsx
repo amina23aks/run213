@@ -14,7 +14,7 @@ import { isProductInStock } from "@/lib/products/availability";
 
 type SelectedItem = {
   enabled: boolean;
-  color: string | null;
+  colorId: string | null;
   size: string | null;
 };
 
@@ -27,6 +27,10 @@ function isUnavailable(product: Product | null) {
 function needsColor(product: Product) { return product.colors.length > 0; }
 function needsSize(product: Product) { return product.sizes.length > 0; }
 
+export function getLookItemImage(product: Product, selectedColorId: string | null) {
+  return (selectedColorId ? product.images.find((image) => image.colorId === selectedColorId) : null) ?? product.images[0] ?? null;
+}
+
 export function LookDetailClient({ look }: { look: LookWithProducts }) {
   const { addLookGroup } = useCart();
   const [message, setMessage] = useState<string | null>(null);
@@ -34,7 +38,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   const itemRefs = useRef<Record<string, HTMLElement | null>>({});
   const [selected, setSelected] = useState<Record<string, SelectedItem>>(() => Object.fromEntries(look.products.map(({ productId, product }) => [productId, {
     enabled: !isUnavailable(product),
-    color: product?.colors.length === 1 ? product.colors[0]?.name ?? null : null,
+    colorId: product?.colors.length === 1 ? product.colors[0]?.id ?? null : null,
     size: product?.sizes.length === 1 ? product.sizes[0]?.label ?? null : null,
   }])));
 
@@ -58,7 +62,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
 
   function addSelectedLook() {
     const invalid = new Set<string>();
-    const preparedItems: Array<{ product: Product; selectedColor: string | null; selectedSize: string | null; quantity: number }> = [];
+    const preparedItems: Array<{ product: Product; selectedColorId: string | null; selectedSize: string | null; quantity: number }> = [];
 
     for (const { productId, product } of look.products) {
       const state = selected[productId];
@@ -67,11 +71,11 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         invalid.add(productId);
         continue;
       }
-      if ((needsColor(product) && !state.color) || (needsSize(product) && !state.size)) {
+      if ((needsColor(product) && !state.colorId) || (needsSize(product) && !state.size)) {
         invalid.add(productId);
         continue;
       }
-      preparedItems.push({ product, selectedColor: state.color, selectedSize: state.size, quantity: 1 });
+      preparedItems.push({ product, selectedColorId: state.colorId, selectedSize: state.size, quantity: 1 });
     }
 
     if (!hasValidLookPrice) {
@@ -118,12 +122,13 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         {hasValidLookPrice ? <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="You save {amount} when you buy the complete Look." /> : <div className="lookTotalBar"><span>Look total</span><strong>Unavailable</strong></div>}
         <div className="lookItemsList">
           {look.products.map(({ productId, product }) => {
-            const state = selected[productId] ?? { enabled: false, color: null, size: null };
+            const state = selected[productId] ?? { enabled: false, colorId: null, size: null };
             const unavailable = isUnavailable(product);
             const isInvalid = invalidIds.has(productId);
+            const itemImage = product ? getLookItemImage(product, state.colorId) : null;
             return (
               <article ref={(node) => { itemRefs.current[productId] = node; }} className={unavailable || !state.enabled ? "lookItem is-muted" : isInvalid ? "lookItem is-invalid" : "lookItem"} key={productId}>
-                {product ? <Image src={cloudinaryImageUrl(product.images[0]?.url ?? "/placeholders/product-placeholder.webp", { width: CLOUDINARY_IMAGE_WIDTHS.productThumbnail })} alt={product.images[0]?.alt || product.name} width={100} height={100} sizes="100px" unoptimized /> : <div className="lookMissingProduct">Unavailable</div>}
+                {product ? <Image src={cloudinaryImageUrl(itemImage?.url ?? "/placeholders/product-placeholder.webp", { width: CLOUDINARY_IMAGE_WIDTHS.productThumbnail })} alt={itemImage?.alt || product.name} width={100} height={100} sizes="100px" unoptimized /> : <div className="lookMissingProduct">Unavailable</div>}
                 <div>
                   <div className="lookItemHeader">
                     <div>{product ? <Link href={`/product/${product.slug}`}>{product.name}</Link> : <strong>Unavailable product</strong>}{product ? <span>Included in Look</span> : null}</div>
@@ -132,7 +137,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
                   {unavailable ? <p className="lookUnavailable">Unavailable or out of stock.</p> : null}
                   {isInvalid ? <p className="lookItemError">Choose required size and color.</p> : null}
                   {product && !unavailable && state.enabled ? <div className="lookItemOptions">
-                    {product.colors.length ? <div>{product.colors.map((color) => <button className={state.color === color.name ? "productSwatch productSwatch--selected" : "productSwatch"} type="button" key={color.id ?? color.name} aria-label={`Select ${color.name}`} aria-pressed={state.color === color.name} onClick={() => patchItem(productId, { color: color.name })}><span className="productSwatch__color" style={{ backgroundColor: color.hex }} /></button>)}</div> : null}
+                    {product.colors.length ? <div>{product.colors.map((color) => <button className={state.colorId === color.id ? "productSwatch productSwatch--selected" : "productSwatch"} type="button" key={color.id} aria-label={`Select ${color.name}`} aria-pressed={state.colorId === color.id} onClick={() => patchItem(productId, { colorId: color.id })}><span className="productSwatch__color" style={{ backgroundColor: color.hex }} /></button>)}</div> : null}
                     {product.sizes.length ? <div>{product.sizes.map((size) => <button className={state.size === size.label ? "isSelected" : undefined} type="button" key={size.label} onClick={() => patchItem(productId, { size: size.label })}>{size.label}</button>)}</div> : null}
                   </div> : null}
                 </div>

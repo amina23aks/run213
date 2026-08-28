@@ -39,6 +39,7 @@ export type OrderItem = {
   category: ProductCategory;
   image: string;
   selectedSize: string | null;
+  selectedColorId?: string | null;
   selectedColor: string | null;
   selectedColorHex?: string | null;
   quantity: number;
@@ -132,6 +133,7 @@ export type CreateOrderRequest = {
   items: Array<{
     productId: string;
     selectedSize?: string | null;
+    selectedColorId?: string | null;
     selectedColor?: string | null;
     quantity: number;
     lookGroupId?: string | null;

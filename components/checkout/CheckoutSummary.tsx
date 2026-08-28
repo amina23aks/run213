@@ -40,7 +40,7 @@ export function CheckoutSummary() {
                   <div><span>LOOK</span><h3>{firstItem.lookName ?? "Selected Look"}</h3><strong>{formatDzd(getGroupSubtotal(group.items))}</strong></div>
                 </header>
                 <div>
-                  {group.items.map((item) => <p key={`${item.productId}-${item.selectedSize ?? "no-size"}-${item.selectedColor ?? "no-color"}`}><span>{item.name}</span><CheckoutVariantMeta selectedSize={item.selectedSize} selectedColor={item.selectedColor} quantity={item.quantity} /></p>)}
+                  {group.items.map((item) => <p key={`${item.productId}-${item.selectedSize ?? "no-size"}-${item.selectedColorId ?? item.selectedColor ?? "no-color"}`}><span>{item.name}</span><CheckoutVariantMeta selectedSize={item.selectedSize} selectedColor={item.selectedColor} selectedColorHex={item.selectedColorHex} quantity={item.quantity} /></p>)}
                 </div>
               </article>
             );
@@ -54,7 +54,7 @@ export function CheckoutSummary() {
               </div>
               <section>
                 <h3>{item.name}</h3>
-                <CheckoutVariantMeta selectedSize={item.selectedSize} selectedColor={item.selectedColor} quantity={item.quantity} />
+                <CheckoutVariantMeta selectedSize={item.selectedSize} selectedColor={item.selectedColor} selectedColorHex={item.selectedColorHex} quantity={item.quantity} />
                 <span>Qty {item.quantity}</span>
               </section>
               <strong>{formatDzd(item.priceDzd * item.quantity)}</strong>
@@ -78,8 +78,8 @@ export function CheckoutSummary() {
   );
 }
 
-function CheckoutVariantMeta({ selectedSize, selectedColor, quantity }: { selectedSize?: string | null; selectedColor?: string | null; quantity: number }) {
-  return <small className="checkoutVariantMeta">{selectedSize ? <span>SIZE {selectedSize}</span> : null}{selectedColor ? <i className="inlineSwatch" style={{ background: checkoutColorHex(selectedColor) }} aria-label={`Color ${selectedColor}`} title={selectedColor} /> : null}<span>Qty {quantity}</span></small>;
+function CheckoutVariantMeta({ selectedSize, selectedColor, selectedColorHex, quantity }: { selectedSize?: string | null; selectedColor?: string | null; selectedColorHex?: string | null; quantity: number }) {
+  return <small className="checkoutVariantMeta">{selectedSize ? <span>SIZE {selectedSize}</span> : null}{selectedColor ? <><i className="inlineSwatch" style={{ background: selectedColorHex ?? checkoutColorHex(selectedColor) }} aria-label={`Color ${selectedColor}`} title={selectedColor} /><span>{selectedColor}</span></> : null}<span>Qty {quantity}</span></small>;
 }
-function checkoutColorHex(name: string) { const key = name.toLowerCase(); return key.includes("black") ? "#050505" : key.includes("white") ? "#f7f2e8" : key.includes("grey") || key.includes("gray") ? "#8a8a84" : key.includes("lime") ? "#c8ff00" : name;
+function checkoutColorHex(name: string) { const key = name.toLowerCase(); return key.includes("black") ? "#050505" : key.includes("white") ? "#f7f2e8" : key.includes("grey") || key.includes("gray") ? "#8a8a84" : key.includes("lime") ? "#c8ff00" : "transparent";
 }

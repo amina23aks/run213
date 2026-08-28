@@ -4,7 +4,7 @@ import { listActiveLookCollections, listHomepageLooks } from "@/lib/firestore/lo
 export async function ShopTheLook() {
   const [figures, collections] = await Promise.all([
     listHomepageLooks(),
-    listActiveLookCollections(4),
+    listActiveLookCollections(),
   ]);
 
   return <ShopTheLookClient figures={figures} collections={collections} />;

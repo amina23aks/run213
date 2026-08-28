@@ -40,6 +40,7 @@ export function buildCreateOrderRequest(values: OrderFormValues, cartItems: Cart
     items: cartItems.map((item) => ({
       productId: item.productId,
       selectedSize: item.selectedSize,
+      selectedColorId: item.selectedColorId ?? null,
       selectedColor: item.selectedColor,
       quantity: item.quantity,
       lookGroupId: item.lookGroupId ?? null,
@@ -83,7 +84,7 @@ export async function submitOrderToApi(payload: CreateOrderRequest, idToken?: st
 }
 
 export function getCheckoutCartSignature(cartItems: CartItem[]): string {
-  return cartItems.map((item) => [item.productId, item.selectedSize ?? "", item.selectedColor ?? "", item.quantity, item.lookGroupId ?? ""].join(":"))
+  return cartItems.map((item) => [item.productId, item.selectedSize ?? "", item.selectedColorId ?? item.selectedColor ?? "", item.quantity, item.lookGroupId ?? ""].join(":"))
     .sort()
     .join("|");
 }

@@ -38,7 +38,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
           />
           <div className="lookCollectionHero__overlay">
             <h1>{collection.name}</h1>
-            <p>{collection.subtitle}</p>
+            {collection.description ? <p>{collection.description}</p> : null}
           </div>
         </header>
         <section className="looksEditorialList" aria-label={`${collection.name} looks`}>
