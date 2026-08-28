@@ -8,9 +8,9 @@ test("Collection Hero contains only canonical name and description", async () =>
   const [page, css] = await Promise.all([read("app/looks/[collectionSlug]/page.tsx"), read("app/globals.css")]);
   const hero = page.slice(page.indexOf('<header className="lookCollectionHero">'), page.indexOf("</header>"));
   assert.match(hero, /<h1>\{collection\.name\}<\/h1>/);
-  assert.match(hero, /collection\.description \? <p>\{collection\.description\}<\/p> : null/);
+  assert.match(hero, /publicDescription \? <p>\{publicDescription\}<\/p> : null/);
   assert.doesNotMatch(page, /collection\.subtitle/);
-  assert.equal(page.match(/\{collection\.description\}/g)?.length, 1);
+  assert.equal(page.match(/\{publicDescription\}/g)?.length, 1);
   assert.match(css, /\.lookCollectionHero__overlay h1 \{[\s\S]*?font-size: clamp\(1\.8rem, 4\.2vw, 4rem\)[\s\S]*?white-space: nowrap/);
   assert.match(css, /\.lookCollectionHero__overlay p \{[\s\S]*?color: rgba\(255, 255, 255, 0\.92\)[\s\S]*?line-height: 1\.45/);
 });
