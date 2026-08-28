@@ -119,7 +119,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
       <div className="lookDetailPanel">
         <h1>{look.name}</h1>
         <p>{look.description}</p>
-        {hasValidLookPrice ? <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="You save {amount} when you buy the complete Look." /> : <div className="lookTotalBar"><span>Look total</span><strong>Unavailable</strong></div>}
+        {hasValidLookPrice ? <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="Save {amount} when you buy the complete Look." /> : <div className="lookTotalBar"><span>Look total</span><strong>Unavailable</strong></div>}
         <div className="lookItemsList">
           {look.products.map(({ productId, product }) => {
             const state = selected[productId] ?? { enabled: false, colorId: null, size: null };

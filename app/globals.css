@@ -6517,3 +6517,41 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .adminSidebar__nav.isOpen { gap: .45rem; margin-top: .75rem; }
   .adminSidebar__footer, .adminSidebar__store { display: none; }
 }
+
+/* Final public presentation polish. */
+.shopHero {
+  background-image: linear-gradient(90deg, rgba(247, 242, 232, 0.72) 0%, rgba(247, 242, 232, 0.34) 42%, rgba(247, 242, 232, 0.03) 68%), url("/brand/shop-hero.png");
+  background-position: center;
+  min-height: clamp(18rem, 34vw, 30rem);
+  padding: clamp(2rem, 5vw, 4rem);
+}
+.shopHero > div { display: flex; flex-direction: column; justify-content: center; min-height: inherit; max-width: 30rem; }
+.shopHero h1 { font-size: clamp(3rem, 6vw, 5.75rem); }
+.shopHero p { max-width: 28rem; }
+.accountNameLine button { border: 0; border-radius: 0; color: var(--foreground); height: 1.75rem; width: 1.75rem; }
+.accountSignout { margin-top: 1rem; padding: .8rem 1rem; }
+.accountSignout button { min-height: 2.25rem; padding: .4rem .7rem; }
+.accountAuthModal { align-items: center !important; overflow-y: auto; }
+.accountAuthModal__card {
+  max-height: none !important;
+  max-width: 560px !important;
+  overflow: visible !important;
+  padding: 1.2rem !important;
+  width: min(92vw, 560px) !important;
+}
+.accountAuthModal__card h2 { font-size: clamp(2.1rem, 4vw, 2.75rem) !important; }
+.accountAuthModal__card .accountMenu__form input,
+.accountAuthModal__card .accountMenu__primary,
+.accountAuthModal__card .accountMenu__google { height: 2.75rem !important; min-height: 2.75rem !important; }
+@media (max-width: 700px) {
+  .shopHero { background-position: 58% center; min-height: 20rem; padding: 1.35rem; }
+  .shopHero > div { max-width: min(72%, 20rem); }
+  .shopHero h1 { font-size: clamp(2.75rem, 14vw, 4rem); }
+  .shopHero p { font-size: .86rem; line-height: 1.4; }
+  .run-club__phrases, .runClubStatement { justify-items: center; text-align: center; }
+  .run-club__phrases p, .runClubStatement p { justify-content: center; text-align: center; width: 100%; }
+  .lookDetailHero { display: flex !important; height: clamp(18rem, 92vw, 28rem); max-height: 28rem; min-height: 0; background: var(--surface-soft, #eee8dc); }
+  .lookDetailHero img { display: block !important; height: 100%; object-fit: contain !important; width: 100%; }
+  .accountAuthModal { align-items: flex-start !important; padding: 12px !important; }
+  .accountAuthModal__card { margin: auto; max-height: none !important; overflow: visible !important; padding: 1rem !important; width: calc(100vw - 24px) !important; }
+}

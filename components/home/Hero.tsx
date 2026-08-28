@@ -17,7 +17,7 @@ export function Hero() {
       <div className="hero__content">
         <p className="eyebrow">213 RUN</p>
         <h1 id="hero-title">BUILT.<br />NOT FOUND.</h1>
-        <p>Running lifestyle for the ones who show up.</p>
+        <p>Streetwear for everyday movement.<br />Clean fits for campus, city and everything in between.</p>
         <div className="hero__actions">
           <a className="button button--lime" href="/shop">SHOP NOW <span>→</span></a>
           <a className="button button--ghost" href="#shop-the-look">EXPLORE LOOKS <span>→</span></a>
