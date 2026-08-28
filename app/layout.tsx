@@ -6,6 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "213 RUN",
   description: "BUILT. NOT FOUND.",
+  icons: { icon: "/brand/favicon.png", shortcut: "/brand/favicon.png" },
 };
 
 export default function RootLayout({

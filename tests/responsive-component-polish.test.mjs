@@ -9,13 +9,13 @@ test("related products keep two compact columns on narrow screens", () => {
   assert.match(css, /@media \(max-width: 559px\)[\s\S]*?\.relatedProducts__grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
-test("account uses explicit light and dark icon assets and puts sign out first", () => {
+test("account uses explicit light and dark icon assets and puts sign out last", () => {
   const account = read("components/account/AccountPageClient.tsx");
   for (const name of ["order-bag", "heart", "save", "running"]) {
     assert.ok(account.includes(`lightIcon=\"/icons/${name}.png\"`));
     assert.ok(account.includes(`darkIcon=\"/icons/${name}-dark.png\"`));
   }
-  assert.ok(account.indexOf("accountSignout") < account.indexOf("ACCOUNT ACTIVITY"));
+  assert.ok(account.indexOf("accountSignout") > account.indexOf("ACCOUNT ACTIVITY"));
   assert.doesNotMatch(account, /replace\(\/\\\.png\$\//);
 });
 
