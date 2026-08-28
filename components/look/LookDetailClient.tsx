@@ -11,6 +11,7 @@ import { useCart } from "@/context/cart";
 import type { LookWithProducts } from "@/types/look";
 import type { Product } from "@/types/product";
 import { isProductInStock } from "@/lib/products/availability";
+import { FallbackImage } from "@/components/ui/FallbackImage";
 
 type SelectedItem = {
   enabled: boolean;
@@ -114,7 +115,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   return (
     <section className="lookDetailSection">
       <div className="lookDetailHero">
-        <Image src={cloudinaryImageUrl(look.heroImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookDetail })} alt={look.heroImage.alt} width={860} height={980} sizes="(max-width: 899px) 100vw, 55vw" priority unoptimized />
+        <FallbackImage fallbackSrc="/placeholders/product-placeholder.webp" src={cloudinaryImageUrl(look.heroImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookDetail })} alt={look.heroImage.alt || look.name} width={860} height={980} sizes="(max-width: 899px) 100vw, 860px" priority unoptimized />
       </div>
       <div className="lookDetailPanel">
         <h1>{look.name}</h1>
