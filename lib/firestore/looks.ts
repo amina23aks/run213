@@ -13,7 +13,7 @@ export async function listActiveLookCollections(limit = 8): Promise<LookCollecti
   try {
     const { getAdminDb } = await import("@/lib/firebase/admin");
     const snapshot = await getAdminDb().collection(COLLECTIONS).where("status", "==", "active").limit(READ_LIMIT).get();
-    return snapshot.docs.map((doc) => parseCollection(doc.id, doc.data())).filter((item): item is LookCollection => item !== null).sort((a, b) => a.sortOrder - b.sortOrder).slice(0, limit);
+    return snapshot.docs.map((doc) => parseCollection(doc.id, doc.data())).filter((item): item is LookCollection => item !== null).sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id)).slice(0, limit);
   } catch (error) {
     warnLooks("Active look collections query failed.", error);
     return [];

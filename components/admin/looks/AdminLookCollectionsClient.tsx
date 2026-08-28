@@ -14,12 +14,7 @@ type ApiList = { items: LookCollection[] };
 type CollectionDraft = typeof emptyDraft;
 type FieldErrors = Partial<Record<keyof CollectionDraft | "summary", string>>;
 const missingClientEnv = getMissingFirebaseClientEnv();
-const COLLECTION_SLOTS = [
-  { order: 1, label: "01 Summer Road" },
-  { order: 2, label: "02 City Everyday" },
-  { order: 3, label: "03 Evening Layer" },
-  { order: 4, label: "04 Essential Layers" },
-] as const;
+const HOMEPAGE_POSITIONS = [1, 2, 3, 4, 5, 6] as const;
 const emptyDraft = { name: "", subtitle: "", description: "", status: "draft", sortOrder: "1", cardImageUrl: "", cardImagePublicId: "" };
 
 export function AdminLookCollectionsClient() {
@@ -68,7 +63,7 @@ export function AdminLookCollectionsClient() {
   }
 
   async function save() {
-    const validation = validateDraft(draft, items, editingId);
+    const validation = validateDraft(draft);
     setErrors(validation.errors);
     if (!validation.ok) return;
     const body = JSON.stringify({ slug: slugPreview, name: draft.name, subtitle: draft.subtitle, description: draft.description, status: draft.status, sortOrder: validation.sortOrder, cardImage: { url: draft.cardImageUrl, alt: draft.name, publicId: draft.cardImagePublicId || undefined } });
@@ -79,28 +74,26 @@ export function AdminLookCollectionsClient() {
   async function archive(id: string) { try { await adminFetch(`/api/admin/look-collections/${id}`, { method: "DELETE" }); await load(); showToast("Collection archived."); } catch { setErrors({ summary: "Archive failed." }); } }
   function edit(item: LookCollection) { setEditingId(item.id); setDraft({ name: item.name, subtitle: item.subtitle, description: item.description, status: item.status === "active" ? "active" : "draft", sortOrder: String(item.sortOrder), cardImageUrl: item.cardImage.url, cardImagePublicId: item.cardImage.publicId ?? "" }); setErrors({}); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
-  return <AdminShell title="Look Collections" description="Create and manage the four Shop The Look collection slots.">
+  return <AdminShell title="Look Collections" description="Create and order Shop The Look collections.">
     <div className="adminLookWorkspace">
       <section className="adminCard adminLookEditor"><div className="adminCard__heading"><p>LOOK COLLECTIONS</p><h2>{editingId ? "Edit collection" : "Create collection"}</h2><span>{message}</span></div>{errors.summary ? <p className="adminFormAlert">{errors.summary}</p> : null}
         <AdminLookSection number="01" title="Collection details"><div className="adminProductGrid adminProductGrid--two"><AdminLookField label="Collection name" error={errors.name}><input placeholder="SUMMER ROAD" value={draft.name} onChange={(event) => patchDraft({ name: event.target.value })} /></AdminLookField><AdminLookField label="Slug preview"><input value={slugPreview || "collection-name"} readOnly /></AdminLookField></div><AdminLookField label="Subtitle"><input placeholder="Light. Fast. Unstoppable." value={draft.subtitle} onChange={(event) => patchDraft({ subtitle: event.target.value })} /></AdminLookField><AdminLookField label="Description"><textarea rows={3} placeholder="Describe this collection." value={draft.description} onChange={(event) => patchDraft({ description: event.target.value })} /></AdminLookField></AdminLookSection>
-        <AdminLookSection number="02" title="Card position"><AdminLookField label="Fixed homepage slot" helper="The chosen slot sets sortOrder 1–4." error={errors.sortOrder}><select value={draft.sortOrder} onChange={(event) => patchDraft({ sortOrder: event.target.value })}>{COLLECTION_SLOTS.map((slot) => <option key={slot.order} value={slot.order}>{slot.label}</option>)}</select></AdminLookField></AdminLookSection>
+        <AdminLookSection number="02" title="Homepage order"><AdminLookField label="Homepage position" helper="Controls the display order of active collections on the homepage." error={errors.sortOrder}><select value={draft.sortOrder} onChange={(event) => patchDraft({ sortOrder: event.target.value })}>{HOMEPAGE_POSITIONS.map((position) => <option key={position} value={position}>{position}</option>)}</select></AdminLookField></AdminLookSection>
         <AdminLookSection number="03" title="Visibility"><div className="adminPillGroup">{(["draft", "active"] as const).map((status) => <button className={draft.status === status ? "isSelected" : undefined} key={status} type="button" onClick={() => patchDraft({ status })}>{status}</button>)}</div></AdminLookSection>
         <AdminLookSection number="04" title="Card image"><label className="adminUploadButton"><input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void upload(file); }} /><span>{uploading ? "Uploading…" : draft.cardImageUrl ? "Replace card image" : "Upload card image"}</span></label>{errors.cardImageUrl ? <small className="adminInlineError">{errors.cardImageUrl}</small> : null}{draft.cardImageUrl ? <figure className="adminLookPreview adminLookPreview--landscape"><Image src={cloudinaryImageUrl(draft.cardImageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt="Collection card preview" width={220} height={130} unoptimized /><button type="button" onClick={() => patchDraft({ cardImageUrl: "", cardImagePublicId: "" })}>Remove image</button></figure> : null}</AdminLookSection>
         <div className="adminProductActions"><button className="adminPrimary" type="button" onClick={save}>Save collection</button>{editingId ? <button type="button" onClick={() => { setEditingId(null); setDraft(emptyDraft); }}>Cancel edit</button> : null}</div>
       </section>
-      <section className="adminCard"><div className="adminCard__heading"><p>COLLECTION LIST</p><h2>Collections</h2></div><div className="adminLookList">{items.map((item) => <article className="adminLookRow" key={item.id}>{item.cardImage.url ? <Image src={cloudinaryImageUrl(item.cardImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={item.cardImage.alt} width={96} height={58} unoptimized /> : null}<div><strong>{String(item.sortOrder).padStart(2, "0")} · {item.name}</strong><span>{item.slug} · {item.status}</span></div><button type="button" onClick={() => edit(item)}>Edit</button>{item.status === "archived" ? <span>Archived</span> : <button type="button" onClick={() => archive(item.id)}>Archive</button>}</article>)}</div></section>
+      <section className="adminCard"><div className="adminCard__heading"><p>COLLECTION LIST</p><h2>Collections</h2></div><div className="adminLookList">{items.length ? items.map((item) => <article className="adminLookRow" key={item.id}>{item.cardImage.url ? <Image src={cloudinaryImageUrl(item.cardImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={item.cardImage.alt} width={96} height={58} unoptimized /> : null}<div><strong>{String(item.sortOrder).padStart(2, "0")} · {item.name}</strong><span>{item.slug} · {item.status}</span></div><button type="button" onClick={() => edit(item)}>Edit</button>{item.status === "archived" ? <span>Archived</span> : <button type="button" onClick={() => archive(item.id)}>Archive</button>}</article>) : <p className="adminEmptyState">No collections yet. Create your first collection above.</p>}</div></section>
     </div>
   </AdminShell>;
 }
 
-function validateDraft(draft: CollectionDraft, items: LookCollection[], editingId: string | null): { ok: boolean; errors: FieldErrors; sortOrder: number } {
+function validateDraft(draft: CollectionDraft): { ok: boolean; errors: FieldErrors; sortOrder: number } {
   const errors: FieldErrors = {};
   const sortOrder = Number(draft.sortOrder);
   if (!draft.name.trim()) errors.name = "Enter a collection name.";
-  if (!Number.isFinite(sortOrder) || sortOrder < 1 || sortOrder > 4) errors.sortOrder = "Choose one of the four homepage slots.";
+  if (!Number.isInteger(sortOrder) || sortOrder < 1 || sortOrder > 6) errors.sortOrder = "Choose a homepage position from 1 to 6.";
   if (draft.status === "active" && !draft.cardImageUrl) errors.cardImageUrl = "Upload a card image before activating this collection.";
-  const conflict = items.find((item) => item.id !== editingId && item.status === "active" && item.sortOrder === sortOrder && draft.status === "active");
-  if (conflict) errors.sortOrder = `Slot ${sortOrder} is already used by ${conflict.name}.`;
   return { ok: Object.keys(errors).length === 0, errors, sortOrder: Number.isFinite(sortOrder) ? sortOrder : 1 };
 }
 

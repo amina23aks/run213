@@ -189,8 +189,8 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .shopLookSection { grid-template-columns: 13.75rem minmax(0, 1fr); column-gap: 1.75rem; }
   .shopLookIntro { grid-column: 1; grid-row: 1; }
   .shopLookFigures { grid-column: 2; grid-row: 1; }
-  .shopLookCards { display: flex; gap: 1.125rem; overflow: visible; }
-  .look-card { min-width: 0; flex: 1 1 calc((100% - 3.375rem) / 4); }
+  .shopLookCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); gap: 1.125rem; overflow: visible; }
+  .look-card { min-width: 0; width: 100%; }
   .run-club { align-items: center; }
   .run-club__cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .run-club__phrases { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -3415,6 +3415,14 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .adminLookProductPicker {
   display: grid;
   gap: .65rem;
+}
+
+.adminEmptyState {
+  border: 1px dashed rgba(0, 0, 0, .16);
+  border-radius: 14px;
+  color: #5f5f5f;
+  margin: 0;
+  padding: .8rem .9rem;
 }
 
 .adminLookRow,
