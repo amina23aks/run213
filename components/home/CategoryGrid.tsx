@@ -12,8 +12,8 @@ export function CategoryGrid() {
   return (
     <section className="home-section category-section" id="shop" aria-labelledby="category-title">
       <aside className="section-intro">
-        <h2 id="category-title">SHOP BY CATEGORY</h2>
-        <p>Shop the essentials.<br />Built for your run.</p>
+        <h2 id="category-title">THE DAILY ROTATION.</h2>
+        <p>T-shirts, hoodies and bottoms made for everyday movement.</p>
       </aside>
       <div className="category-row">
         {categoryCards.map((category) => (

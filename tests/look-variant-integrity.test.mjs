@@ -82,7 +82,7 @@ test("cart, checkout, Account and Admin render stored historical name, hex, and 
 test("Look Collection public Hero renders canonical name and description without subtitle", async () => {
   const page = await read("app/looks/[collectionSlug]/page.tsx");
   assert.match(page, /<h1>\{collection\.name\}<\/h1>/);
-  assert.match(page, /collection\.description \? <p>\{collection\.description\}<\/p> : null/);
+  assert.match(page, /publicDescription \? <p>\{publicDescription\}<\/p> : null/);
   assert.doesNotMatch(page, /collection\.subtitle/);
-  assert.equal(page.match(/\{collection\.description\}/g)?.length, 1);
+  assert.equal(page.match(/\{publicDescription\}/g)?.length, 1);
 });
