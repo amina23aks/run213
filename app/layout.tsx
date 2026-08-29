@@ -2,10 +2,17 @@ import type { Metadata } from "next";
 import { CartProvider } from "@/context/cart";
 import { FavoritesProvider } from "@/context/favorites";
 import "./globals.css";
+import { DEFAULT_SOCIAL_IMAGE, isProductionDeployment, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "213 RUN",
-  description: "BUILT. NOT FOUND.",
+  metadataBase: SITE_URL,
+  title: { default: SITE_TITLE, template: "%s | 213 RUN" },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  alternates: { canonical: "/" },
+  robots: isProductionDeployment ? { index: true, follow: true } : { index: false, follow: false },
+  openGraph: { type: "website", siteName: SITE_NAME, title: SITE_TITLE, description: SITE_DESCRIPTION, url: "/", images: [DEFAULT_SOCIAL_IMAGE] },
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION, images: [DEFAULT_SOCIAL_IMAGE] },
   icons: { icon: "/brand/favicon.png", shortcut: "/brand/favicon.png" },
 };
 

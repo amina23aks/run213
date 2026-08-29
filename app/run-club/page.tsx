@@ -5,6 +5,13 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { RunClubSubmissionForm } from "@/components/run-club/RunClubSubmissionForm";
 import { getPublicRunClubEntries, getPublicRunClubWinners, getRunClubMonthStatus } from "@/lib/run-club/public";
+import { publicPageMetadata } from "@/lib/seo";
+
+export const metadata = publicPageMetadata({
+  title: "Run Club",
+  description: "Join 213 RUN Club in Algeria: share your run proof, build your monthly streak and join a community that shows up at every pace.",
+  pathname: "/run-club",
+});
 
 const steps = [
   { title: "RUN AT YOUR PACE", text: "No minimum distance or speed." },
