@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import { WilayaInput } from "@/components/checkout/WilayaInput";
 import { useCart } from "@/context/cart";
 import { buildCreateOrderRequest, OrderSubmissionError, resetCheckoutAttemptKey, submitOrderToApi, validateOrderFormFields, type OrderFormValues } from "@/lib/orders/client";
 import type { DeliveryMode } from "@/types/order";
@@ -11,6 +11,11 @@ import { saveGuestOrderAccess } from "@/components/orders/orderAccessStorage";
 import { waitForAuthHydration } from "@/components/orders/customerOrderAccess";
 
 export function CheckoutForm() {
+  function notifyWilayaChange(wilaya: string) {
+    const deliveryMode = document.querySelector<HTMLInputElement>('input[name="deliveryType"]:checked')?.value ?? "home";
+    window.dispatchEvent(new CustomEvent("run213:delivery-change", { detail: { wilaya, deliveryMode } }));
+    if (wilaya && fieldErrors.wilaya) setFieldErrors((current) => { const next = { ...current }; delete next.wilaya; return next; });
+  }
   function notifyDeliveryChange(event: ChangeEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
     window.dispatchEvent(new CustomEvent("run213:delivery-change", { detail: { wilaya: String(formData.get("wilaya") ?? ""), deliveryMode: String(formData.get("deliveryType") ?? "home") } }));
@@ -30,6 +35,7 @@ export function CheckoutForm() {
 
   function focusFirstError(form: HTMLFormElement, errors: Record<string, string>) {
     const first = Object.keys(errors)[0];
+    if (first === "wilaya") { form.querySelector<HTMLElement>('[data-wilaya-input="wilaya"]')?.focus(); return; }
     const name = first === "deliveryMode" ? "deliveryType" : first;
     const control = form.elements.namedItem(name);
     if (control instanceof HTMLElement) control.focus();
@@ -106,10 +112,7 @@ export function CheckoutForm() {
         <div className="checkoutFields checkoutFields--two">
           <label>
             <span>Wilaya</span>
-            <select name="wilaya" required defaultValue="" aria-invalid={Boolean(fieldErrors.wilaya)}>
-              <option value="" disabled>Choose wilaya</option>
-              {ALGERIA_WILAYAS.map((wilaya) => <option value={wilaya.name} key={wilaya.code}>{wilaya.label}</option>)}
-            </select>
+            <WilayaInput name="wilaya" invalid={Boolean(fieldErrors.wilaya)} onCanonicalChange={notifyWilayaChange} />
             {fieldErrors.wilaya ? <small className="fieldError">{fieldErrors.wilaya}</small> : null}
           </label>
           <fieldset className="checkoutDeliveryType checkoutDeliveryType--compact" aria-invalid={Boolean(fieldErrors.deliveryMode)}>

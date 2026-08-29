@@ -6,10 +6,10 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { CartItem } from "@/components/cart/CartItem";
 import { CartLookGroup } from "@/components/cart/CartLookGroup";
+import { WilayaInput } from "@/components/checkout/WilayaInput";
 import { groupCartItems } from "@/components/cart/cartGrouping";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
-import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
 import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
 import { getShippingQuote } from "@/lib/orders/shipping";
 import type { DeliveryMode } from "@/types/order";
@@ -33,6 +33,13 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     const deliveryMode = String(formData.get("drawerDeliveryMode") ?? "home") as DeliveryMode;
     if (!wilaya) { setQuickDeliveryDzd(null); return; }
     try { setQuickDeliveryDzd(getShippingQuote({ wilaya, deliveryMode }).amountDzd); }
+    catch { setQuickDeliveryDzd(null); }
+  }
+
+  function updateQuickWilaya(wilaya: string) {
+    const deliveryMode = document.querySelector<HTMLInputElement>('input[name="drawerDeliveryMode"]:checked')?.value as DeliveryMode | undefined;
+    if (!wilaya) { setQuickDeliveryDzd(null); return; }
+    try { setQuickDeliveryDzd(getShippingQuote({ wilaya, deliveryMode: deliveryMode ?? "home" }).amountDzd); }
     catch { setQuickDeliveryDzd(null); }
   }
 
@@ -117,10 +124,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
                 <label>
                   <span>Wilaya</span>
-                  <select name="drawerWilaya" defaultValue="" required>
-                    <option value="" disabled>Choose wilaya</option>
-                    {ALGERIA_WILAYAS.map((wilaya) => <option value={wilaya.name} key={wilaya.code}>{wilaya.label}</option>)}
-                  </select>
+                  <WilayaInput name="drawerWilaya" onCanonicalChange={updateQuickWilaya} />
                 </label>
                 <fieldset className="drawerDeliveryMode">
                   <legend>Delivery mode</legend>
