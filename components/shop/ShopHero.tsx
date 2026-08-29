@@ -4,7 +4,7 @@ export function ShopHero() {
       <div>
         <span className="shopHero__eyebrow">CAMPUS DROP AVAILABLE NOW</span>
         <h1 id="shop-title">SHOP</h1>
-        <p>Streetwear designed for comfort, modern fits and everyday wear.</p>
+        <p>Streetwear designed for comfort,<br className="shopHero__desktopBreak" /> modern fits and everyday wear.</p>
       </div>
     </section>
   );

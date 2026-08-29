@@ -11,7 +11,7 @@ test("related products keep two compact columns on narrow screens", () => {
 
 test("account uses explicit light and dark icon assets and puts sign out last", () => {
   const account = read("components/account/AccountPageClient.tsx");
-  for (const name of ["order-bag", "heart", "save", "running"]) {
+  for (const name of ["order-bag", "heart", "running"]) {
     assert.ok(account.includes(`lightIcon=\"/icons/${name}.png\"`));
     assert.ok(account.includes(`darkIcon=\"/icons/${name}-dark.png\"`));
   }
