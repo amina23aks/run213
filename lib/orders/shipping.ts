@@ -1,4 +1,5 @@
 import { ALGERIA_WILAYAS } from "@/data/algeriaWilayas";
+import ECONOMIC_SHIPPING_RATES from "@/data/economicShippingRates.json";
 import type { DeliveryInfo, DeliveryMode, DeliveryPricingStatus } from "@/types/order";
 
 export type ShippingQuote = {
@@ -19,11 +20,17 @@ export type WilayaDeliveryRate = {
   deskDzd: number | null;
 };
 
+const ratesByCode = new Map(ECONOMIC_SHIPPING_RATES.map((rate) => [rate.code, rate]));
+const canonicalCodes = new Set(ALGERIA_WILAYAS.map((wilaya) => wilaya.code));
+
+if (ratesByCode.size !== ECONOMIC_SHIPPING_RATES.length || ECONOMIC_SHIPPING_RATES.length !== ALGERIA_WILAYAS.length || ECONOMIC_SHIPPING_RATES.some((rate) => !canonicalCodes.has(rate.code))) {
+  throw new Error("Economic shipping rates must cover each canonical Wilaya exactly once");
+}
+
 export const WILAYA_DELIVERY_RATES: WilayaDeliveryRate[] = ALGERIA_WILAYAS.map((wilaya) => {
-  const code = Number(wilaya.code);
-  const zone = code <= 16 ? 0 : code <= 31 ? 1 : code <= 48 ? 2 : 3;
-  const homeDzd = 450 + zone * 150;
-  return { wilaya: wilaya.name, homeDzd, deskDzd: Math.max(350, homeDzd - 150) };
+  const rate = ratesByCode.get(wilaya.code);
+  if (!rate) throw new Error(`Missing economic shipping rate for Wilaya ${wilaya.code}`);
+  return { wilaya: wilaya.name, homeDzd: rate.homeDzd, deskDzd: rate.deskDzd };
 });
 
 export function getShippingQuote(delivery: Pick<DeliveryInfo, "wilaya" | "deliveryMode">): ShippingQuote {
