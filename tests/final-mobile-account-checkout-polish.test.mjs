@@ -45,6 +45,14 @@ test("Shop Hero uses the deployable root asset path", () => {
   assert.doesNotMatch(css, /url\("\/brand\/shop-hero\.png"\)/);
 });
 
+test("Shop Hero badge stays compact and copy sits lower with a mobile-safe break", () => {
+  assert.match(css, /\.shopHero__eyebrow \{[^}]*align-self: flex-start;/);
+  assert.match(css, /\.shopHero > div \{[^}]*justify-content: flex-end;/);
+  const shopHero = readFileSync("components/shop/ShopHero.tsx", "utf8");
+  assert.match(shopHero, /comfort,<br className="shopHero__desktopBreak" \/> modern fits/);
+  assert.match(css, /\.shopHero__desktopBreak \{ display: none; \}/);
+});
+
 test("Home Hero preserves CTA labels and destinations while lowering mobile content", () => {
   assert.match(hero, /href="\/shop">SHOP NOW/);
   assert.match(hero, /href="#shop-the-look">EXPLORE LOOKS/);

@@ -236,7 +236,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 
 .shopPage { width: min(100%, 92rem); margin: 0 auto; padding: 5.75rem clamp(1rem, 4vw, 2.6rem) clamp(2.25rem, 5vw, 3.5rem); }
 .shopHero { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: clamp(1.5rem, 3vw, 2rem); background: linear-gradient(115deg, rgba(255, 250, 240, 0.98) 0%, rgba(255, 250, 240, 0.94) 54%, rgba(239, 231, 217, 0.9) 100%), url("/road.png") center right / cover no-repeat; padding: clamp(2.35rem, 5vw, 4.5rem); color: var(--foreground); }
-.shopHero__eyebrow { display: inline-flex; margin-bottom: 0.9rem; border-radius: 999px; background: var(--lime); padding: 0.38rem 0.62rem; font-size: 0.66rem; font-weight: 950; line-height: 1; text-transform: uppercase; }
+.shopHero__eyebrow { display: inline-flex; align-self: flex-start; margin-bottom: 0.9rem; border-radius: 999px; background: var(--lime); padding: 0.38rem 0.62rem; font-size: 0.66rem; font-weight: 950; line-height: 1; text-transform: uppercase; }
 .shopHero h1 { max-width: 10ch; margin: 0; font-size: clamp(3.5rem, 7vw, 7rem); font-weight: 950; letter-spacing: -0.06em; line-height: 0.88; text-transform: uppercase; }
 .shopHero p { max-width: 32rem; margin: 0.85rem 0 0; color: rgba(7, 7, 6, 0.78); font-size: clamp(1rem, 1.45vw, 1.125rem); font-weight: 750; line-height: 1.42; }
 
@@ -6508,9 +6508,9 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   min-height: clamp(18rem, 34vw, 30rem);
   padding: clamp(2rem, 5vw, 4rem);
 }
-.shopHero > div { display: flex; flex-direction: column; justify-content: center; min-height: inherit; max-width: 30rem; }
+.shopHero > div { display: flex; flex-direction: column; justify-content: flex-end; min-height: inherit; max-width: 30rem; }
 .shopHero h1 { font-size: clamp(3rem, 6vw, 5.75rem); }
-.shopHero p { max-width: 28rem; }
+.shopHero p { max-width: 25rem; }
 .accountNameLine button { border: 0; border-radius: 0; color: var(--foreground); height: 1.75rem; width: 1.75rem; }
 .accountSignout { margin-top: 1rem; padding: .8rem 1rem; }
 .accountSignout button { min-height: 2.25rem; padding: .4rem .7rem; }
@@ -6519,6 +6519,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   .shopHero > div { max-width: min(72%, 20rem); }
   .shopHero h1 { font-size: clamp(2.75rem, 14vw, 4rem); }
   .shopHero p { font-size: .86rem; line-height: 1.4; }
+  .shopHero__desktopBreak { display: none; }
   .run-club__phrases, .runClubStatement { justify-items: center; text-align: center; }
   .run-club__phrases p, .runClubStatement p { justify-content: center; text-align: center; width: 100%; }
 }
