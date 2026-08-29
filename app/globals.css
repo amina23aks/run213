@@ -6508,7 +6508,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
   min-height: clamp(18rem, 34vw, 30rem);
   padding: clamp(2rem, 5vw, 4rem);
 }
-.shopHero > div { display: flex; flex-direction: column; justify-content: flex-end; min-height: inherit; max-width: 30rem; }
+.shopHero > div { display: flex; flex-direction: column; justify-content: flex-start; min-height: inherit; max-width: 30rem; }
 .shopHero h1 { font-size: clamp(3rem, 6vw, 5.75rem); }
 .shopHero p { max-width: 25rem; }
 .accountNameLine button { border: 0; border-radius: 0; color: var(--foreground); height: 1.75rem; width: 1.75rem; }
@@ -6516,7 +6516,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .accountSignout button { min-height: 2.25rem; padding: .4rem .7rem; }
 @media (max-width: 700px) {
   .shopHero { background-position: 58% center; min-height: 20rem; padding: 1.35rem; }
-  .shopHero > div { max-width: min(72%, 20rem); }
+  .shopHero > div { max-width: min(72%, 20rem); transform: translateY(.9rem); }
   .shopHero h1 { font-size: clamp(2.75rem, 14vw, 4rem); }
   .shopHero p { font-size: .86rem; line-height: 1.4; }
   .shopHero__desktopBreak { display: none; }
