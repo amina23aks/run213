@@ -28,8 +28,8 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
           </section>
         ) : (
           <section className="checkoutLayout" aria-label="Checkout details">
-            <CheckoutForm />
             <CheckoutSummary />
+            <CheckoutForm />
           </section>
         )}
       </main>
