@@ -6529,17 +6529,16 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
 .lookDetailSection {
   display: grid;
   gap: clamp(1.4rem, 3vw, 2.5rem);
-  grid-template-columns: minmax(0, .86fr) minmax(24rem, 1fr);
+  grid-template-columns: minmax(0, .82fr) minmax(390px, 1fr);
+  max-width: 1400px;
   width: 100%;
 }
 .lookDetailHero {
-  aspect-ratio: 7 / 8;
   background: var(--surface-soft, #eee8dc);
   border-radius: 1.5rem;
   display: flex !important;
-  height: auto !important;
-  min-height: 18rem;
-  max-height: 42rem;
+  height: min(68vh, 650px) !important;
+  min-height: 480px;
   margin-inline: auto;
   overflow: hidden;
   position: sticky !important;
@@ -6549,7 +6548,7 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
 .lookDetailHero img {
   display: block !important;
   height: 100% !important;
-  max-height: none !important;
+  max-height: 650px !important;
   object-fit: contain !important;
   padding: clamp(.4rem, 1vw, .8rem);
   width: 100% !important;
@@ -6577,6 +6576,7 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
   margin: auto;
   min-width: 0 !important;
   padding: 1.2rem !important;
+  position: relative !important;
   transform: none !important;
   overflow: hidden !important;
   width: min(100%, 34rem) !important;
@@ -6585,6 +6585,7 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
   background: transparent !important;
   border-color: rgba(31,31,31,.12) !important;
   height: 1.9rem !important;
+  position: absolute !important;
   right: .85rem !important;
   top: .85rem !important;
   width: 1.9rem !important;
@@ -6593,7 +6594,7 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
 .accountAuthModal__card .accountMenu__googleIcon { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; display: block !important; fill: initial !important; object-fit: contain; padding: 0 !important; stroke: initial !important; }
 @media (max-width: 899px) {
   .lookDetailSection { grid-template-columns: minmax(0, 1fr); }
-  .lookDetailHero { aspect-ratio: 7 / 8; min-height: 17rem; max-height: 32rem; position: static !important; width: min(100%, 28rem); }
+  .lookDetailHero { aspect-ratio: 7 / 8; height: auto !important; min-height: 17rem; max-height: 32rem; position: static !important; width: min(100%, 28rem); }
   .lookDetailPanel { margin-inline: auto; width: min(100%, 52rem); }
   .accountAuthModal { align-items: flex-start !important; padding: .75rem !important; }
   .accountAuthModal__card { margin-block: auto; width: min(100%, 34rem) !important; }
