@@ -8,10 +8,15 @@ import { formatDzd } from "@/constants/products";
 import { LookPriceDisplay } from "@/components/look/LookPriceDisplay";
 import { getActiveLookCollectionBySlug, listActiveLooksByCollection } from "@/lib/firestore/looks";
 import { getLookHref } from "@/lib/look-urls";
+import type { Metadata } from "next";
+import { cache } from "react";
+import { publicPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 type LooksCollectionPageProps = { params: Promise<{ collectionSlug: string }> };
+
+const getPublicCollection = cache(getActiveLookCollectionBySlug);
 
 const launchCollectionDescriptions: Record<string, string> = {
   "campus-mode": "Student-ready looks built for class, campus and everyday movement.",
@@ -19,9 +24,17 @@ const launchCollectionDescriptions: Record<string, string> = {
   "warm-days": "Lightweight outfits for warm days, relaxed movement and everyday comfort.",
 };
 
+export async function generateMetadata({ params }: LooksCollectionPageProps): Promise<Metadata> {
+  const { collectionSlug } = await params;
+  const collection = await getPublicCollection(collectionSlug);
+  if (!collection) return {};
+  const description = launchCollectionDescriptions[collection.slug] ?? collection.description;
+  return publicPageMetadata({ title: `${collection.name} Collection`, description, pathname: `/looks/${collection.slug}`, image: collection.cardImage.url });
+}
+
 export default async function LooksCollectionPage({ params }: LooksCollectionPageProps) {
   const { collectionSlug } = await params;
-  const collection = await getActiveLookCollectionBySlug(collectionSlug);
+  const collection = await getPublicCollection(collectionSlug);
 
   if (!collection) notFound();
 

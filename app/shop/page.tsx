@@ -4,12 +4,22 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { listActiveProducts, SHOP_CATALOG_LIMIT } from "@/lib/firestore/products";
 import { listActiveLooks } from "@/lib/firestore/looks";
+import type { Metadata } from "next";
+import { publicPageMetadata } from "@/lib/seo";
+
+const shopMetadata = publicPageMetadata({ title: "Shop Streetwear", description: "Explore 213 RUN T-shirts, hoodies, pants, accessories and complete Looks made for comfortable everyday movement.", pathname: "/shop" });
 
 export const dynamic = "force-dynamic";
 
 type ShopPageProps = {
-  searchParams: Promise<{ locked?: string; mode?: string }>;
+  searchParams: Promise<{ locked?: string; mode?: string; category?: string; search?: string }>;
 };
+
+export async function generateMetadata({ searchParams }: ShopPageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const isInternalSearch = Boolean(params.search);
+  return { ...shopMetadata, ...(isInternalSearch ? { robots: { index: false, follow: true } } : {}) };
+}
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;

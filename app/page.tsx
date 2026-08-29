@@ -6,6 +6,12 @@ import { RunClub } from "@/components/home/RunClub";
 import { ShopTheLook } from "@/components/home/ShopTheLook";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { publicPageMetadata, SITE_DESCRIPTION, SITE_TITLE } from "@/lib/seo";
+
+export const metadata = {
+  ...publicPageMetadata({ title: SITE_TITLE, description: SITE_DESCRIPTION, pathname: "/" }),
+  title: { absolute: SITE_TITLE },
+};
 
 export const dynamic = "force-dynamic";
 
