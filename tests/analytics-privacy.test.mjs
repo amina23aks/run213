@@ -14,6 +14,12 @@ const blockedPaths = [
   "/cart",
   "/order-success/private-order-id",
   "/api/orders",
+  "/contact",
+  "/wishlist",
+  "/product",
+  "/look",
+  "/looks",
+  "/shop/sale",
 ];
 
 const publicPaths = ["/", "/shop", "/product/oversized-tee", "/look/summer-road", "/looks/summer-road", "/run-club", "/about", "/shipping", "/returns", "/faq", "/privacy", "/terms"];
@@ -23,7 +29,10 @@ test("private, account, admin, and transactional page views are blocked", () => 
 });
 
 test("public storefront page views remain allowed", () => {
-  for (const pathname of publicPaths) assert.equal(isPublicPageViewPath(pathname), true, pathname);
+  for (const pathname of publicPaths) {
+    assert.equal(isPublicPageViewPath(pathname), true, pathname);
+    assert.equal(isPublicPageViewPath(`${pathname}?email=private@example.com#private`), true, pathname);
+  }
 });
 
 test("page locations contain only the origin and pathname", () => {
@@ -43,6 +52,19 @@ test("admin analytics are blocked while checkout and purchase event support rema
   assert.match(analytics, /"begin_checkout"/);
   assert.match(analytics, /"add_shipping_info"/);
   assert.match(analytics, /"purchase"/);
+  assert.match(analytics, /transaction_id: order\.orderId/);
+  assert.match(analytics, /value: order\.totals\.totalDzd/);
+  assert.match(analytics, /window\.sessionStorage\.getItem\(key\)/);
+  assert.match(analytics, /window\.sessionStorage\.setItem\(key, "1"\)/);
   assert.match(provider, /page_path: pagePath/);
   assert.doesNotMatch(provider, /useSearchParams|window\.location\.href/);
+});
+
+test("footer keeps the support email as an accessible mailto link", async () => {
+  const [footer, links] = await Promise.all([
+    readFile(new URL("../components/layout/Footer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../constants/home.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(links, /href:\s*"mailto:213run\.collab@gmail\.com"/);
+  assert.match(footer, /<a href=\{link\.href\}/);
 });
