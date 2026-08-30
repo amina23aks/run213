@@ -6613,3 +6613,37 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
   .checkoutForm { grid-column: 1; grid-row: 1; }
   .checkoutSummary { grid-column: 2; grid-row: 1; }
 }
+
+/* Public editorial / legal pages */
+.editorialPage { flex: 1; background: var(--cream, #f7f2e8); color: var(--foreground, #070706); padding: clamp(5.6rem, 9vw, 7.5rem) clamp(1rem, 5vw, 3rem) clamp(3rem, 7vw, 5.5rem); }
+.editorialPage > article { width: min(100%, 50rem); margin: 0 auto; }
+.editorialPage > article > header { border-bottom: 1px solid rgba(7,7,6,.16); padding-bottom: clamp(1.25rem, 3vw, 2rem); margin-bottom: clamp(1.4rem, 3vw, 2.2rem); }
+.editorialPage header > span { display: block; margin-bottom: .6rem; color: #667d00; font-size: .68rem; font-weight: 950; letter-spacing: .12em; }
+.editorialPage h1 { max-width: 44rem; margin: 0; font-size: clamp(2.25rem, 7vw, 5.2rem); font-weight: 950; letter-spacing: -.055em; line-height: .9; }
+.editorialPage header p { margin: .8rem 0 0; color: rgba(7,7,6,.62); font-size: .76rem; font-weight: 750; }
+.editorialPage__content { display: grid; gap: 1.15rem; font-size: clamp(.96rem, 1.5vw, 1.08rem); line-height: 1.68; }
+.editorialPage__content section { display: grid; gap: .45rem; padding: .35rem 0 .85rem; }
+.editorialPage__content h2 { margin: 0; font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 950; letter-spacing: -.025em; }
+.editorialPage__content p, .editorialPage__content ul { margin: 0; }
+.editorialPage__content ul { padding-left: 1.2rem; }
+.editorialPage__content a { font-weight: 850; text-decoration: underline; text-decoration-color: var(--lime); text-underline-offset: .2em; }
+.editorialPage__statement { display: block; margin-top: 1rem; font-size: clamp(2rem, 6vw, 4rem); letter-spacing: -.06em; line-height: .9; }
+.faqAccordion { display: grid; border-top: 1px solid rgba(7,7,6,.16); }
+.faqAccordion details { border-bottom: 1px solid rgba(7,7,6,.16); }
+.faqAccordion summary { display: grid; grid-template-columns: 2rem 1fr auto; gap: .55rem; align-items: center; cursor: pointer; padding: 1.15rem 0; font-weight: 900; list-style: none; }
+.faqAccordion summary::-webkit-details-marker { display: none; }
+.faqAccordion summary span { color: #667d00; font-size: .68rem; }
+.faqAccordion summary i { font-size: 1.3rem; font-style: normal; transition: transform .2s ease; }
+.faqAccordion details[open] summary i { transform: rotate(45deg); }
+.faqAccordion details p { padding: 0 2rem 1.25rem 2.55rem; color: rgba(7,7,6,.72); }
+.footerCookieButton { border: 0; background: transparent; color: rgba(7,7,6,.78); padding: 0; font: inherit; font-size: .68rem; font-weight: 750; cursor: pointer; }
+.footerCookieButton:hover { color: #667d00; }
+.privacyConsent { position: fixed; z-index: 1000; right: clamp(.75rem, 3vw, 1.5rem); bottom: clamp(.75rem, 3vw, 1.5rem); display: grid; width: min(calc(100% - 1.5rem), 32rem); gap: .8rem; border: 1px solid rgba(255,255,255,.16); border-radius: .75rem; background: #090a08; color: #f7f2e8; padding: clamp(1rem, 3vw, 1.35rem); box-shadow: 0 1.2rem 4rem rgba(0,0,0,.32); }
+.privacyConsent span { color: var(--lime); font-size: .62rem; font-weight: 950; letter-spacing: .12em; }
+.privacyConsent h2 { margin: .2rem 0 0; font-size: clamp(1.5rem, 5vw, 2.2rem); letter-spacing: -.04em; line-height: .95; }
+.privacyConsent p, .privacyConsent small { margin: 0; color: rgba(247,242,232,.78); font-size: .78rem; line-height: 1.5; }
+.privacyConsent p a { color: #fff; font-weight: 850; text-decoration: underline; text-decoration-color: var(--lime); }
+.privacyConsent__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.privacyConsent__actions button { min-height: 2.55rem; border: 1px solid rgba(255,255,255,.25); border-radius: .35rem; background: transparent; color: #fff; padding: .65rem .85rem; font-size: .68rem; font-weight: 950; cursor: pointer; }
+.privacyConsent__actions button:first-child { border-color: var(--lime); background: var(--lime); color: #080908; }
+@media (max-width: 560px) { .privacyConsent { left: .75rem; right: .75rem; bottom: .75rem; width: auto; } .privacyConsent__actions button { flex: 1; } .faqAccordion details p { padding-left: 0; } }

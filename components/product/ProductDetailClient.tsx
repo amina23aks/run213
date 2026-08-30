@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductInfo } from "@/components/product/ProductInfo";
 import type { Product } from "@/types/product";
 
 export function ProductDetailClient({ product }: { product: Product }) {
   const [selectedColorId, setSelectedColorId] = useState<string | null>(product.colors.length === 1 ? product.colors[0]?.id ?? null : null);
+  useEffect(() => { trackEvent("view_item", { currency: "DZD", value: product.priceDzd, items: [{ item_id: product.id, item_name: product.name, price: product.priceDzd, item_category: "Product" }] }); }, [product]);
   return (
     <>
       <ProductGallery product={product} selectedColorId={selectedColorId} />
