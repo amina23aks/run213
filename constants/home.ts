@@ -38,10 +38,22 @@ export const runClubCards = [
 ];
 
 export const footerColumns = [
-  { title: "SHOP", links: ["All Products", "T-Shirts", "Shorts", "Pants", "Hoodies", "Accessories"] },
-  { title: "DROP_001", links: ["Overview", "Tops", "Bottoms", "Accessories"] },
-  { title: "INFO", links: ["Run Club", "About Us", "Shipping", "Returns", "FAQ"] },
-  { title: "FOLLOW US", links: ["Instagram", "TikTok", "YouTube", "Strava"] },
+  { title: "SHOP", links: [
+    { label: "All Products", href: "/shop" }, { label: "T-Shirts", href: "/shop?category=tshirts" },
+    { label: "Tops", href: "/shop?group=tops" }, { label: "Pants", href: "/shop?category=pants" },
+    { label: "Hoodies", href: "/shop?category=hoodies" }, { label: "Accessories", href: "/shop?category=accessories" },
+    { label: "Ensembles", href: "/shop?mode=ensembles" },
+  ] },
+  { title: "INFO", links: [
+    { label: "About 213 RUN", href: "/about" }, { label: "Run Club", href: "/run-club" },
+    { label: "Shipping & Delivery", href: "/shipping" }, { label: "Returns", href: "/returns" }, { label: "FAQ", href: "/faq" },
+  ] },
+  { title: "FOLLOW US", links: [
+    { label: "Instagram", href: "https://www.instagram.com/213run/", external: true },
+    { label: "TikTok", href: "https://www.tiktok.com/@213.run", external: true },
+    { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61591408771641", external: true },
+    { label: "Email", href: "mailto:213run.collab@gmail.com" },
+  ] },
 ];
 
 export const approvedCommunityEntries = [

@@ -1,0 +1,4 @@
+import { EditorialPage } from "@/components/info/EditorialPage";
+import { publicPageMetadata } from "@/lib/seo";
+export const metadata = publicPageMetadata({ title: "About 213 RUN", description: "Meet 213 RUN, the Algerian streetwear label built around everyday movement and showing up.", pathname: "/about" });
+export default function AboutPage() { return <EditorialPage title="ABOUT 213 RUN"><p>213 RUN is an Algerian streetwear label built around everyday movement.</p><p>We focus on relaxed fits, clean silhouettes and pieces made to move from campus to city and everything in between.</p><p>RUN CLUB extends that idea beyond clothing — a community built around showing up, moving at your own pace and sharing the journey.</p><strong className="editorialPage__statement">BUILT. NOT FOUND.</strong></EditorialPage>; }

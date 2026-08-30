@@ -3,6 +3,9 @@ import { CartProvider } from "@/context/cart";
 import { FavoritesProvider } from "@/context/favorites";
 import "./globals.css";
 import { DEFAULT_SOCIAL_IMAGE, isProductionDeployment, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { AnalyticsConsentBanner } from "@/components/analytics/AnalyticsConsent";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
@@ -23,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col"><CartProvider><FavoritesProvider>{children}</FavoritesProvider></CartProvider></body>
+      <body className="min-h-full flex flex-col"><CartProvider><FavoritesProvider>{children}<Suspense fallback={null}><AnalyticsProvider /></Suspense><AnalyticsConsentBanner /></FavoritesProvider></CartProvider></body>
     </html>
   );
 }

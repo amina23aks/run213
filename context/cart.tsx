@@ -6,6 +6,7 @@ import type { CartItem } from "@/types/cart";
 import type { Product } from "@/types/product";
 import { isProductInStock } from "@/lib/products/availability";
 import { calculateCustomerSubtotal, groupCartItemsForPricing } from "@/components/cart/cartGrouping";
+import { cartAnalyticsItems, trackEvent } from "@/lib/analytics";
 
 export const CART_STORAGE_KEY = "213run-cart";
 
@@ -192,6 +193,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       ));
     });
 
+    trackEvent("add_to_cart", { currency: "DZD", value: input.product.priceDzd * quantity, items: [{ item_id: input.product.id, item_name: input.product.name, price: input.product.priceDzd, quantity, item_category: "Product", item_variant: [canonicalColor?.name, selectedSize].filter(Boolean).join(" / ") || undefined }] });
+
     return true;
   }, []);
 
@@ -235,15 +238,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     if (!preparedItems.length) return false;
     setItems((currentItems) => [...currentItems, ...preparedItems]);
+    trackEvent("add_to_cart", { currency: "DZD", value: input.group.priceDzd, items: cartAnalyticsItems(preparedItems) });
     return true;
   }, []);
 
   const removeItem = useCallback((lineKey: string) => {
-    setItems((currentItems) => currentItems.filter((item) => getLineKey(item) !== lineKey));
+    setItems((currentItems) => { const removed = currentItems.find((item) => getLineKey(item) === lineKey); if (removed) trackEvent("remove_from_cart", { currency: "DZD", value: removed.priceDzd * removed.quantity, items: cartAnalyticsItems([removed]) }); return currentItems.filter((item) => getLineKey(item) !== lineKey); });
   }, []);
 
   const removeLookGroup = useCallback((lookGroupId: string) => {
-    setItems((currentItems) => currentItems.filter((item) => item.lookGroupId !== lookGroupId));
+    setItems((currentItems) => { const removed = currentItems.filter((item) => item.lookGroupId === lookGroupId); if (removed.length) trackEvent("remove_from_cart", { currency: "DZD", value: removed[0]?.lookPriceDzd, items: cartAnalyticsItems(removed) }); return currentItems.filter((item) => item.lookGroupId !== lookGroupId); });
   }, []);
 
   const updateQuantity = useCallback((lineKey: string, quantity: number) => {
