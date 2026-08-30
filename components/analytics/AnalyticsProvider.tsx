@@ -1,13 +1,13 @@
 "use client";
 
 import Script from "next/script";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { readAnalyticsConsent, type AnalyticsConsent } from "@/lib/analytics";
+import { cleanPageLocation, cleanPathname, isPublicPageViewPath } from "@/lib/analytics-routing";
 
 export function AnalyticsProvider() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
   const [consent, setConsent] = useState<AnalyticsConsent>("unknown");
   const lastPage = useRef<string | null>(null);
@@ -27,12 +27,12 @@ export function AnalyticsProvider() {
 
   useEffect(() => {
     if (consent !== "allowed" || !measurementId || !window.gtag) return;
-    const query = searchParams.toString();
-    const pagePath = `${pathname}${query ? `?${query}` : ""}`;
+    const pagePath = cleanPathname(pathname);
     if (lastPage.current === pagePath) return;
     lastPage.current = pagePath;
-    window.gtag("event", "page_view", { page_path: pagePath, page_location: window.location.href, page_title: document.title });
-  }, [consent, measurementId, pathname, searchParams]);
+    if (!isPublicPageViewPath(pagePath)) return;
+    window.gtag("event", "page_view", { page_path: pagePath, page_location: cleanPageLocation(window.location.origin, pagePath), page_title: document.title });
+  }, [consent, measurementId, pathname]);
 
   if (consent !== "allowed" || !measurementId) return null;
   return <>

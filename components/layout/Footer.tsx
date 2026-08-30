@@ -19,9 +19,11 @@ export function Footer() {
         {footerColumns.map((column) => (
           <nav key={column.title} aria-label={column.title}>
             <h3>{column.title}</h3>
-            {column.links.map((link) => link.external
-              ? <a href={link.href} target="_blank" rel="noopener noreferrer" key={link.label}>{link.label}</a>
-              : <Link href={link.href} key={link.label}>{link.label}</Link>)}
+            {column.links.map((link) => link.href.startsWith("mailto:")
+              ? <a href={link.href} key={link.label}>{link.label}</a>
+              : link.external
+                ? <a href={link.href} target="_blank" rel="noopener noreferrer" key={link.label}>{link.label}</a>
+                : <Link href={link.href} key={link.label}>{link.label}</Link>)}
           </nav>
         ))}
         <FooterClubForm />
