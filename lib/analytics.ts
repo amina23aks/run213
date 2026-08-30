@@ -1,3 +1,4 @@
+import { isAdminPath } from "@/lib/analytics-routing";
 import type { CartItem } from "@/types/cart";
 import type { CreateOrderResponse } from "@/types/order";
 
@@ -31,7 +32,7 @@ export function cartAnalyticsItems(items: CartItem[]): AnalyticsItem[] {
 }
 
 export function trackEvent(name: "view_item" | "add_to_cart" | "remove_from_cart" | "view_cart" | "begin_checkout" | "add_shipping_info" | "purchase" | "add_to_wishlist", params: EventParams) {
-  if (typeof window === "undefined" || readAnalyticsConsent() !== "allowed" || !window.gtag) return false;
+  if (typeof window === "undefined" || isAdminPath(window.location.pathname) || readAnalyticsConsent() !== "allowed" || !window.gtag) return false;
   window.gtag("event", name, params);
   return true;
 }
