@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { WilayaInput } from "@/components/checkout/WilayaInput";
 import { useCart } from "@/context/cart";
@@ -9,8 +9,11 @@ import { buildCreateOrderRequest, OrderSubmissionError, resetCheckoutAttemptKey,
 import type { DeliveryMode } from "@/types/order";
 import { saveGuestOrderAccess } from "@/components/orders/orderAccessStorage";
 import { waitForAuthHydration } from "@/components/orders/customerOrderAccess";
+import { cartAnalyticsItems, trackEvent, trackPurchaseAfterSuccess } from "@/lib/analytics";
 
 export function CheckoutForm() {
+  const shippingEventKey = useRef("");
+  const beganCheckout = useRef(false);
   function notifyWilayaChange(wilaya: string) {
     const deliveryMode = document.querySelector<HTMLInputElement>('input[name="deliveryType"]:checked')?.value ?? "home";
     window.dispatchEvent(new CustomEvent("run213:delivery-change", { detail: { wilaya, deliveryMode } }));
@@ -19,12 +22,15 @@ export function CheckoutForm() {
   function notifyDeliveryChange(event: ChangeEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
     window.dispatchEvent(new CustomEvent("run213:delivery-change", { detail: { wilaya: String(formData.get("wilaya") ?? ""), deliveryMode: String(formData.get("deliveryType") ?? "home") } }));
+    const mode = String(formData.get("deliveryType") ?? "home"); const wilaya = String(formData.get("wilaya") ?? ""); const key = `${wilaya}:${mode}`;
+    if (wilaya && shippingEventKey.current !== key) { shippingEventKey.current = key; trackEvent("add_shipping_info", { currency: "DZD", shipping_tier: mode, items: cartAnalyticsItems(items) }); }
   }
   const router = useRouter();
   const { items, clearCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  useEffect(() => { if (!beganCheckout.current && items.length) { beganCheckout.current = true; trackEvent("begin_checkout", { currency: "DZD", items: cartAnalyticsItems(items) }); } }, [items]);
 
   function handleChange(event: ChangeEvent<HTMLFormElement>) {
     notifyDeliveryChange(event);
@@ -72,6 +78,7 @@ export function CheckoutForm() {
       const user = await waitForAuthHydration();
       const idToken = user ? await user.getIdToken() : null;
       const order = await submitOrderToApi(buildCreateOrderRequest(values, items), idToken);
+      trackPurchaseAfterSuccess(order, items);
       if (order.customerAccessToken) saveGuestOrderAccess({ orderId: order.orderId, orderNumber: order.orderNumber, token: order.customerAccessToken });
       resetCheckoutAttemptKey();
       clearCart();

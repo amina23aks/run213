@@ -3,6 +3,7 @@
 import type { MouseEvent } from "react";
 import { useFavorites } from "@/context/favorites";
 import type { FavoriteItemType } from "@/context/favorites-storage";
+import { trackEvent } from "@/lib/analytics";
 
 type FavoriteButtonVariant = "card" | "detail";
 
@@ -27,6 +28,7 @@ export function FavoriteButton({ itemType, itemId, itemName, variant = "card", c
       event.stopPropagation();
     }
     void toggleFavorite(itemType, itemId);
+    if (!active) trackEvent("add_to_wishlist", { currency: "DZD", items: [{ item_id: itemId, item_name: itemName, item_category: itemType === "look" ? "Look" : "Product" }] });
   }
 
   return (

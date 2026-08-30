@@ -2,6 +2,8 @@ import Image from "next/image";
 import { BrandPhilosophy } from "@/components/home/BrandPhilosophy";
 import { footerColumns } from "@/constants/home";
 import { FooterClubForm } from "@/components/layout/FooterClubForm";
+import Link from "next/link";
+import { CookieSettingsButton } from "@/components/analytics/AnalyticsConsent";
 
 export function Footer() {
   return (
@@ -17,12 +19,14 @@ export function Footer() {
         {footerColumns.map((column) => (
           <nav key={column.title} aria-label={column.title}>
             <h3>{column.title}</h3>
-            {column.links.map((link) => <a href="#home" key={link}>{link}</a>)}
+            {column.links.map((link) => link.external
+              ? <a href={link.href} target="_blank" rel="noopener noreferrer" key={link.label}>{link.label}</a>
+              : <Link href={link.href} key={link.label}>{link.label}</Link>)}
           </nav>
         ))}
         <FooterClubForm />
       </div>
-      <div className="site-footer__legal"><div><a href="/privacy">Privacy Policy</a><span aria-hidden="true">·</span><a href="/terms">Terms of Service</a></div><small>© 2026 213 RUN. All rights reserved.</small></div>
+      <div className="site-footer__legal"><div><Link href="/privacy">Privacy Policy</Link><span aria-hidden="true">·</span><Link href="/terms">Terms of Service</Link><span aria-hidden="true">·</span><CookieSettingsButton /></div><small>© 2026 213 RUN. All rights reserved.</small></div>
     </footer>
   );
 }

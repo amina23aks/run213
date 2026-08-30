@@ -13,6 +13,7 @@ import { useCart } from "@/context/cart";
 import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
 import { getShippingQuote } from "@/lib/orders/shipping";
 import type { DeliveryMode } from "@/types/order";
+import { trackPurchaseAfterSuccess } from "@/lib/analytics";
 
 type CartDrawerProps = {
   isOpen: boolean;
@@ -68,6 +69,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
     try {
       const order = await submitOrderToApi(buildCreateOrderRequest(values, items));
+      trackPurchaseAfterSuccess(order, items);
       clearCart();
       onClose();
       router.push(`/checkout?status=success&orderNumber=${encodeURIComponent(order.orderNumber)}`);
