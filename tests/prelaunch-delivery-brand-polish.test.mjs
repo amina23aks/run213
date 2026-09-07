@@ -13,15 +13,17 @@ test("order contribution is display-only and preserves the historical snapshot",
   assert.doesNotMatch(detail, /setOrder\([^)]*estimatedProfitDzd/);
 });
 
-test("custom product colors normalize accepted syntax and reject invalid channels", async () => {
+test("native product color picker remains while companion values normalize safely", async () => {
   const color = await read("lib/products/color.ts");
   assert.match(color, /#\?\(\[0-9a-f\]\{6\}\)/);
   assert.match(color, /rgb\\\(/);
   assert.match(color, /channel > 255/);
   assert.match(color, /toUpperCase/);
-  const form = await read("components/admin/products/AdminProductForm.tsx");
-  assert.doesNotMatch(form, /type="color"/);
-  assert.match(form, /normalizeProductColor/);
+  const row = await read("components/admin/products/AdminProductColorRow.tsx");
+  assert.match(row, /type="color"/);
+  assert.match(row, /normalizeProductColor/);
+  assert.match(row, /rgbChannelsToProductColor/);
+  assert.match(row, /RGB values must be 0–255/);
 });
 
 test("image mapping retains canonical color ids and presents names with swatches", async () => {
@@ -42,12 +44,15 @@ test("both checkout surfaces present rates from the canonical shipping module", 
   for (const path of ["components/checkout/CheckoutForm.tsx", "components/cart/CartDrawer.tsx"]) assert.match(await read(path), /<DeliveryModeOptions/);
 });
 
-test("Look strip arrows scroll cards without mutating selection or pricing", async () => {
+test("Look Detail remains stacked and collection preview alone owns its overflow cue", async () => {
   const look = await read("components/look/LookDetailClient.tsx");
-  assert.match(look, /Show next Look product/);
-  assert.match(look, /Show previous Look product/);
-  assert.match(look, /scrollBy/);
-  assert.doesNotMatch(look.slice(look.indexOf("function scrollProducts"), look.indexOf("function patchItem")), /setSelected|calculateLookGroupPrice/);
+  const strip = await read("components/look/LookMiniProductStrip.tsx");
+  assert.match(look, /className="lookItemsList"/);
+  assert.doesNotMatch(look, /lookStripArrow|scrollProducts/);
+  assert.match(strip, /Show more included products/);
+  assert.match(strip, /scrollWidth/);
+  assert.match(strip, /canScrollNext \?/);
+  assert.match(strip, /querySelector<HTMLElement>\("\.lookMiniProduct"\)/);
 });
 
 test("manifest remains safe without claiming unavailable square icon assets", async () => {

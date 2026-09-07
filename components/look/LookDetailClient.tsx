@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { CLOUDINARY_IMAGE_WIDTHS, cloudinaryImageUrl } from "@/lib/cloudinary-delivery";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { LookPriceDisplay } from "@/components/look/LookPriceDisplay";
 import { calculateLookGroupPrice, isValidLookPrice } from "@/lib/lookPricing";
@@ -37,8 +37,6 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   const [message, setMessage] = useState<string | null>(null);
   const [invalidIds, setInvalidIds] = useState<Set<string>>(() => new Set());
   const itemRefs = useRef<Record<string, HTMLElement | null>>({});
-  const stripRef = useRef<HTMLDivElement>(null);
-  const [stripEdges, setStripEdges] = useState({ left: true, right: false });
   const [selected, setSelected] = useState<Record<string, SelectedItem>>(() => Object.fromEntries(look.products.map(({ productId, product }) => [productId, {
     enabled: !isUnavailable(product),
     colorId: product?.colors.length === 1 ? product.colors[0]?.id ?? null : null,
@@ -51,10 +49,6 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   });
   const priceResult = calculateLookGroupPrice({ canonicalLookPriceDzd: look.priceDzd, originalProductIds: look.productIds, selectedProductLines });
   const hasValidLookPrice = isValidLookPrice(look.priceDzd);
-  const updateStripEdges = useCallback(() => { const strip = stripRef.current; if (!strip) return; setStripEdges({ left: strip.scrollLeft <= 2, right: strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 2 }); }, []);
-  useEffect(() => { updateStripEdges(); window.addEventListener("resize", updateStripEdges); return () => window.removeEventListener("resize", updateStripEdges); }, [updateStripEdges, look.products.length]);
-  function scrollProducts(direction: -1 | 1) { const strip = stripRef.current; const card = strip?.querySelector<HTMLElement>(".lookItem"); strip?.scrollBy({ left: direction * ((card?.offsetWidth ?? 250) + 10), behavior: "smooth" }); }
-
   function patchItem(productId: string, patch: Partial<SelectedItem>) {
     setSelected((current) => ({ ...current, [productId]: { ...current[productId], ...patch } }));
     setMessage(null);
@@ -126,9 +120,7 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
         <h1>{look.name}</h1>
         <p>{look.description}</p>
         {hasValidLookPrice ? <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="Save {amount} when you buy the complete Look." /> : <div className="lookTotalBar"><span>Look total</span><strong>Unavailable</strong></div>}
-        <div className="lookProductStripShell">
-        {!stripEdges.left ? <button className="lookStripArrow lookStripArrow--left" type="button" aria-label="Show previous Look product" onClick={() => scrollProducts(-1)}>←</button> : null}
-        <div className="lookItemsList" ref={stripRef} onScroll={updateStripEdges}>
+        <div className="lookItemsList">
           {look.products.map(({ productId, product }) => {
             const state = selected[productId] ?? { enabled: false, colorId: null, size: null };
             const unavailable = isUnavailable(product);
@@ -152,8 +144,6 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
               </article>
             );
           })}
-        </div>
-        {!stripEdges.right ? <button className="lookStripArrow lookStripArrow--right" type="button" aria-label="Show next Look product" onClick={() => scrollProducts(1)}>→</button> : null}
         </div>
         {message ? <p className={message === LOOK_VALIDATION_MESSAGE ? "lookCartMessage lookCartMessage--error" : "lookCartMessage"} role="status">{message}</p> : null}
         <div className="lookActions">

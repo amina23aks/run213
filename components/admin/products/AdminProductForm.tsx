@@ -5,7 +5,7 @@ import type { ProductCategory } from "@/types/product";
 import { AdminProductField, AdminProductSection } from "@/components/admin/products/AdminProductFields";
 import { AdminProductImagePreview } from "@/components/admin/products/AdminProductImagePreview";
 import type { ProductDraft, ProductDraftColor, ProductDraftImage } from "@/components/admin/products/types";
-import { normalizeProductColor } from "@/lib/products/color";
+import { AdminProductColorRow } from "@/components/admin/products/AdminProductColorRow";
 
 const sizeOptions = ["TU", "XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 const categories: { value: ProductCategory; label: string }[] = [
@@ -134,7 +134,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
       </AdminProductSection>
 
       <AdminProductSection eyebrow="06" title="Colors and placement">
-        <div className="adminColorRows">{draft.colors.map((color) => { const normalized = normalizeProductColor(color.hex); return <div className="adminColorRow" key={color.id}><span className="adminColorSwatch" style={{ backgroundColor: normalized ?? "transparent" }} aria-label={normalized ? `${color.name || "Color"} ${normalized}` : "Invalid color"} /><AdminProductField label="Name"><input placeholder="Black" value={color.name} onChange={(event) => onColorChange(color.id, { name: event.target.value })} /></AdminProductField><AdminProductField label="Color value"><input className={normalized ? undefined : "isInvalid"} placeholder="#111111 or rgb(17, 17, 17)" value={color.hex} aria-invalid={!normalized} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} onBlur={() => { if (normalized) onColorChange(color.id, { hex: normalized }); }} />{!normalized ? <small className="adminColorError">Use 6-digit HEX or rgb(0–255, 0–255, 0–255).</small> : null}</AdminProductField><button type="button" onClick={() => onRemoveColor(color.id)}>Remove</button></div>; })}</div>
+        <div className="adminColorRows">{draft.colors.map((color) => <AdminProductColorRow color={color} onChange={(patch) => onColorChange(color.id, patch)} onRemove={() => onRemoveColor(color.id)} key={color.id} />)}</div>
         <button className="adminInlineAdd" type="button" onClick={onAddColor}>+ Add color</button>
         <div className="adminProductGrid adminProductGrid--two"><ToggleCard label="DROP_001" checked={draft.showInDrop001} onChange={(checked) => onChange("showInDrop001", checked)} /></div>
       </AdminProductSection>

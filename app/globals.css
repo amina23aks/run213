@@ -6616,30 +6616,21 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
 .checkoutDeliveryType label span b, .drawerDeliveryMode label span b { color: #070706; font-size: .7rem; font-weight: 950; }
 .checkoutDeliveryType label.isUnavailable, .drawerDeliveryMode label.isUnavailable { cursor: not-allowed; opacity: .5; }
 
-.adminColorSwatch { align-self: center; border: 2px solid #fffdf7; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,.18); height: 1.75rem; width: 1.75rem; }
 .adminColorError { color: #9f1239 !important; font-weight: 800; }
-.adminProductField input.isInvalid { border-color: #be123c; }
+.adminMobileRgb { display: none; }
 .adminProductImageColor small { align-items: center; display: flex; gap: .35rem; font-size: .66rem; font-weight: 850; min-width: 0; }
 .adminProductImageColor small i { border: 1px solid rgba(0,0,0,.18); border-radius: 50%; display: inline-block; flex: 0 0 auto; height: .72rem; width: .72rem; }
 .adminProductImageCard .adminProductImageControls { aspect-ratio: auto; background: transparent; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .2rem; }
 .adminProductImageCard .adminProductImageControls button { min-width: 0; padding-inline: .2rem; }
 
-.lookProductStripShell { min-width: 0; position: relative; }
-.lookStripArrow { display: none; }
+.lookMiniProductStrip { min-width: 0; position: relative; }
+.lookMiniProductStrip__next { align-items: center; background: #f5f1e8; border: 1px solid rgba(7,7,6,.2); border-radius: 50%; box-shadow: 0 .2rem .7rem rgba(7,7,6,.16); color: #070706; cursor: pointer; display: flex; font-size: .75rem; font-weight: 950; height: 1.75rem; justify-content: center; position: absolute; right: .2rem; top: 50%; transform: translateY(-50%); width: 1.75rem; z-index: 2; }
 
 @media (max-width: 700px) {
   .shopHero > div { justify-content: flex-end; max-width: min(78%, 21rem); transform: none; }
   .shopHero { padding-bottom: 1.7rem; }
   .run-club__phrases { grid-template-columns: 1fr; justify-items: center; width: 100%; }
   .run-club__phrases p:last-child { justify-self: center; text-align: center; }
-}
-
-@media (max-width: 899px) {
-  .lookItemsList { display: flex; gap: .65rem; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; padding: .15rem .1rem .4rem; scroll-behavior: smooth; scroll-snap-type: x proximity; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
-  .lookItemsList::-webkit-scrollbar { display: none; }
-  .lookItem { flex: 0 0 min(82vw, 25rem); scroll-snap-align: start; }
-  .lookStripArrow { align-items: center; background: #f5f1e8; border: 1px solid rgba(7,7,6,.2); border-radius: 50%; box-shadow: 0 .25rem .8rem rgba(7,7,6,.16); color: #070706; cursor: pointer; display: flex; height: 2rem; justify-content: center; position: absolute; top: 50%; transform: translateY(-50%); width: 2rem; z-index: 3; }
-  .lookStripArrow--left { left: .35rem; } .lookStripArrow--right { right: .35rem; }
 }
 
 @media (max-width: 760px) {
@@ -6649,10 +6640,15 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
   .adminProductImageCard img { height: 100%; width: 100%; }
   .adminColorRow { align-items: center; grid-template-columns: auto minmax(0,1fr); }
   .adminColorRow > .adminProductField { grid-column: 2; }
+  .adminMobileRgb { display: grid; gap: .3rem; grid-column: 1 / -1; }
+  .adminMobileRgb > span { color: #5f5f5f; font-size: .66rem; font-weight: 950; text-transform: uppercase; }
+  .adminMobileRgb > div { aspect-ratio: auto; background: transparent; display: grid; gap: .35rem; grid-template-columns: repeat(3,minmax(0,1fr)); overflow: visible; }
+  .adminMobileRgb label { display: grid; gap: .18rem; }
+  .adminMobileRgb input { min-width: 0; width: 100%; }
   .adminColorRow > button { grid-column: 2; justify-self: end; padding: .25rem; }
 }
 @media (max-width: 330px) { .adminProductImageGrid { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { .lookItemsList { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { .lookMiniProducts { scroll-behavior: auto; } }
 
 
 /* Final mobile composition keeps collections readable without changing the figure carousel. */
