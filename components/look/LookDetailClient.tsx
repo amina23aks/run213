@@ -49,7 +49,6 @@ export function LookDetailClient({ look }: { look: LookWithProducts }) {
   });
   const priceResult = calculateLookGroupPrice({ canonicalLookPriceDzd: look.priceDzd, originalProductIds: look.productIds, selectedProductLines });
   const hasValidLookPrice = isValidLookPrice(look.priceDzd);
-
   function patchItem(productId: string, patch: Partial<SelectedItem>) {
     setSelected((current) => ({ ...current, [productId]: { ...current[productId], ...patch } }));
     setMessage(null);

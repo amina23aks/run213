@@ -33,6 +33,11 @@ export const WILAYA_DELIVERY_RATES: WilayaDeliveryRate[] = ALGERIA_WILAYAS.map((
   return { wilaya: wilaya.name, homeDzd: rate.homeDzd, deskDzd: rate.deskDzd };
 });
 
+export function getDeliveryModeRates(wilaya: string): Pick<WilayaDeliveryRate, "homeDzd" | "deskDzd"> | null {
+  const rate = WILAYA_DELIVERY_RATES.find((entry) => entry.wilaya === wilaya);
+  return rate ? { homeDzd: rate.homeDzd, deskDzd: rate.deskDzd } : null;
+}
+
 export function getShippingQuote(delivery: Pick<DeliveryInfo, "wilaya" | "deliveryMode">): ShippingQuote {
   const rate = WILAYA_DELIVERY_RATES.find((entry) => entry.wilaya === delivery.wilaya);
   if (!rate) throw new Error("Unsupported wilaya");

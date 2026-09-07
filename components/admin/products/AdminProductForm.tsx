@@ -5,6 +5,7 @@ import type { ProductCategory } from "@/types/product";
 import { AdminProductField, AdminProductSection } from "@/components/admin/products/AdminProductFields";
 import { AdminProductImagePreview } from "@/components/admin/products/AdminProductImagePreview";
 import type { ProductDraft, ProductDraftColor, ProductDraftImage } from "@/components/admin/products/types";
+import { AdminProductColorRow } from "@/components/admin/products/AdminProductColorRow";
 
 const sizeOptions = ["TU", "XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 const categories: { value: ProductCategory; label: string }[] = [
@@ -133,7 +134,7 @@ export function AdminProductForm({ draft, editingId, errors, onAddColor, onCance
       </AdminProductSection>
 
       <AdminProductSection eyebrow="06" title="Colors and placement">
-        <div className="adminColorRows">{draft.colors.map((color) => <div className="adminColorRow" key={color.id}><label className="adminColorPicker"><input type="color" value={isHexColor(color.hex) ? color.hex : "#000000"} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} /><span style={{ backgroundColor: isHexColor(color.hex) ? color.hex : "#000000" }} /></label><AdminProductField label="Name"><input placeholder="Black" value={color.name} onChange={(event) => onColorChange(color.id, { name: event.target.value })} /></AdminProductField><AdminProductField label="Hex"><input placeholder="#111111" value={color.hex} onChange={(event) => onColorChange(color.id, { hex: event.target.value })} /></AdminProductField><button type="button" onClick={() => onRemoveColor(color.id)}>Remove</button></div>)}</div>
+        <div className="adminColorRows">{draft.colors.map((color) => <AdminProductColorRow color={color} onChange={(patch) => onColorChange(color.id, patch)} onRemove={() => onRemoveColor(color.id)} key={color.id} />)}</div>
         <button className="adminInlineAdd" type="button" onClick={onAddColor}>+ Add color</button>
         <div className="adminProductGrid adminProductGrid--two"><ToggleCard label="DROP_001" checked={draft.showInDrop001} onChange={(checked) => onChange("showInDrop001", checked)} /></div>
       </AdminProductSection>
@@ -148,7 +149,6 @@ function UploadButton({ label, busy, disabled, onUpload }: { label: string; busy
 }
 
 function ToggleCard({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) { return <label className="adminToggleCard"><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} /><span>{label}</span></label>; }
-function isHexColor(value: string) { return /^#[0-9a-fA-F]{6}$/.test(value); }
 function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""); }
 
 function formatDzd(value: number) { return `${Math.round(value).toLocaleString("fr-DZ")} DZD`; }

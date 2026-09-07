@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { WilayaInput } from "@/components/checkout/WilayaInput";
+import { DeliveryModeOptions } from "@/components/checkout/DeliveryModeOptions";
 import { useCart } from "@/context/cart";
 import { buildCreateOrderRequest, OrderSubmissionError, resetCheckoutAttemptKey, submitOrderToApi, validateOrderFormFields, type OrderFormValues } from "@/lib/orders/client";
 import type { DeliveryMode } from "@/types/order";
@@ -14,7 +15,9 @@ import { cartAnalyticsItems, trackEvent, trackPurchaseAfterSuccess } from "@/lib
 export function CheckoutForm() {
   const shippingEventKey = useRef("");
   const beganCheckout = useRef(false);
+  const [selectedWilaya, setSelectedWilaya] = useState("");
   function notifyWilayaChange(wilaya: string) {
+    setSelectedWilaya(wilaya);
     const deliveryMode = document.querySelector<HTMLInputElement>('input[name="deliveryType"]:checked')?.value ?? "home";
     window.dispatchEvent(new CustomEvent("run213:delivery-change", { detail: { wilaya, deliveryMode } }));
     if (wilaya && fieldErrors.wilaya) setFieldErrors((current) => { const next = { ...current }; delete next.wilaya; return next; });
@@ -122,18 +125,7 @@ export function CheckoutForm() {
             <WilayaInput name="wilaya" invalid={Boolean(fieldErrors.wilaya)} onCanonicalChange={notifyWilayaChange} />
             {fieldErrors.wilaya ? <small className="fieldError">{fieldErrors.wilaya}</small> : null}
           </label>
-          <fieldset className="checkoutDeliveryType checkoutDeliveryType--compact" aria-invalid={Boolean(fieldErrors.deliveryMode)}>
-            <legend>Delivery mode</legend>
-            <label>
-              <input type="radio" name="deliveryType" value="home" defaultChecked />
-              <span>Home</span>
-            </label>
-            {fieldErrors.deliveryMode ? <small className="fieldError">{fieldErrors.deliveryMode}</small> : null}
-            <label>
-              <input type="radio" name="deliveryType" value="desk" />
-              <span>Desk</span>
-            </label>
-          </fieldset>
+          <div><DeliveryModeOptions wilaya={selectedWilaya} name="deliveryType" variant="checkout" invalid={Boolean(fieldErrors.deliveryMode)} />{fieldErrors.deliveryMode ? <small className="fieldError">{fieldErrors.deliveryMode}</small> : null}</div>
         </div>
 
         <label>

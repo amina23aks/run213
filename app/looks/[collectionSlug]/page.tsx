@@ -11,6 +11,7 @@ import { getLookHref } from "@/lib/look-urls";
 import type { Metadata } from "next";
 import { cache } from "react";
 import { publicPageMetadata } from "@/lib/seo";
+import { LookMiniProductStrip } from "@/components/look/LookMiniProductStrip";
 
 export const dynamic = "force-dynamic";
 
@@ -73,12 +74,12 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                   <h2>{look.name}</h2>
                   <p>{look.description}</p>
                   <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="Save {amount} when you buy the complete Look." />
-                  <div className="lookMiniProducts">
+                  <LookMiniProductStrip>
                     {activeProducts.slice(0, 4).map((product) => {
                       const image = product.images[0];
                       return <Link className="lookMiniProduct" href={`/product/${product.slug}`} key={product.id}><span className="lookMiniProduct__image">{image?.url ? <Image src={cloudinaryImageUrl(image.url, { width: CLOUDINARY_IMAGE_WIDTHS.productThumbnail })} alt={image.alt || product.name} width={150} height={130} sizes="150px" unoptimized /> : <span className="lookMiniProduct__fallback">No image</span>}</span><strong>{product.name}</strong><span>{product.colors[0]?.name ?? "No color"}</span><small>{product.sizes.length ? product.sizes.map((size) => size.label).join(" · ") : "One size"}</small><em>{formatDzd(product.priceDzd)}</em></Link>;
                     })}
-                  </div>
+                  </LookMiniProductStrip>
                   <Link className="lookViewButton" href={getLookHref(look)}>VIEW LOOK <span>→</span></Link>
                 </div>
               </article>

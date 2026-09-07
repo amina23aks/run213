@@ -6601,6 +6601,55 @@ html.auth-modal-open body { overflow: hidden; overscroll-behavior: none; }
   .accountAuthModal__card { margin-block: auto; width: min(100%, 34rem) !important; }
 }
 
+/* Pre-launch delivery, admin mapping, and mobile navigation polish. */
+.wilayaCombobox { min-width: 0; position: relative; width: 100%; }
+.wilayaCombobox__list { background: #fffdf7; border: 1px solid rgba(7,7,6,.2); border-radius: .7rem; box-shadow: 0 .8rem 2rem rgba(7,7,6,.16); display: grid; left: 0; margin-top: .25rem; max-height: 14rem; min-width: 0; overflow-x: hidden; overflow-y: auto; position: absolute; right: 0; top: 100%; z-index: 40; }
+.wilayaCombobox__list button { align-items: center; background: transparent; border: 0; color: #070706; cursor: pointer; display: flex; gap: .65rem; min-height: 2.45rem; padding: .55rem .7rem; text-align: left; width: 100%; }
+.wilayaCombobox__list button:hover, .wilayaCombobox__list button.isActive, .wilayaCombobox__list button[aria-selected="true"] { background: rgba(199,244,0,.22); }
+.wilayaCombobox__list button span { color: #667d00 !important; flex: 0 0 1.5rem; font-size: .66rem !important; }
+.wilayaCombobox__list p { color: #68675f; font-size: .75rem; margin: 0; padding: .75rem; }
+.checkoutDeliveryType label span, .drawerDeliveryMode label span { align-items: flex-start; display: grid; gap: .12rem .45rem; grid-template-columns: 1.08rem minmax(0,1fr); min-width: 0; width: 100%; }
+.checkoutDeliveryType label span::before, .drawerDeliveryMode label span::before { grid-row: 1 / span 3; }
+.checkoutDeliveryType label span :is(strong,small,b), .drawerDeliveryMode label span :is(strong,small,b) { grid-column: 2; }
+.checkoutDeliveryType label span strong, .drawerDeliveryMode label span strong { font-size: .7rem; text-transform: uppercase; }
+.checkoutDeliveryType label span small, .drawerDeliveryMode label span small { color: rgba(7,7,6,.58); font-size: .62rem; font-weight: 650; line-height: 1.25; text-transform: none; }
+.checkoutDeliveryType label span b, .drawerDeliveryMode label span b { color: #070706; font-size: .7rem; font-weight: 950; }
+.checkoutDeliveryType label.isUnavailable, .drawerDeliveryMode label.isUnavailable { cursor: not-allowed; opacity: .5; }
+
+.adminColorError { color: #9f1239 !important; font-weight: 800; }
+.adminMobileRgb { display: none; }
+.adminProductImageColor small { align-items: center; display: flex; gap: .35rem; font-size: .66rem; font-weight: 850; min-width: 0; }
+.adminProductImageColor small i { border: 1px solid rgba(0,0,0,.18); border-radius: 50%; display: inline-block; flex: 0 0 auto; height: .72rem; width: .72rem; }
+.adminProductImageCard .adminProductImageControls { aspect-ratio: auto; background: transparent; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .2rem; }
+.adminProductImageCard .adminProductImageControls button { min-width: 0; padding-inline: .2rem; }
+
+.lookMiniProductStrip { min-width: 0; position: relative; }
+.lookMiniProductStrip__next { align-items: center; background: #f5f1e8; border: 1px solid rgba(7,7,6,.2); border-radius: 50%; box-shadow: 0 .2rem .7rem rgba(7,7,6,.16); color: #070706; cursor: pointer; display: flex; font-size: .75rem; font-weight: 950; height: 1.75rem; justify-content: center; position: absolute; right: .2rem; top: 50%; transform: translateY(-50%); width: 1.75rem; z-index: 2; }
+
+@media (max-width: 700px) {
+  .shopHero > div { justify-content: flex-end; max-width: min(78%, 21rem); transform: none; }
+  .shopHero { padding-bottom: 1.7rem; }
+  .run-club__phrases { grid-template-columns: 1fr; justify-items: center; width: 100%; }
+  .run-club__phrases p:last-child { justify-self: center; text-align: center; }
+}
+
+@media (max-width: 760px) {
+  .adminProductImageGrid { grid-template-columns: repeat(2,minmax(0,1fr)); width: 100%; }
+  .adminProductImageCard { max-width: none; min-width: 0; }
+  .adminProductImageCard > div:first-child { aspect-ratio: 1; }
+  .adminProductImageCard img { height: 100%; width: 100%; }
+  .adminColorRow { align-items: center; grid-template-columns: auto minmax(0,1fr); }
+  .adminColorRow > .adminProductField { grid-column: 2; }
+  .adminMobileRgb { display: grid; gap: .3rem; grid-column: 1 / -1; }
+  .adminMobileRgb > span { color: #5f5f5f; font-size: .66rem; font-weight: 950; text-transform: uppercase; }
+  .adminMobileRgb > div { aspect-ratio: auto; background: transparent; display: grid; gap: .35rem; grid-template-columns: repeat(3,minmax(0,1fr)); overflow: visible; }
+  .adminMobileRgb label { display: grid; gap: .18rem; }
+  .adminMobileRgb input { min-width: 0; width: 100%; }
+  .adminColorRow > button { grid-column: 2; justify-self: end; padding: .25rem; }
+}
+@media (max-width: 330px) { .adminProductImageGrid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .lookMiniProducts { scroll-behavior: auto; } }
+
 
 /* Final mobile composition keeps collections readable without changing the figure carousel. */
 @media (max-width: 759px) {

@@ -43,6 +43,7 @@ export function AdminProductImagePreview({ images, colors, onRemove, onUpdate, o
               <option value="">All colors</option>
               {colors.map((color) => <option value={color.id} key={color.id}>{color.name || color.hex}</option>)}
             </select>
+            {image.colorId ? <small>{(() => { const color = colors.find((entry) => entry.id === image.colorId); return color ? <><i style={{ backgroundColor: color.hex }} />{color.name || color.hex}</> : "Unknown color"; })()}</small> : <small>All colors</small>}
           </label>
         </figure>
       ))}
