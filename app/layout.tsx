@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   robots: isProductionDeployment ? { index: true, follow: true } : { index: false, follow: false },
   openGraph: { type: "website", siteName: SITE_NAME, title: SITE_TITLE, description: SITE_DESCRIPTION, url: "/", images: [DEFAULT_SOCIAL_IMAGE] },
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION, images: [DEFAULT_SOCIAL_IMAGE] },
+  manifest: "/manifest.webmanifest",
   icons: { icon: "/brand/favicon.png", shortcut: "/brand/favicon.png" },
 };
 

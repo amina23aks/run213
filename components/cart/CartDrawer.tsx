@@ -7,6 +7,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { CartItem } from "@/components/cart/CartItem";
 import { CartLookGroup } from "@/components/cart/CartLookGroup";
 import { WilayaInput } from "@/components/checkout/WilayaInput";
+import { DeliveryModeOptions } from "@/components/checkout/DeliveryModeOptions";
 import { groupCartItems } from "@/components/cart/cartGrouping";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
@@ -26,6 +27,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [quickDeliveryDzd, setQuickDeliveryDzd] = useState<number | null>(null);
+  const [quickWilaya, setQuickWilaya] = useState("");
   const hasItems = isHydrated && items.length > 0;
 
   function updateQuickDelivery(event: ChangeEvent<HTMLFormElement>) {
@@ -38,6 +40,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   }
 
   function updateQuickWilaya(wilaya: string) {
+    setQuickWilaya(wilaya);
     const deliveryMode = document.querySelector<HTMLInputElement>('input[name="drawerDeliveryMode"]:checked')?.value as DeliveryMode | undefined;
     if (!wilaya) { setQuickDeliveryDzd(null); return; }
     try { setQuickDeliveryDzd(getShippingQuote({ wilaya, deliveryMode: deliveryMode ?? "home" }).amountDzd); }
@@ -128,11 +131,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <span>Wilaya</span>
                   <WilayaInput name="drawerWilaya" onCanonicalChange={updateQuickWilaya} />
                 </label>
-                <fieldset className="drawerDeliveryMode">
-                  <legend>Delivery mode</legend>
-                  <label><input type="radio" name="drawerDeliveryMode" value="home" defaultChecked /><span>Home</span></label>
-                  <label><input type="radio" name="drawerDeliveryMode" value="desk" /><span>Desk</span></label>
-                </fieldset>
+                <DeliveryModeOptions wilaya={quickWilaya} name="drawerDeliveryMode" variant="drawer" />
                 <label>
                   <span>Address</span>
                   <input type="text" name="drawerAddress" placeholder="Street, building, floor" required />

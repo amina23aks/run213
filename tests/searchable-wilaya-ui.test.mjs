@@ -14,11 +14,16 @@ test("checkout and Quick Checkout share the searchable Wilaya input instead of a
   assert.doesNotMatch(drawer, /<select name="drawerWilaya"/);
 });
 
-test("the shared input uses canonical Algeria Wilayas and invalid text submits an empty canonical value", () => {
+test("the shared accessible combobox uses canonical Algeria Wilayas and invalid text submits an empty canonical value", () => {
   assert.match(input, /ALGERIA_WILAYAS\.find/);
   assert.match(input, /resolveCanonicalWilaya\(value\) \?\? ""/);
   assert.match(input, /<input type="hidden" name=\{name\} value=\{canonicalValue\}/);
-  assert.match(input, /<datalist/);
+  assert.match(input, /role="combobox"/);
+  assert.match(input, /role="listbox"/);
+  assert.doesNotMatch(input, /<datalist/);
+  assert.match(input, /ArrowDown/);
+  assert.match(input, /Enter/);
+  assert.match(input, /Escape/);
 });
 
 test("valid Wilaya and delivery-mode changes both recalculate Quick Checkout shipping", () => {
@@ -28,8 +33,8 @@ test("valid Wilaya and delivery-mode changes both recalculate Quick Checkout shi
 });
 
 test("real radios retain explicit selected and focus-visible card states", () => {
-  assert.match(checkout, /type="radio" name="deliveryType"/);
-  assert.match(drawer, /type="radio" name="drawerDeliveryMode"/);
+  assert.match(checkout, /DeliveryModeOptions/);
+  assert.match(drawer, /DeliveryModeOptions/);
   assert.match(css, /label:has\(input:checked\)/);
   assert.match(css, /label:has\(input:focus-visible\)/);
   assert.match(css, /radial-gradient\(circle at center, var\(--lime\)/);

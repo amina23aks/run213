@@ -11,6 +11,7 @@ import { extractFirebaseAuthCode, getAuthErrorMessage } from "@/lib/auth-errors"
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import { PRODUCT_IMAGE_LIMIT } from "@/lib/products/constants.mjs";
 import type { Product } from "@/types/product";
+import { normalizeProductColor } from "@/lib/products/color";
 
 type AdminProductsResponse = {
   products: Product[];
@@ -419,7 +420,8 @@ function validateDraft(draft: ProductDraft): string[] {
   if (!Number.isFinite(discount) || discount < 0 || discount > 100) errors.push("Discount must be between 0 and 100.");
   if (!draft.images.length) errors.push("Upload at least one product image.");
   if (draft.images.length > PRODUCT_IMAGE_LIMIT) errors.push(`Upload at most ${PRODUCT_IMAGE_LIMIT} product images.`);
-  if (!draft.colors.some((color) => color.name.trim() && /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))) errors.push("Add at least one color with a name and valid #HEX value.");
+  if (!draft.colors.some((color) => color.name.trim() && normalizeProductColor(color.hex))) errors.push("Add at least one color with a name and valid HEX or rgb() value.");
+  if (draft.colors.some((color) => !color.name.trim() || !normalizeProductColor(color.hex))) errors.push("Every color needs a name and valid color value.");
   if (draft.stockMode === "limited" && !draft.stockQty.trim()) errors.push("Stock quantity is required when stock mode is limited.");
   return errors;
 }
@@ -466,8 +468,7 @@ function toPayload(draft: ProductDraft) {
     discountPercent,
     images: draft.images.map((image, index) => ({ id: image.id, url: image.url, alt: image.alt || draft.name || "Product image", publicId: image.publicId, sortOrder: image.sortOrder ?? index, isPrimary: image.isPrimary, colorId: image.colorId ?? null })),
     colors: draft.colors
-      .filter((color) => /^#[0-9a-fA-F]{6}$/.test(color.hex.trim()))
-      .map((color, index) => ({ id: color.id || `color-${index}`, name: color.name.trim() || `Color ${index + 1}`, hex: color.hex.trim().toUpperCase() })),
+      .map((color, index) => ({ id: color.id || `color-${index}`, name: color.name.trim() || `Color ${index + 1}`, hex: normalizeProductColor(color.hex)! })),
     sizes: draft.sizes.map((label) => ({ label })),
     status: draft.status,
     inStock: draft.stockMode === "unlimited" || Number(draft.stockQty) > 0,
