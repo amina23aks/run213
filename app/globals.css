@@ -5572,6 +5572,28 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityGridEmpty, .communityGridLoaded { margin: 0; color: rgba(7,7,6,0.72); font-size: 0.84rem; font-weight: 800; text-align: center; }
 .communityGridLoadMore { justify-self: center; min-height: 2.45rem; min-width: min(100%, 10rem); padding: 0.55rem 0.9rem; background: rgba(255,250,240,0.72); }
 
+@media (min-width: 340px) and (max-width: 767px) {
+  .runClubGallery .communityGrid { width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.3rem, 1.5vw, 0.42rem); }
+}
+
+@media (max-width: 767px) {
+  .runClubGallery .communityPost, .runClubGallery .communityPost__open { min-width: 0; max-width: 100%; overflow: hidden; }
+  .runClubGallery .communityPost .communityImageFrame { width: 100%; aspect-ratio: 4 / 5; }
+  .runClubGallery .communityPost__meta { min-width: 0; gap: 0.1rem; padding: clamp(0.28rem, 1.6vw, 0.4rem); }
+  .runClubGallery .communityPost__meta strong { display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; font-size: clamp(0.5rem, 2.15vw, 0.62rem); line-height: 1.08; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .runClubGallery .communityPost__meta small { display: block; min-width: 0; overflow: hidden; font-size: clamp(0.44rem, 1.85vw, 0.56rem); text-overflow: ellipsis; white-space: nowrap; }
+  .runClubGallery .communityPost__meta p { display: none; }
+  .runClubGallery .communityWinnerBadge { max-width: 100%; overflow: hidden; padding: 0.16rem 0.25rem; font-size: 0.42rem; text-overflow: ellipsis; white-space: nowrap; }
+
+  .communityDetailModal { overflow: hidden; padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left)); }
+  .communityDetailModal__dialog { width: min(34rem, calc(100vw - 1.5rem)); max-width: 100%; max-height: calc(100dvh - 1.5rem); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+  .communityDetailModal__dialog .communityImageFrame { width: 100%; max-height: min(58dvh, 30rem); object-position: center; }
+  .communityDetailModal__dialog .communityImageFrame__image { object-fit: contain; object-position: center; }
+  .communityDetailModal__copy { min-width: 0; overflow-wrap: anywhere; background: var(--surface); color: var(--foreground); }
+  .communityDetailModal__copy h2, .communityDetailModal__copy p { max-width: 100%; overflow-wrap: anywhere; }
+  .communityDetailModal__close { width: 2.75rem; height: 2.75rem; }
+}
+
 .communityImageFrame { position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: rgba(7,7,6,0.08); isolation: isolate; }
 .communityPost .communityImageFrame { border-radius: 0.58rem 0.58rem 0 0; }
 .communityImageFrame__backdrop { z-index: 0; object-fit: cover; opacity: 0.28; filter: blur(12px) saturate(0.82); pointer-events: none; transform: scale(1.08); }

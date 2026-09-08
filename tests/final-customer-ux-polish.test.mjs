@@ -60,6 +60,21 @@ test("community modal is accessible and renders only the public CommunityEntry p
   assert.doesNotMatch(communityGrid, /email|phone|customerId|admin/);
 });
 
+test("public Run Club community grid and detail modal stay compact across phone widths", () => {
+  assert.match(css, /@media \(min-width: 340px\) and \(max-width: 767px\) \{[\s\S]*?\.runClubGallery \.communityGrid \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(min-width: 1024px\) \{[\s\S]*?\.communityGrid \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.runClubGallery \.communityPost, \.runClubGallery \.communityPost__open \{[^}]*min-width: 0;[^}]*max-width: 100%;[^}]*overflow: hidden/);
+  assert.match(css, /\.runClubGallery \.communityPost__meta strong \{[^}]*overflow-wrap: anywhere;[^}]*-webkit-line-clamp: 2/);
+  assert.match(css, /\.runClubGallery \.communityPost__meta p \{ display: none; \}/);
+  assert.match(communityGrid, /onClick=\{\(\) => setSelectedEntry\(entry\)\}/);
+  assert.match(communityGrid, /selectedEntry\.caption/);
+  assert.match(css, /\.communityDetailModal__dialog \{[^}]*width: min\(34rem, calc\(100vw - 1\.5rem\)\);[^}]*max-height: calc\(100dvh - 1\.5rem\);[^}]*overflow-x: hidden;[^}]*overflow-y: auto/);
+  assert.match(css, /\.communityDetailModal__dialog \.communityImageFrame__image \{ object-fit: contain; object-position: center; \}/);
+  assert.match(css, /\.communityDetailModal__copy \{[^}]*background: var\(--surface\);[^}]*color: var\(--foreground\)/);
+  assert.match(css, /\.communityDetailModal__close \{ width: 2\.75rem; height: 2\.75rem; \}/);
+  assert.match(communityGrid, /const PAGE_SIZE = 12/);
+});
+
 test("Run Club reuses optional canonical Wilaya input while Checkout keeps its required default", () => {
   assert.match(runForm, /<WilayaInput name="wilaya" required=\{false\}/);
   assert.match(wilayaInput, /required = true/);
