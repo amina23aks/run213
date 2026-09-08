@@ -6,7 +6,7 @@ import { adminProductInputSchema, withCanonicalStock } from "@/lib/products/sche
 
 export const dynamic = "force-dynamic";
 const COLLECTION = "products";
-const DEFAULT_LIMIT = 25;
+const DEFAULT_LIMIT = 8;
 const MAX_LIMIT = 50;
 
 type AdminProductCursor = {

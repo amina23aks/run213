@@ -10,7 +10,7 @@ import { invalidateAdminAccessOnDenied } from "@/lib/admin-client-auth";
 import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { LookCollection } from "@/types/look";
 
-type ApiList = { items: LookCollection[] };
+type ApiList = { items: LookCollection[]; nextCursor: string | null };
 type CollectionDraft = typeof emptyDraft;
 type FieldErrors = Partial<Record<keyof CollectionDraft | "summary", string>>;
 const missingClientEnv = getMissingFirebaseClientEnv();
@@ -20,6 +20,7 @@ const emptyDraft = { name: "", subtitle: "", description: "", status: "draft", s
 export function AdminLookCollectionsClient() {
   const [user, setUser] = useState<User | null>(null);
   const [items, setItems] = useState<LookCollection[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [draft, setDraft] = useState(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [message, setMessage] = useState("Sign in with an approved admin email.");
@@ -34,8 +35,8 @@ export function AdminLookCollectionsClient() {
     return response.json();
   }, [user]);
 
-  const load = useCallback(async (authUser = user) => {
-    try { const data = await adminFetch("/api/admin/look-collections", undefined, authUser) as ApiList; setItems(data.items); setMessage(""); }
+  const load = useCallback(async (authUser = user, cursor: string | null = null) => {
+    try { const path = cursor ? `/api/admin/look-collections?cursor=${encodeURIComponent(cursor)}` : "/api/admin/look-collections"; const data = await adminFetch(path, undefined, authUser) as ApiList; setItems((current) => cursor ? appendUnique(current, data.items) : data.items); setNextCursor(data.nextCursor); setMessage(""); }
     catch { setMessage("Access denied or Firebase admin env is missing."); }
   }, [adminFetch, user]);
 
@@ -83,10 +84,12 @@ export function AdminLookCollectionsClient() {
         <AdminLookSection number="04" title="Card image"><label className="adminUploadButton"><input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void upload(file); }} /><span>{uploading ? "Uploading…" : draft.cardImageUrl ? "Replace card image" : "Upload card image"}</span></label>{errors.cardImageUrl ? <small className="adminInlineError">{errors.cardImageUrl}</small> : null}{draft.cardImageUrl ? <figure className="adminLookPreview adminLookPreview--landscape"><Image src={cloudinaryImageUrl(draft.cardImageUrl, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt="Collection card preview" width={220} height={130} unoptimized /><button type="button" onClick={() => patchDraft({ cardImageUrl: "", cardImagePublicId: "" })}>Remove image</button></figure> : null}</AdminLookSection>
         <div className="adminProductActions"><button className="adminPrimary" type="button" onClick={save}>Save collection</button>{editingId ? <button type="button" onClick={() => { setEditingId(null); setDraft(emptyDraft); }}>Cancel edit</button> : null}</div>
       </section>
-      <section className="adminCard"><div className="adminCard__heading"><p>COLLECTION LIST</p><h2>Collections</h2></div><div className="adminLookList">{items.length ? items.map((item) => <article className="adminLookRow" key={item.id}>{item.cardImage.url ? <Image src={cloudinaryImageUrl(item.cardImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={item.cardImage.alt} width={96} height={58} unoptimized /> : null}<div><strong>{String(item.sortOrder).padStart(2, "0")} · {item.name}</strong><span>{item.slug} · {item.status}</span></div><button type="button" onClick={() => edit(item)}>Edit</button>{item.status === "archived" ? <span>Archived</span> : <button type="button" onClick={() => archive(item.id)}>Archive</button>}</article>) : <p className="adminEmptyState">No collections yet. Create your first collection above.</p>}</div></section>
+      <section className="adminCard"><div className="adminCard__heading"><p>COLLECTION LIST</p><h2>Collections</h2></div><div className="adminLookList">{items.length ? items.map((item) => <article className="adminLookRow" key={item.id}>{item.cardImage.url ? <Image src={cloudinaryImageUrl(item.cardImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={item.cardImage.alt} width={96} height={58} unoptimized /> : null}<div><strong>{String(item.sortOrder).padStart(2, "0")} · {item.name}</strong><span>{item.slug} · {item.status}</span></div><button type="button" onClick={() => edit(item)}>Edit</button>{item.status === "archived" ? <span>Archived</span> : <button type="button" onClick={() => archive(item.id)}>Archive</button>}</article>) : <p className="adminEmptyState">No collections yet. Create your first collection above.</p>}</div>{nextCursor ? <button className="adminProductList__more" type="button" onClick={() => void load(user, nextCursor)}>LOAD MORE</button> : null}</section>
     </div>
   </AdminShell>;
 }
+
+function appendUnique(current: LookCollection[], next: LookCollection[]) { const ids = new Set(current.map((item) => item.id)); return [...current, ...next.filter((item) => !ids.has(item.id))]; }
 
 function validateDraft(draft: CollectionDraft): { ok: boolean; errors: FieldErrors; sortOrder: number } {
   const errors: FieldErrors = {};

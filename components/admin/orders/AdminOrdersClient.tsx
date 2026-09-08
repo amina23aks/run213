@@ -24,13 +24,13 @@ export function AdminOrdersClient() {
     setLoading(true); setMessage(null);
     try {
       const token = await getToken();
-      const params = new URLSearchParams({ limit: "15", status });
+      const params = new URLSearchParams({ limit: "10", status });
       if (search.trim()) params.set("search", search.trim());
       if (nextCursor) params.set("cursor", nextCursor);
       const response = await fetch(`/api/admin/orders?${params}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await response.json() as ListResponse | { error?: string };
       if (!response.ok || !("orders" in data)) throw new Error("error" in data ? data.error : "Orders could not be loaded.");
-      setOrders((current) => mode === "append" ? [...current, ...data.orders] : data.orders);
+      setOrders((current) => mode === "append" ? appendUnique(current, data.orders) : data.orders);
       setCursor(data.nextCursor);
     } catch (error) { setMessage(error instanceof Error ? error.message : "Orders could not be loaded."); }
     finally { setLoading(false); }
@@ -59,4 +59,9 @@ export function AdminOrdersClient() {
       {cursor ? <button className="adminProductList__more" type="button" disabled={loading} onClick={() => void load(cursor, "append")}>{loading ? "Loading..." : "Load more"}</button> : null}
     </section>
   </AdminShell>;
+}
+
+function appendUnique(current: AdminOrderSummary[], next: AdminOrderSummary[]) {
+  const loaded = new Set(current.map((order) => order.id));
+  return [...current, ...next.filter((order) => !loaded.has(order.id))];
 }

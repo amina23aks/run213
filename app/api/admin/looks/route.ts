@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 const COLLECTION = "looks";
 const PRODUCTS_COLLECTION = "products";
 const COLLECTIONS_COLLECTION = "lookCollections";
-const DEFAULT_LIMIT = 50;
+const DEFAULT_LIMIT = 5;
+const MAX_LIMIT = 50;
 
 type Cursor = { sortOrder: number; id: string };
 type SafeErrorCode = "validation_failed" | "duplicate_slug" | "collection_missing" | "products_unavailable" | "index_required" | "write_failed";
@@ -21,13 +22,14 @@ export async function GET(request: Request) {
   if (!adminVerification.ok) return adminVerification.response;
 
   const url = new URL(request.url);
+  const pageSize = clampLimit(Number(url.searchParams.get("limit") ?? DEFAULT_LIMIT));
   const cursor = parseCursor(url.searchParams.get("cursor"));
-  let query = getAdminDb().collection(COLLECTION).orderBy("sortOrder", "asc").orderBy(FieldPath.documentId(), "asc").limit(DEFAULT_LIMIT + 1);
+  let query = getAdminDb().collection(COLLECTION).orderBy("sortOrder", "asc").orderBy(FieldPath.documentId(), "asc").limit(pageSize + 1);
   if (cursor) query = query.startAfter(cursor.sortOrder, cursor.id);
   const snapshot = await query.get();
-  const docs = snapshot.docs.slice(0, DEFAULT_LIMIT);
+  const docs = snapshot.docs.slice(0, pageSize);
   const lastDoc = docs.at(-1);
-  const hasMore = snapshot.docs.length > DEFAULT_LIMIT;
+  const hasMore = snapshot.docs.length > pageSize;
   const lastSortOrder = lastDoc?.get("sortOrder");
   return Response.json({
     items: docs.map((doc) => ({ id: doc.id, ...doc.data() })),
@@ -97,6 +99,7 @@ function handleLookServerError(error: unknown) {
   return safeLookError("write_failed", "Look could not be saved. Please try again.", 500);
 }
 function encodeCursor(cursor: Cursor): string { return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url"); }
+function clampLimit(value: number) { return Number.isFinite(value) ? Math.min(Math.max(Math.trunc(value), 1), MAX_LIMIT) : DEFAULT_LIMIT; }
 function parseCursor(value: string | null): Cursor | null { if (!value) return null; try { const decoded = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<Cursor>; if (typeof decoded.sortOrder === "number" && typeof decoded.id === "string") return { sortOrder: decoded.sortOrder, id: decoded.id }; } catch (error) { console.warn("[admin-looks] Invalid cursor", error); } return null; }
 function revalidateLooks() { revalidateTag("looks", "max"); revalidatePath("/"); revalidatePath("/looks/[collectionSlug]", "page"); revalidatePath("/look/[lookSlug]", "page"); revalidatePath("/admin/look-collections"); revalidatePath("/admin/looks"); }
 async function getNextLookSortOrder(collectionId: string): Promise<number> { const snapshot = await getAdminDb().collection(COLLECTION).where("collectionId", "==", collectionId).orderBy("sortOrder", "desc").limit(1).get(); const highest = snapshot.docs[0]?.get("sortOrder"); return (typeof highest === "number" && Number.isFinite(highest) ? highest : 0) + 10; }

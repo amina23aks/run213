@@ -8,7 +8,7 @@ import type { OrderRecord, OrderStatus } from "@/types/order";
 
 const ORDERS_COLLECTION = "orders";
 const PRODUCTS_COLLECTION = "products";
-const DEFAULT_LIMIT = 15;
+const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 30;
 
 export const ADMIN_ORDER_STATUSES: OrderStatus[] = ["pending", "confirmed", "shipped", "delivered", "cancelled", "returned"];

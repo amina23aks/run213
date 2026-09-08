@@ -6,7 +6,8 @@ import { lookCollectionInputSchema } from "@/lib/look-schema";
 
 export const dynamic = "force-dynamic";
 const COLLECTION = "lookCollections";
-const DEFAULT_LIMIT = 50;
+const DEFAULT_LIMIT = 5;
+const MAX_LIMIT = 50;
 
 type Cursor = { sortOrder: number; id: string };
 
@@ -16,13 +17,14 @@ export async function GET(request: Request) {
   if (!adminVerification.ok) return adminVerification.response;
 
   const url = new URL(request.url);
+  const pageSize = clampLimit(Number(url.searchParams.get("limit") ?? DEFAULT_LIMIT));
   const cursor = parseCursor(url.searchParams.get("cursor"));
-  let query = getAdminDb().collection(COLLECTION).orderBy("sortOrder", "asc").orderBy(FieldPath.documentId(), "asc").limit(DEFAULT_LIMIT + 1);
+  let query = getAdminDb().collection(COLLECTION).orderBy("sortOrder", "asc").orderBy(FieldPath.documentId(), "asc").limit(pageSize + 1);
   if (cursor) query = query.startAfter(cursor.sortOrder, cursor.id);
   const snapshot = await query.get();
-  const docs = snapshot.docs.slice(0, DEFAULT_LIMIT);
+  const docs = snapshot.docs.slice(0, pageSize);
   const lastDoc = docs.at(-1);
-  const hasMore = snapshot.docs.length > DEFAULT_LIMIT;
+  const hasMore = snapshot.docs.length > pageSize;
   const lastSortOrder = lastDoc?.get("sortOrder");
   return Response.json({
     items: docs.map((doc) => ({ id: doc.id, ...doc.data() })),
@@ -48,6 +50,7 @@ export async function POST(request: Request) {
 }
 
 function encodeCursor(cursor: Cursor): string { return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url"); }
+function clampLimit(value: number) { return Number.isFinite(value) ? Math.min(Math.max(Math.trunc(value), 1), MAX_LIMIT) : DEFAULT_LIMIT; }
 function parseCursor(value: string | null): Cursor | null {
   if (!value) return null;
   try {

@@ -29,7 +29,7 @@ test("admin favorites ALL, PRODUCTS, and LOOKS use indexed stable cursor query s
 
 test("admin favorites keeps aggregate reads and hydration within cost bounds", () => {
   const source = read("app/api/admin/favorites/route.ts");
-  assert.match(source, /const PAGE_SIZE = 20/);
+  assert.match(source, /const PAGE_SIZE = 5/);
   assert.match(source, /limit\(PAGE_SIZE \+ 1\)/);
   assert.match(source, /snapshot\.docs\.slice\(0, PAGE_SIZE\)/);
   assert.match(source, /const refs = aggregates\.map/);

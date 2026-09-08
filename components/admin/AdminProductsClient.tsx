@@ -110,7 +110,7 @@ export function AdminProductsClient() {
       try {
         const url = cursor ? `/api/admin/products?cursor=${encodeURIComponent(cursor)}` : "/api/admin/products";
         const data = (await adminFetch(url)) as AdminProductsResponse;
-        setProducts((current) => (cursor ? [...current, ...data.products] : data.products));
+        setProducts((current) => (cursor ? appendUniqueProducts(current, data.products) : data.products));
         setNextCursor(data.nextCursor);
         setIsAuthorized(true);
         showTemporaryMessage("Products loaded.");
@@ -394,6 +394,11 @@ export function AdminProductsClient() {
       </div>
     </AdminShell>
   );
+}
+
+function appendUniqueProducts(current: Product[], next: Product[]) {
+  const loaded = new Set(current.map((product) => product.id));
+  return [...current, ...next.filter((product) => !loaded.has(product.id))];
 }
 
 function AdminAccessState({ missingClientEnv, missingServerEnv, message }: { missingClientEnv: string[]; missingServerEnv: string[]; message: string }) {

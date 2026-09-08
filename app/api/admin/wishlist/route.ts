@@ -2,30 +2,35 @@ import { FieldPath } from "firebase-admin/firestore";
 import { z } from "zod";
 import { adminJsonError, verifyAdminRequest } from "@/lib/admin-auth";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getWishlistDocumentId, normalizeWishlistEmail } from "@/lib/wishlist/identity";
 
 export const dynamic = "force-dynamic";
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 5;
 
 export async function GET(request: Request) {
   const adminVerification = await verifyAdminRequest(request);
 
   if (!adminVerification.ok) return adminVerification.response;
   const url = new URL(request.url);
+  const search = url.searchParams.get("search")?.trim() ?? "";
   const cursor = parseCursor(url.searchParams.get("cursor"));
   const collection = getAdminDb().collection("wishlistSignups");
+  if (search) {
+    const normalizedEmail = normalizeWishlistEmail(search);
+    const [count, document] = await Promise.all([collection.count().get(), normalizedEmail ? collection.doc(getWishlistDocumentId(normalizedEmail)).get() : Promise.resolve(null)]);
+    const subscribers = document?.exists ? [serializeSubscriber(document)] : [];
+    return Response.json({ total: count.data().count, subscribers, nextCursor: null });
+  }
   let query = collection.orderBy("createdAt", "desc").orderBy(FieldPath.documentId(), "desc").limit(PAGE_SIZE + 1);
   if (cursor) query = query.startAfter(new Date(cursor.createdAt), cursor.id);
   const [count, snapshot] = await Promise.all([collection.count().get(), query.get()]);
   const docs = snapshot.docs.slice(0, PAGE_SIZE);
-  const subscribers = docs.map((doc) => ({
-    id: doc.id,
-    email: String(doc.get("email") ?? ""),
-    joinedAt: doc.get("createdAt")?.toDate?.().toISOString?.() ?? null,
-    status: typeof doc.get("status") === "string" ? doc.get("status") : null,
-  }));
+  const subscribers = docs.map(serializeSubscriber);
   const last = docs.at(-1), lastDate = last?.get("createdAt")?.toDate?.();
   return Response.json({ total: count.data().count, subscribers, nextCursor: snapshot.docs.length > PAGE_SIZE && last && lastDate instanceof Date ? encodeCursor({ createdAt: lastDate.toISOString(), id: last.id }) : null });
 }
+
+function serializeSubscriber(doc: FirebaseFirestore.DocumentSnapshot) { return { id: doc.id, email: String(doc.get("email") ?? ""), joinedAt: doc.get("createdAt")?.toDate?.().toISOString?.() ?? null, status: typeof doc.get("status") === "string" ? doc.get("status") : null }; }
 
 type WishlistCursor = { createdAt: string; id: string };
 function encodeCursor(cursor: WishlistCursor) { return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url"); }

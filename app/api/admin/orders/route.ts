@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   try {
     const result = await listAdminOrders({
-      limit: Number(url.searchParams.get("limit") ?? 15),
+      limit: Number(url.searchParams.get("limit") ?? 10),
       cursor: url.searchParams.get("cursor"),
       status: url.searchParams.get("status"),
       search: url.searchParams.get("search"),
