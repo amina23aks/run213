@@ -11,10 +11,12 @@ import { DeliveryModeOptions } from "@/components/checkout/DeliveryModeOptions";
 import { groupCartItems } from "@/components/cart/cartGrouping";
 import { formatDzd } from "@/constants/products";
 import { useCart } from "@/context/cart";
-import { buildCreateOrderRequest, submitOrderToApi, validateOrderFormValues, type OrderFormValues } from "@/lib/orders/client";
+import { buildCreateOrderRequest, OrderSubmissionError, resetCheckoutAttemptKey, submitOrderToApi, validateOrderFormFields, type OrderFormValues } from "@/lib/orders/client";
 import { getShippingQuote } from "@/lib/orders/shipping";
 import type { DeliveryMode } from "@/types/order";
 import { trackPurchaseAfterSuccess } from "@/lib/analytics";
+import { saveGuestOrderAccess } from "@/components/orders/orderAccessStorage";
+import { waitForAuthHydration } from "@/components/orders/customerOrderAccess";
 
 type CartDrawerProps = {
   isOpen: boolean;
@@ -28,6 +30,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [quickDeliveryDzd, setQuickDeliveryDzd] = useState<number | null>(null);
   const [quickWilaya, setQuickWilaya] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const hasItems = isHydrated && items.length > 0;
 
   function updateQuickDelivery(event: ChangeEvent<HTMLFormElement>) {
@@ -41,17 +44,39 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   function updateQuickWilaya(wilaya: string) {
     setQuickWilaya(wilaya);
+    if (wilaya && fieldErrors.wilaya) clearFieldError("wilaya");
     const deliveryMode = document.querySelector<HTMLInputElement>('input[name="drawerDeliveryMode"]:checked')?.value as DeliveryMode | undefined;
     if (!wilaya) { setQuickDeliveryDzd(null); return; }
     try { setQuickDeliveryDzd(getShippingQuote({ wilaya, deliveryMode: deliveryMode ?? "home" }).amountDzd); }
     catch { setQuickDeliveryDzd(null); }
   }
 
+  function clearFieldError(field: string) {
+    if (!fieldErrors[field]) return;
+    setFieldErrors((current) => { const next = { ...current }; delete next[field]; return next; });
+  }
+
+  function handleQuickChange(event: ChangeEvent<HTMLFormElement>) {
+    updateQuickDelivery(event);
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) return;
+    clearFieldError(target.name === "drawerDeliveryMode" ? "deliveryMode" : target.name.replace(/^drawer/, "").replace(/^./, (letter) => letter.toLowerCase()));
+  }
+
+  function focusFirstError(form: HTMLFormElement, errors: Record<string, string>) {
+    const first = Object.keys(errors)[0];
+    if (first === "wilaya") { form.querySelector<HTMLElement>('[data-wilaya-input="drawerWilaya"]')?.focus(); return; }
+    const names: Record<string, string> = { fullName: "drawerFullName", phone: "drawerPhone", deliveryMode: "drawerDeliveryMode", address: "drawerAddress", notes: "drawerNotes" };
+    const control = form.elements.namedItem(names[first] ?? first);
+    if (control instanceof HTMLElement) control.focus();
+  }
+
   async function handleQuickCheckoutSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting) return;
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const values: OrderFormValues = {
       fullName: String(formData.get("drawerFullName") ?? ""),
       phone: String(formData.get("drawerPhone") ?? ""),
@@ -60,24 +85,35 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       address: String(formData.get("drawerAddress") ?? ""),
       notes: String(formData.get("drawerNotes") ?? ""),
     };
-    const validationError = validateOrderFormValues(values, items);
+    const validation = validateOrderFormFields(values, items);
 
-    if (validationError) {
-      setMessage(validationError);
+    if (validation.message) {
+      setFieldErrors(validation.fieldErrors);
+      setMessage(Object.keys(validation.fieldErrors).length ? null : validation.message);
+      focusFirstError(form, validation.fieldErrors);
       return;
     }
 
     setIsSubmitting(true);
     setMessage(null);
+    setFieldErrors({});
 
     try {
-      const order = await submitOrderToApi(buildCreateOrderRequest(values, items));
+      const user = await waitForAuthHydration();
+      const idToken = user ? await user.getIdToken() : null;
+      const order = await submitOrderToApi(buildCreateOrderRequest(values, items), idToken);
       trackPurchaseAfterSuccess(order, items);
+      if (order.customerAccessToken) saveGuestOrderAccess({ orderId: order.orderId, orderNumber: order.orderNumber, token: order.customerAccessToken });
+      resetCheckoutAttemptKey();
       clearCart();
       onClose();
-      router.push(`/checkout?status=success&orderNumber=${encodeURIComponent(order.orderNumber)}`);
+      router.push(`/orders/${encodeURIComponent(order.orderId)}?status=success`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not create order. Please try again.");
+      if (error instanceof OrderSubmissionError && Object.keys(error.fieldErrors).length) {
+        setFieldErrors(error.fieldErrors);
+        setMessage(null);
+        focusFirstError(form, error.fieldErrors);
+      } else setMessage(error instanceof Error ? error.message : "Could not create order. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -112,33 +148,39 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </div>
               <Link className="cartDrawer__checkout" href="/checkout" onClick={onClose}>GO TO CHECKOUT PAGE</Link>
 
-              <form className="drawerCheckoutForm" action="#" onSubmit={handleQuickCheckoutSubmit} onChange={updateQuickDelivery}>
+              <form className="drawerCheckoutForm" action="#" onSubmit={handleQuickCheckoutSubmit} onChange={handleQuickChange} noValidate>
                 <div className="drawerCheckoutForm__header">
                   <strong>Quick checkout</strong>
                   <span>COD only</span>
                 </div>
+                {Object.keys(fieldErrors).length ? <p className="deliveryValidationSummary" role="alert">Check the highlighted delivery details.</p> : null}
                 <div className="drawerCheckoutForm__grid">
                   <label>
                     <span>Full name</span>
-                    <input type="text" name="drawerFullName" placeholder="Your name" required />
+                    <input type="text" name="drawerFullName" placeholder="Your name" aria-invalid={Boolean(fieldErrors.fullName)} required />
+                    {fieldErrors.fullName ? <small className="fieldError">{fieldErrors.fullName}</small> : null}
                   </label>
                   <label>
                     <span>Phone</span>
-                    <input type="tel" name="drawerPhone" placeholder="0550 00 00 00" required />
+                    <input type="tel" name="drawerPhone" placeholder="0550 00 00 00" aria-invalid={Boolean(fieldErrors.phone)} required />
+                    {fieldErrors.phone ? <small className="fieldError">{fieldErrors.phone}</small> : null}
                   </label>
                 </div>
                 <label>
                   <span>Wilaya</span>
-                  <WilayaInput name="drawerWilaya" onCanonicalChange={updateQuickWilaya} />
+                  <WilayaInput name="drawerWilaya" invalid={Boolean(fieldErrors.wilaya)} onCanonicalChange={updateQuickWilaya} />
+                  {fieldErrors.wilaya ? <small className="fieldError">{fieldErrors.wilaya}</small> : null}
                 </label>
-                <DeliveryModeOptions wilaya={quickWilaya} name="drawerDeliveryMode" variant="drawer" />
+                <div><DeliveryModeOptions wilaya={quickWilaya} name="drawerDeliveryMode" variant="drawer" invalid={Boolean(fieldErrors.deliveryMode)} />{fieldErrors.deliveryMode ? <small className="fieldError">{fieldErrors.deliveryMode}</small> : null}</div>
                 <label>
                   <span>Address</span>
-                  <input type="text" name="drawerAddress" placeholder="Street, building, floor" required />
+                  <input type="text" name="drawerAddress" placeholder="Street, building, floor" aria-invalid={Boolean(fieldErrors.address)} required />
+                  {fieldErrors.address ? <small className="fieldError">{fieldErrors.address}</small> : null}
                 </label>
                 <label>
                   <span>Notes</span>
-                  <textarea name="drawerNotes" placeholder="Optional delivery note" rows={2} />
+                  <textarea name="drawerNotes" placeholder="Optional delivery note" rows={2} aria-invalid={Boolean(fieldErrors.notes)} />
+                  {fieldErrors.notes ? <small className="fieldError">{fieldErrors.notes}</small> : null}
                 </label>
                 {message ? <p className="checkoutFormMessage" role="status">{message}</p> : null}
                 <div className="cartDrawerSubtotalBox cartDrawerSubtotalBox--quick">
@@ -155,7 +197,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="cartDrawer__empty">
             <p>Your cart is empty.</p>
             <span>Start with DROP_001.</span>
-            <Link href="/shop" onClick={onClose}>SHOP DROP_001</Link>
+            <Link href="/shop" onClick={onClose}>GO TO SHOP</Link>
           </div>
         )}
       </aside>
