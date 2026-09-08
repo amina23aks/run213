@@ -5564,7 +5564,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityDetailModal__dialog { position: relative; width: min(100%, 34rem); max-height: calc(100dvh - 1.5rem); overflow: auto; border: 1px solid rgba(255,255,255,0.14); border-radius: 1rem; background: var(--cream); color: var(--foreground); box-shadow: 0 1.5rem 5rem rgba(0,0,0,0.38); }
 .communityDetailModal__dialog .communityImageFrame { width: 100%; max-height: min(62dvh, 36rem); aspect-ratio: 4 / 5; border-radius: 1rem 1rem 0 0; }
 .communityDetailModal__close { position: absolute; top: 0.65rem; right: 0.65rem; z-index: 5; display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; background: rgba(7,7,6,0.76); color: white; font-size: 1.5rem; cursor: pointer; }
-.communityDetailModal__copy { display: grid; gap: 0.35rem; padding: 1rem; overflow-wrap: anywhere; }
+.communityDetailModal__copy { display: grid; gap: 0.35rem; padding: 1rem; overflow-wrap: anywhere; background: var(--surface); }
 .communityDetailModal__copy h2, .communityDetailModal__copy p { margin: 0; }
 .communityDetailModal__copy h2 { font-size: clamp(1.25rem, 5vw, 1.8rem); line-height: 1; text-transform: uppercase; }
 .communityDetailModal__copy small { color: rgba(7,7,6,0.66); font-weight: 800; }
