@@ -13,7 +13,7 @@ export const metadata = {
   title: { absolute: SITE_TITLE },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default function Home() {
   return (

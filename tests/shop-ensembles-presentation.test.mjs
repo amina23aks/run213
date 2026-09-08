@@ -81,8 +81,11 @@ test("Shop Look reads are bounded, active-only, and do not resolve Products", as
   const start = source.indexOf("export async function listActiveLooks(");
   const end = source.indexOf("export async function getActiveLookCollectionBySlug", start);
   const implementation = source.slice(start, end);
-  assert.match(implementation, /where\("status", "==", "active"\)\.limit\(READ_LIMIT\)/);
-  assert.match(implementation, /slice\(0, limit\)/);
+  const cachedStart = source.indexOf("const readCachedActiveLooks = unstable_cache");
+  const cachedEnd = source.indexOf("const readCachedActiveLookCollectionBySlug", cachedStart);
+  const cachedImplementation = source.slice(cachedStart, cachedEnd);
+  assert.match(cachedImplementation, /where\("status", "==", "active"\)\.limit\(READ_LIMIT\)/);
+  assert.match(implementation, /slice\(0, clampLimit\(limit, 20\)\)/);
   assert.doesNotMatch(implementation, /resolveLookProducts|getActiveProductsByIds/);
 });
 

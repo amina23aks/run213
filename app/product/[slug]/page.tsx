@@ -9,7 +9,11 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { canonicalUrl, publicPageMetadata, safeJsonLd, SITE_NAME } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+export function generateStaticParams() {
+  return [];
+}
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;

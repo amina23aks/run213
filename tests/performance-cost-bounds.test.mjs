@@ -60,3 +60,37 @@ test("public product catalog cache remains tagged for mutation invalidation", ()
   assert.match(source, /revalidate: 60, tags: \["products"\]/);
   assert.match(source, /where\("status", "==", "active"\)/);
 });
+
+test("public Look catalog uses bounded tagged caches and ISR pages", () => {
+  const looks = read("lib/firestore/looks.ts");
+  assert.match(looks, /unstable_cache/);
+  assert.doesNotMatch(looks, /unstable_noStore|noStore\(\)/);
+  assert.match(looks, /const READ_LIMIT = 60/);
+  assert.match(looks, /revalidate: 60, tags: \["looks"\]/);
+  assert.match(looks, /revalidate: 60, tags: \["looks", "products"\]/);
+  assert.match(looks, /where\("status", "==", "active"\)/);
+
+  for (const path of ["app/page.tsx", "app/product/[slug]/page.tsx", "app/look/[lookSlug]/page.tsx", "app/looks/[collectionSlug]/page.tsx"]) {
+    const page = read(path);
+    assert.match(page, /export const revalidate = 60/);
+    assert.doesNotMatch(page, /force-dynamic/);
+  }
+
+  for (const path of ["app/product/[slug]/page.tsx", "app/look/[lookSlug]/page.tsx", "app/looks/[collectionSlug]/page.tsx"]) {
+    assert.match(read(path), /export function generateStaticParams\(\) \{\s*return \[\];\s*\}/);
+  }
+
+  assert.match(read("app/shop/page.tsx"), /export const dynamic = "force-dynamic"/);
+});
+
+test("Admin Look writes batch canonical Product hydration and invalidate public Look data", () => {
+  for (const path of ["app/api/admin/looks/route.ts", "app/api/admin/looks/[id]/route.ts"]) {
+    const source = read(path);
+    assert.match(source, /db\.getAll\(\.\.\.uniqueIds\.map/);
+    assert.match(source, /revalidateTag\("looks", "max"\)/);
+  }
+
+  for (const path of ["app/api/admin/look-collections/route.ts", "app/api/admin/look-collections/[id]/route.ts"]) {
+    assert.match(read(path), /revalidateTag\("looks", "max"\)/);
+  }
+});
