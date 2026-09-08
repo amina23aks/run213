@@ -5830,6 +5830,7 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .adminRunClubRow:hover { border-color: rgba(95,117,0,0.35); background: #fffdf7; box-shadow: 0 0 0 2px rgba(199,244,0,0.12); }
 .adminRunClubRow:focus-visible { border-color: #5f7500; box-shadow: 0 0 0 3px rgba(199,244,0,0.28); outline: none; }
 .adminRunClubModalOverlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: rgba(0,0,0,0.58); padding: clamp(0.7rem, 2vw, 1.25rem); overflow: hidden; }
+.adminRunClubModalOverlay--nested { z-index: 1001; }
 .adminRunClubLinkOverlay { z-index: 1010; }
 .adminRunClubConfirm label { display: grid; gap: .45rem; font-size: .72rem; font-weight: 900; }
 .adminRunClubConfirm input { min-width: 0; border: 1px solid rgba(7,7,6,.2); border-radius: .65rem; background: #fff; color: #111; padding: .75rem; }

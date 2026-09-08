@@ -40,7 +40,6 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
   const [messageTone, setMessageTone] = useState<"success" | "error" | "neutral">("neutral");
   const [appendError, setAppendError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [confirmDrawOpen, setConfirmDrawOpen] = useState(false);
   const [confirmAppendOpen, setConfirmAppendOpen] = useState(false);
@@ -51,6 +50,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
   const [linkTarget, setLinkTarget] = useState<{uid:string;email:string|null}|null>(null);
   const [linkError, setLinkError] = useState("");
   const lastSelectedRowRef = useRef<HTMLDivElement | null>(null);
+  const rejectButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const token = useCallback(async (forceRefresh = false) => {
     const [{ auth }] = await Promise.all([import("@/lib/firebase/client"), import("firebase/auth")]);
@@ -89,7 +89,6 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
       setCursor(listPayload.nextCursor);
       if (!append) {
         setSelected(null);
-        setIsRejecting(false);
         setRejectionReason("");
       }
     } catch (error) {
@@ -104,11 +103,16 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
 
   const closeModal = useCallback(() => {
     setSelected(null);
-    setIsRejecting(false);
     setRejectionReason("");
     setConfirmApprovedReject(false);
     window.requestAnimationFrame(() => lastSelectedRowRef.current?.focus());
   }, []);
+
+  const closeApprovedRejectConfirmation = useCallback(() => {
+    if (loading) return;
+    setConfirmApprovedReject(false);
+    window.requestAnimationFrame(() => rejectButtonRef.current?.focus());
+  }, [loading]);
 
   useEffect(() => {
     if (!selected) return undefined;
@@ -116,7 +120,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
     document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || loading) return;
-      if (confirmApprovedReject) setConfirmApprovedReject(false);
+      if (confirmApprovedReject) closeApprovedRejectConfirmation();
       else closeModal();
     };
     window.addEventListener("keydown", onKeyDown);
@@ -124,7 +128,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [closeModal, confirmApprovedReject, loading, selected]);
+  }, [closeApprovedRejectConfirmation, closeModal, confirmApprovedReject, loading, selected]);
 
   const closeAppendModal = useCallback(() => {
     if (loading) return;
@@ -146,7 +150,6 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
 
   async function moderate(action: "approve" | "reject", approvedRejectionConfirmed = false) {
     if (!selected) return;
-    if (action === "reject" && !isRejecting && selected.status !== "rejected") { setIsRejecting(true); return; }
     if (action === "reject" && selected.status === "approved" && !approvedRejectionConfirmed) {
       setConfirmApprovedReject(true);
       return;
@@ -235,7 +238,6 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
   function openModal(item: Submission, row: HTMLDivElement) {
     lastSelectedRowRef.current = row;
     setSelected(item);
-    setIsRejecting(false);
     setRejectionReason(item.rejectionReason ?? "");
   }
 
@@ -266,12 +268,12 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
 
       {confirmAppendOpen ? <div className="adminRunClubModalOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeAppendModal(); }}><aside className="adminRunClubConfirm adminRunClubConfirm--append" role="dialog" aria-modal="true" aria-labelledby="append-confirm-title"><button className="adminRunClubConfirm__close" type="button" aria-label="Close additional winner dialog" disabled={loading} onClick={closeAppendModal}>×</button><h2 id="append-confirm-title">Add another winner for {new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en", { month: "long", year: "numeric", timeZone: "UTC" })}?</h2><p>One additional winner will be selected randomly from the remaining approved participants.</p><p>The existing winner will not be changed.</p>{appendError ? <div className="adminRunClubConfirm__error" role="alert">{appendError}</div> : null}<div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void appendWinner()} type="button">{loading ? "Selecting..." : "CONFIRM ADDITIONAL WINNER"}</button><button className="adminSecondary" disabled={loading} onClick={closeAppendModal} type="button">CANCEL</button></div></aside></div> : null}
 
-      {confirmApprovedReject ? <div className="adminRunClubModalOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !loading) setConfirmApprovedReject(false); }}><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="approved-reject-title"><h2 id="approved-reject-title">Reject approved submission?</h2><p>This removes the submission from the public feed. Existing moderation history remains preserved.</p><div className="adminRunClubActions"><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject", true)} type="button">CONFIRM REJECTION</button><button className="adminSecondary" disabled={loading} onClick={() => setConfirmApprovedReject(false)} type="button" autoFocus>CANCEL</button></div></aside></div> : null}
-
       {linkOpen && selected ? <div className="adminRunClubModalOverlay adminRunClubLinkOverlay" role="presentation"><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="link-customer-title"><h2 id="link-customer-title">LINK TO CUSTOMER ACCOUNT</h2>{linkTarget?<><p>Confirm the exact Firebase Authentication account. This does not change moderation or public visibility.</p><dl><dt>UID</dt><dd>{linkTarget.uid}</dd><dt>Email</dt><dd>{linkTarget.email || "Not available"}</dd></dl></>:<label htmlFor="customer-uid">Exact Firebase Authentication UID<input id="customer-uid" autoFocus value={linkUid} onChange={event=>{setLinkUid(event.target.value);setLinkTarget(null)}} autoComplete="off" /></label>}{linkError?<p className="adminRunClubConfirm__error" role="alert">{linkError}</p>:null}<div className="adminRunClubActions"><button className="adminPrimary" type="button" disabled={loading||!linkUid.trim()} onClick={()=>void linkCustomer(Boolean(linkTarget))}>{loading?"CHECKING…":linkTarget?"CONFIRM LINK":"VERIFY UID"}</button><button className="adminSecondary" type="button" disabled={loading} onClick={()=>{setLinkOpen(false);setLinkTarget(null);setLinkError("")}}>CANCEL</button></div></aside></div>:null}
 
 
-      {selected ? <div className="adminRunClubModalOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !loading) closeModal(); }}><aside className="adminRunClubModal" role="dialog" aria-modal="true" aria-labelledby="submission-detail-title"><header className="adminRunClubModal__header"><div><p>{selected.customerUserId?"SUBMISSION DETAIL":"LEGACY UNLINKED SUBMISSION"}</p><h2 id="submission-detail-title">{selected.name}</h2><span>{selected.monthKey}</span></div><StatusBadge status={selected.status} /><button className="adminRunClubModal__close" type="button" onClick={closeModal} autoFocus>Close</button></header><div className="adminRunClubModal__body"><div className="adminRunClubDetail__media">{selected.proofImage ? <FallbackImage fallbackSrc="/placeholders/community-proof-placeholder.webp" className="adminRunClubDetail__image" src={cloudinaryImageUrl(selected.proofImage.secureUrl, { width: CLOUDINARY_IMAGE_WIDTHS.communityAdmin })} alt={`Full run proof submitted by ${selected.name}`} width={720} height={720} sizes="(max-width: 800px) 100vw, 720px" unoptimized /> : <p>No proof image.</p>}</div><section className="adminRunClubInfo"><h3>Submission information</h3><dl><dt>Name</dt><dd>{selected.name}</dd><dt>Contact</dt><dd>{selected.contactType === "email" ? <a href={`mailto:${selected.contactValue}`}>{selected.contactValue}</a> : `${selected.contactType}: ${selected.contactValue}`}</dd><dt>Instagram</dt><dd>{selected.instagram || "—"}</dd><dt>Wilaya</dt><dd>{selected.wilaya || "—"}</dd><dt>Caption</dt><dd>{selected.caption || "—"}</dd>{selected.pendingRevision?<><dt>Proposed caption</dt><dd>{selected.pendingRevision.caption||"—"}</dd><dt>Proposed wilaya</dt><dd>{selected.pendingRevision.wilaya||"—"}</dd></>:null}<dt>Consent</dt><dd>{selected.consentAccepted ? "Accepted" : "Missing"}</dd><dt>Submitted</dt><dd>{formatSubmitted(selected.createdAt)}</dd><dt>Month</dt><dd>{selected.monthKey}</dd><dt>Current status</dt><dd><StatusBadge status={selected.status} /></dd></dl><div className="adminRunClubActions">{selected.customerUserId?null:<button className="adminSecondary" disabled={loading} onClick={()=>{setLinkError("");setLinkUid("");setLinkTarget(null);setLinkOpen(true)}} type="button">LINK TO CUSTOMER ACCOUNT</button>}{selected.status==="edit_requested"?<><button className="adminPrimary" disabled={loading} onClick={()=>void moderateCustomerRequest("approve_edit")}>APPROVE EDIT</button><button className="adminDanger" disabled={loading} onClick={()=>void moderateCustomerRequest("reject_edit")}>REJECT EDIT</button></>:selected.status==="removal_requested"?<><button className="adminDanger" disabled={loading} onClick={()=>void moderateCustomerRequest("approve_removal")}>APPROVE REMOVAL</button><button className="adminPrimary" disabled={loading} onClick={()=>void moderateCustomerRequest("reject_removal")}>RESTORE POST</button></>:<><button className="adminPrimary" disabled={loading} onClick={() => void moderate("approve")} type="button">APPROVE</button><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject")} type="button">REJECT</button></>}<button className="adminSecondary" disabled={loading} onClick={closeModal} type="button">CLOSE</button></div></section></div></aside></div> : null}
+      {selected ? <div className="adminRunClubModalOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !loading) closeModal(); }}><aside className="adminRunClubModal" role="dialog" aria-modal="true" aria-labelledby="submission-detail-title"><header className="adminRunClubModal__header"><div><p>{selected.customerUserId?"SUBMISSION DETAIL":"LEGACY UNLINKED SUBMISSION"}</p><h2 id="submission-detail-title">{selected.name}</h2><span>{selected.monthKey}</span></div><StatusBadge status={selected.status} /><button className="adminRunClubModal__close" type="button" onClick={closeModal} autoFocus>Close</button></header><div className="adminRunClubModal__body"><div className="adminRunClubDetail__media">{selected.proofImage ? <FallbackImage fallbackSrc="/placeholders/community-proof-placeholder.webp" className="adminRunClubDetail__image" src={cloudinaryImageUrl(selected.proofImage.secureUrl, { width: CLOUDINARY_IMAGE_WIDTHS.communityAdmin })} alt={`Full run proof submitted by ${selected.name}`} width={720} height={720} sizes="(max-width: 800px) 100vw, 720px" unoptimized /> : <p>No proof image.</p>}</div><section className="adminRunClubInfo"><h3>Submission information</h3><dl><dt>Name</dt><dd>{selected.name}</dd><dt>Contact</dt><dd>{selected.contactType === "email" ? <a href={`mailto:${selected.contactValue}`}>{selected.contactValue}</a> : `${selected.contactType}: ${selected.contactValue}`}</dd><dt>Instagram</dt><dd>{selected.instagram || "—"}</dd><dt>Wilaya</dt><dd>{selected.wilaya || "—"}</dd><dt>Caption</dt><dd>{selected.caption || "—"}</dd>{selected.pendingRevision?<><dt>Proposed caption</dt><dd>{selected.pendingRevision.caption||"—"}</dd><dt>Proposed wilaya</dt><dd>{selected.pendingRevision.wilaya||"—"}</dd></>:null}<dt>Consent</dt><dd>{selected.consentAccepted ? "Accepted" : "Missing"}</dd><dt>Submitted</dt><dd>{formatSubmitted(selected.createdAt)}</dd><dt>Month</dt><dd>{selected.monthKey}</dd><dt>Current status</dt><dd><StatusBadge status={selected.status} /></dd></dl><div className="adminRunClubActions">{selected.customerUserId?null:<button className="adminSecondary" disabled={loading} onClick={()=>{setLinkError("");setLinkUid("");setLinkTarget(null);setLinkOpen(true)}} type="button">LINK TO CUSTOMER ACCOUNT</button>}{selected.status==="edit_requested"?<><button className="adminPrimary" disabled={loading} onClick={()=>void moderateCustomerRequest("approve_edit")}>APPROVE EDIT</button><button className="adminDanger" disabled={loading} onClick={()=>void moderateCustomerRequest("reject_edit")}>REJECT EDIT</button></>:selected.status==="removal_requested"?<><button className="adminDanger" disabled={loading} onClick={()=>void moderateCustomerRequest("approve_removal")}>APPROVE REMOVAL</button><button className="adminPrimary" disabled={loading} onClick={()=>void moderateCustomerRequest("reject_removal")}>RESTORE POST</button></>:<><button className="adminPrimary" disabled={loading} onClick={() => void moderate("approve")} type="button">APPROVE</button><button ref={rejectButtonRef} className="adminDanger" disabled={loading} onClick={() => void moderate("reject")} type="button">REJECT</button></>}<button className="adminSecondary" disabled={loading} onClick={closeModal} type="button">CLOSE</button></div></section></div></aside></div> : null}
+
+      {confirmApprovedReject ? <div className="adminRunClubModalOverlay adminRunClubModalOverlay--nested" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeApprovedRejectConfirmation(); }}><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="approved-reject-title"><h2 id="approved-reject-title">Reject approved submission?</h2><p>This will change the approved submission to rejected and remove it from the public feed.</p><div className="adminRunClubActions"><button className="adminSecondary" disabled={loading} onClick={closeApprovedRejectConfirmation} type="button" autoFocus>CANCEL</button><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject", true)} type="button">CONFIRM REJECTION</button></div></aside></div> : null}
     </>
   );
 }

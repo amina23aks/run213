@@ -7,6 +7,8 @@ const configRoute = readFileSync("app/api/admin/config/route.ts", "utf8");
 const returns = readFileSync("lib/orders/returns.ts", "utf8");
 const orderAdmin = readFileSync("lib/orders/admin.ts", "utf8");
 const firebaseTypes = readFileSync("types/firebase.ts", "utf8");
+const runClubAdmin = readFileSync("components/admin/AdminRunClubClient.tsx", "utf8");
+const globalStyles = readFileSync("app/globals.css", "utf8");
 
 test("placeholder Settings route and navigation are removed", () => {
   assert.equal(existsSync("app/admin/settings/page.tsx"), false);
@@ -43,4 +45,26 @@ test("admin UI contains no native browser dialogs", () => {
   for (const path of adminFiles) {
     assert.doesNotMatch(readFileSync(path, "utf8"), /\b(?:alert|confirm|prompt)\s*\(/);
   }
+});
+
+test("approved Run Club rejection opens its visible confirmation on the first click", () => {
+  assert.doesNotMatch(runClubAdmin, /isRejecting|setIsRejecting/);
+  assert.match(runClubAdmin, /selected\.status === "approved" && !approvedRejectionConfirmed[\s\S]*setConfirmApprovedReject\(true\)/);
+  assert.match(runClubAdmin, /ref=\{rejectButtonRef\}[\s\S]*onClick=\{\(\) => void moderate\("reject"\)\}/);
+});
+
+test("approved rejection confirmation is the top accessible modal layer", () => {
+  const detailPosition = runClubAdmin.indexOf("submission-detail-title");
+  const confirmationPosition = runClubAdmin.indexOf("approved-reject-title");
+  assert.ok(detailPosition >= 0 && confirmationPosition > detailPosition);
+  assert.match(runClubAdmin, /adminRunClubModalOverlay--nested[\s\S]*role="dialog"[\s\S]*aria-modal="true"/);
+  assert.match(globalStyles, /\.adminRunClubModalOverlay \{[^}]*z-index: 1000[^}]*\}[\s\S]*\.adminRunClubModalOverlay--nested \{ z-index: 1001; \}/);
+});
+
+test("approved rejection cancellation and confirmation preserve intentional behavior", () => {
+  assert.match(runClubAdmin, /if \(confirmApprovedReject\) closeApprovedRejectConfirmation\(\)/);
+  assert.match(runClubAdmin, /requestAnimationFrame\(\(\) => rejectButtonRef\.current\?\.focus\(\)\)/);
+  assert.match(runClubAdmin, /onMouseDown=\{\(event\) => \{ if \(event\.target === event\.currentTarget\) closeApprovedRejectConfirmation\(\); \}\}/);
+  assert.match(runClubAdmin, /onClick=\{closeApprovedRejectConfirmation\}[\s\S]*autoFocus>CANCEL/);
+  assert.match(runClubAdmin, /onClick=\{\(\) => void moderate\("reject", true\)\}[\s\S]*CONFIRM REJECTION/);
 });
