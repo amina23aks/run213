@@ -9,8 +9,8 @@ test("homepage figures are canonical-ID deduped, deterministically ordered, and 
     read("lib/firestore/looks.ts"),
     read("components/home/ShopTheLookClient.tsx"),
   ]);
-  assert.match(store, /const uniqueLooks = new Map<string, Look>\(\)/);
-  assert.match(store, /!uniqueLooks\.has\(look\.id\)/);
+  assert.match(store, /const looks = new Map<string, Look>\(\)/);
+  assert.match(store, /!looks\.has\(look\.id\)/);
   assert.match(store, /homepageFigureOrder \?\? a\.sortOrder/);
   assert.match(store, /a\.sortOrder - b\.sortOrder[\s\S]*?a\.id\.localeCompare\(b\.id\)/);
   assert.match(client, /new Map\(figures\.map\(\(figure\) => \[figure\.id, figure\]\)\)/);

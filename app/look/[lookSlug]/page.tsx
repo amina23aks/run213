@@ -7,7 +7,11 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { publicPageMetadata } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+export function generateStaticParams() {
+  return [];
+}
 
 type LookPageProps = { params: Promise<{ lookSlug: string }> };
 

@@ -77,12 +77,13 @@ async function canonicalizeLookInput(input: LookInput): Promise<{ data: LookInpu
 
 async function readCanonicalProducts(productIds: string[]): Promise<{ items: Product[]; unavailable: string[] }> {
   const uniqueIds = Array.from(new Set(productIds));
-  const results = await Promise.all(uniqueIds.map(async (id) => {
-    const doc = await getAdminDb().collection(PRODUCTS_COLLECTION).doc(id).get();
+  const db = getAdminDb();
+  const documents = uniqueIds.length ? await db.getAll(...uniqueIds.map((id) => db.collection(PRODUCTS_COLLECTION).doc(id))) : [];
+  const results = documents.map((doc) => {
     const data = doc.data() as Partial<Product> | undefined;
-    if (!doc.exists || !data || data.status !== "active" || typeof data.priceDzd !== "number") return { product: null, label: typeof data?.name === "string" ? data.name : id };
-    return { product: { id: doc.id, ...data } as Product, label: data.name ?? id };
-  }));
+    if (!doc.exists || !data || data.status !== "active" || typeof data.priceDzd !== "number") return { product: null, label: typeof data?.name === "string" ? data.name : doc.id };
+    return { product: { id: doc.id, ...data } as Product, label: data.name ?? doc.id };
+  });
   return { items: results.flatMap((item) => item.product ? [item.product] : []), unavailable: results.flatMap((item) => item.product ? [] : [item.label]) };
 }
 

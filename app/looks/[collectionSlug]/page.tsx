@@ -13,7 +13,11 @@ import { cache } from "react";
 import { publicPageMetadata } from "@/lib/seo";
 import { LookMiniProductStrip } from "@/components/look/LookMiniProductStrip";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+export function generateStaticParams() {
+  return [];
+}
 
 type LooksCollectionPageProps = { params: Promise<{ collectionSlug: string }> };
 
