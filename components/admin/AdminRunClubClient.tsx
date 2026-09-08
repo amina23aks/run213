@@ -44,6 +44,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
   const [rejectionReason, setRejectionReason] = useState("");
   const [confirmDrawOpen, setConfirmDrawOpen] = useState(false);
   const [confirmAppendOpen, setConfirmAppendOpen] = useState(false);
+  const [confirmApprovedReject, setConfirmApprovedReject] = useState(false);
   const [winnerCount, setWinnerCount] = useState(1);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUid, setLinkUid] = useState("");
@@ -105,6 +106,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
     setSelected(null);
     setIsRejecting(false);
     setRejectionReason("");
+    setConfirmApprovedReject(false);
     window.requestAnimationFrame(() => lastSelectedRowRef.current?.focus());
   }, []);
 
@@ -112,13 +114,17 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
     if (!selected) return undefined;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && !loading) closeModal(); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || loading) return;
+      if (confirmApprovedReject) setConfirmApprovedReject(false);
+      else closeModal();
+    };
     window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [closeModal, loading, selected]);
+  }, [closeModal, confirmApprovedReject, loading, selected]);
 
   const closeAppendModal = useCallback(() => {
     if (loading) return;
@@ -138,10 +144,13 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
     };
   }, [closeAppendModal, confirmAppendOpen]);
 
-  async function moderate(action: "approve" | "reject") {
+  async function moderate(action: "approve" | "reject", approvedRejectionConfirmed = false) {
     if (!selected) return;
     if (action === "reject" && !isRejecting && selected.status !== "rejected") { setIsRejecting(true); return; }
-    if (action === "reject" && selected.status === "approved" && !window.confirm("Reject this already approved entry? Existing moderation rules will handle the public feed update.")) return;
+    if (action === "reject" && selected.status === "approved" && !approvedRejectionConfirmed) {
+      setConfirmApprovedReject(true);
+      return;
+    }
     setLoading(true);
     try {
       const payload = action === "approve"
@@ -256,6 +265,8 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
       {confirmDrawOpen ? <div className="adminRunClubModalOverlay" role="presentation"><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="draw-confirm-title"><h2 id="draw-confirm-title">Draw winners for {new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en", { month: "long", year: "numeric", timeZone: "UTC" })}?</h2><p>Choose 1–3 winners. Winners are selected randomly from approved participants and preserved for this month.</p><label className="adminRunClubWinnerCount" htmlFor="winner-count">Number of winners<select id="winner-count" value={winnerCount} onChange={(event) => setWinnerCount(Number(event.target.value))}><option value={1}>1 winner</option><option value={2}>2 winners</option><option value={3}>3 winners</option></select></label><div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void drawWinner()} type="button">{loading ? "Drawing..." : "CONFIRM DRAW"}</button><button className="adminSecondary" disabled={loading} onClick={() => setConfirmDrawOpen(false)} type="button">CANCEL</button></div></aside></div> : null}
 
       {confirmAppendOpen ? <div className="adminRunClubModalOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeAppendModal(); }}><aside className="adminRunClubConfirm adminRunClubConfirm--append" role="dialog" aria-modal="true" aria-labelledby="append-confirm-title"><button className="adminRunClubConfirm__close" type="button" aria-label="Close additional winner dialog" disabled={loading} onClick={closeAppendModal}>×</button><h2 id="append-confirm-title">Add another winner for {new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en", { month: "long", year: "numeric", timeZone: "UTC" })}?</h2><p>One additional winner will be selected randomly from the remaining approved participants.</p><p>The existing winner will not be changed.</p>{appendError ? <div className="adminRunClubConfirm__error" role="alert">{appendError}</div> : null}<div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void appendWinner()} type="button">{loading ? "Selecting..." : "CONFIRM ADDITIONAL WINNER"}</button><button className="adminSecondary" disabled={loading} onClick={closeAppendModal} type="button">CANCEL</button></div></aside></div> : null}
+
+      {confirmApprovedReject ? <div className="adminRunClubModalOverlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !loading) setConfirmApprovedReject(false); }}><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="approved-reject-title"><h2 id="approved-reject-title">Reject approved submission?</h2><p>This removes the submission from the public feed. Existing moderation history remains preserved.</p><div className="adminRunClubActions"><button className="adminDanger" disabled={loading} onClick={() => void moderate("reject", true)} type="button">CONFIRM REJECTION</button><button className="adminSecondary" disabled={loading} onClick={() => setConfirmApprovedReject(false)} type="button" autoFocus>CANCEL</button></div></aside></div> : null}
 
       {linkOpen && selected ? <div className="adminRunClubModalOverlay adminRunClubLinkOverlay" role="presentation"><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="link-customer-title"><h2 id="link-customer-title">LINK TO CUSTOMER ACCOUNT</h2>{linkTarget?<><p>Confirm the exact Firebase Authentication account. This does not change moderation or public visibility.</p><dl><dt>UID</dt><dd>{linkTarget.uid}</dd><dt>Email</dt><dd>{linkTarget.email || "Not available"}</dd></dl></>:<label htmlFor="customer-uid">Exact Firebase Authentication UID<input id="customer-uid" autoFocus value={linkUid} onChange={event=>{setLinkUid(event.target.value);setLinkTarget(null)}} autoComplete="off" /></label>}{linkError?<p className="adminRunClubConfirm__error" role="alert">{linkError}</p>:null}<div className="adminRunClubActions"><button className="adminPrimary" type="button" disabled={loading||!linkUid.trim()} onClick={()=>void linkCustomer(Boolean(linkTarget))}>{loading?"CHECKING…":linkTarget?"CONFIRM LINK":"VERIFY UID"}</button><button className="adminSecondary" type="button" disabled={loading} onClick={()=>{setLinkOpen(false);setLinkTarget(null);setLinkError("")}}>CANCEL</button></div></aside></div>:null}
 

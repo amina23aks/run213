@@ -36,6 +36,7 @@ test("protected diagnostics expose configuration state, never secret values", ()
 test("admin UI contains no native browser dialogs", () => {
   const adminFiles = [
     "components/admin/AdminShell.tsx",
+    "components/admin/AdminRunClubClient.tsx",
     "components/admin/orders/AdminStatusMenu.tsx",
     "components/admin/products/AdminProductForm.tsx",
   ];
