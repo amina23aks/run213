@@ -28,7 +28,8 @@ test("the shared accessible combobox uses canonical Algeria Wilayas and invalid 
 
 test("valid Wilaya and delivery-mode changes both recalculate Quick Checkout shipping", () => {
   assert.match(drawer, /onCanonicalChange=\{updateQuickWilaya\}/);
-  assert.match(drawer, /onChange=\{updateQuickDelivery\}/);
+  assert.match(drawer, /onChange=\{handleQuickChange\}/);
+  assert.match(drawer, /updateQuickDelivery\(event\)/);
   assert.match(drawer, /getShippingQuote\(\{ wilaya, deliveryMode/);
 });
 

@@ -75,7 +75,7 @@ export default async function LooksCollectionPage({ params }: LooksCollectionPag
                   <Image src={cloudinaryImageUrl(look.heroImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.lookDetail })} alt={look.heroImage.alt} fill sizes="(max-width: 900px) 100vw, 52vw" unoptimized />
                 </Link>
                 <div className="lookEditorialContent">
-                  <h2>{look.name}</h2>
+                  <h2 className="lookEditorialTitle">{look.name}</h2>
                   <p>{look.description}</p>
                   <LookPriceDisplay priceDzd={look.priceDzd} compareAtPriceDzd={look.compareAtPriceDzd} discountPercent={look.discountPercent} isPromo={look.isPromo} savingsLabel="Save {amount} when you buy the complete Look." />
                   <LookMiniProductStrip>

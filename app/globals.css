@@ -470,6 +470,8 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .drawerCheckoutForm label span, .drawerDeliveryMode legend { color: rgba(7, 7, 6, 0.66); font-size: 0.62rem; font-weight: 950; text-transform: uppercase; }
 .drawerCheckoutForm input, .drawerCheckoutForm select, .drawerCheckoutForm textarea, .checkoutCard select { width: 100%; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 0.65rem; background: rgba(255, 255, 255, 0.52); color: var(--foreground); padding: 0.62rem 0.68rem; font-size: 0.78rem; font-weight: 750; outline: 0; }
 .drawerCheckoutForm textarea { resize: vertical; min-height: 3.7rem; }
+.drawerCheckoutForm [aria-invalid="true"] { border-color: #c62828; box-shadow: 0 0 0 1px rgba(198, 40, 40, 0.16); }
+.drawerCheckoutForm .fieldError { color: #b42318; font-size: 0.66rem; font-weight: 800; line-height: 1.25; }
 .drawerDeliveryMode { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; border: 0; margin: 0; padding: 0; }
 .drawerDeliveryMode legend { grid-column: 1 / -1; }
 .drawerDeliveryMode label { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 0.7rem; background: rgba(255, 255, 255, 0.38); padding: 0.5rem; }
@@ -5556,6 +5558,17 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityPost__meta strong { overflow: hidden; font-size: clamp(0.54rem, 1.7vw, 0.72rem); font-weight: 950; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .communityPost__meta small, .communityPost__meta p { margin: 0; color: rgba(7,7,6,0.68); font-size: clamp(0.48rem, 1.55vw, 0.64rem); font-weight: 700; line-height: 1.18; }
 .communityPost__meta p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.communityPost__open { display: block; width: 100%; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; cursor: pointer; }
+.communityPost__open:focus-visible { outline: 3px solid var(--lime); outline-offset: -3px; }
+.communityDetailModal { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; overflow-y: auto; background: rgba(0,0,0,0.72); padding: clamp(0.75rem, 3vw, 2rem); }
+.communityDetailModal__dialog { position: relative; width: min(100%, 34rem); max-height: calc(100dvh - 1.5rem); overflow: auto; border: 1px solid rgba(255,255,255,0.14); border-radius: 1rem; background: var(--cream); color: var(--foreground); box-shadow: 0 1.5rem 5rem rgba(0,0,0,0.38); }
+.communityDetailModal__dialog .communityImageFrame { width: 100%; max-height: min(62dvh, 36rem); aspect-ratio: 4 / 5; border-radius: 1rem 1rem 0 0; }
+.communityDetailModal__close { position: absolute; top: 0.65rem; right: 0.65rem; z-index: 5; display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; background: rgba(7,7,6,0.76); color: white; font-size: 1.5rem; cursor: pointer; }
+.communityDetailModal__copy { display: grid; gap: 0.35rem; padding: 1rem; overflow-wrap: anywhere; }
+.communityDetailModal__copy h2, .communityDetailModal__copy p { margin: 0; }
+.communityDetailModal__copy h2 { font-size: clamp(1.25rem, 5vw, 1.8rem); line-height: 1; text-transform: uppercase; }
+.communityDetailModal__copy small { color: rgba(7,7,6,0.66); font-weight: 800; }
+.communityDetailModal__copy p { white-space: pre-wrap; }
 .communityGridEmpty, .communityGridLoaded { margin: 0; color: rgba(7,7,6,0.72); font-size: 0.84rem; font-weight: 800; text-align: center; }
 .communityGridLoadMore { justify-self: center; min-height: 2.45rem; min-width: min(100%, 10rem); padding: 0.55rem 0.9rem; background: rgba(255,250,240,0.72); }
 
@@ -5635,11 +5648,22 @@ img, picture, video, canvas, svg { display: block; max-width: 100%; }
 .communityMarquee--compact .communityCard { flex-basis: clamp(14rem, 22vw, 17rem); min-width: clamp(14rem, 22vw, 17rem); }
 .communityCard > .communityImageFrame { position: relative; inset: auto; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: inherit; background: rgba(7,7,6,0.28); }
 .communityCard .communityImageFrame__backdrop { display: none; }
+.communityCard .communityImageFrame--contain .communityImageFrame__backdrop { display: block; }
 .communityCard .communityImageFrame::after { position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, transparent 38%, rgba(0,0,0,0.76)); content: ""; pointer-events: none; }
 .communityCard .communityImageFrame__image { z-index: 1; object-position: center; }
 .communityCard .communityImageFrame--cover .communityImageFrame__image { object-fit: cover; padding: 0; }
 .communityCard .communityImageFrame--contain { background: linear-gradient(135deg, rgba(245,241,232,0.92), rgba(226,220,207,0.84)); }
 .communityCard .communityImageFrame--contain .communityImageFrame__image { object-fit: contain; padding: 0.45rem; }
+
+/* Launch polish: card swatches scroll on one line without widening mobile cards. */
+@media (max-width: 700px) {
+  .productCard .swatchesRow { display: flex; flex-wrap: nowrap; max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; scrollbar-width: none; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+  .productCard .swatchesRow::-webkit-scrollbar { display: none; }
+  .productCard .swatchesRow .productSwatch { flex: 0 0 auto; }
+}
+
+/* Only editorial module names are compact; collection hero typography is unchanged. */
+.looksCollectionPage .lookEditorialContent .lookEditorialTitle { max-width: 100%; overflow: hidden; font-size: clamp(1.2rem, 2.2vw, 2rem); line-height: 1; text-overflow: clip; white-space: nowrap; }
 .communityCard__meta { position: absolute; inset: auto 0.85rem 0.75rem; z-index: 3; display: grid; gap: 0.08rem; padding: 0; color: white; pointer-events: none; }
 .communityCard__meta strong { overflow: hidden; color: white; font-size: 0.78rem; font-weight: 950; line-height: 1.05; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .communityCard__meta span, .communityCard__meta small { color: rgba(255,255,255,0.86); font-size: 0.62rem; font-weight: 750; line-height: 1.12; }

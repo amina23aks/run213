@@ -318,7 +318,7 @@ function buildOrderItems(input: CreateOrderRequest, products: ProductById, looks
       item.lookCompareAtPriceDzd = canonicalLook.compareAtPriceDzd;
       item.lookDiscountPercent = canonicalLook.discountPercent;
       item.lookSavingsDzd = lookSavingsDzd;
-      item.admin = calculateItemAdminSnapshot(products.get(item.productId)?.costPriceDzd, item.lineTotalDzd, item.quantity);
+      item.admin = calculateItemAdminSnapshot(products.get(item.productId)?.costPriceDzd, item.allocatedRevenueDzd, item.quantity);
       allocated += value;
     });
   });

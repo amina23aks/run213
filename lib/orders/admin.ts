@@ -229,7 +229,7 @@ function toAdminOrderItem(item: unknown) {
     productId: stringOrNull(record.productId), slug: stringOrNull(record.slug), name: stringOrNull(record.name) ?? "Product", category: stringOrNull(record.category), image: stringOrNull(record.image),
     selectedSize: stringOrNull(record.selectedSize), selectedColorId: stringOrNull(record.selectedColorId), selectedColor: stringOrNull(record.selectedColor), selectedColorHex: stringOrNull(record.selectedColorHex), quantity: numberOrNull(record.quantity) ?? 0,
     unitPriceDzd: numberOrNull(record.unitPriceDzd), lineTotalDzd: numberOrNull(record.lineTotalDzd), stockMode: stringOrNull(record.stockMode),
-    lookName: stringOrNull(record.lookName), lookPricingMode: stringOrNull(record.lookPricingMode),
+    lookName: stringOrNull(record.lookName), lookPricingMode: stringOrNull(record.lookPricingMode), allocatedRevenueDzd: numberOrNull(record.allocatedRevenueDzd),
     unitCostDzd: numberOrNull(admin.unitCostDzd), lineCostDzd: numberOrNull(admin.lineCostDzd), estimatedLineProfitDzd: numberOrNull(admin.estimatedLineProfitDzd),
   };
 }
