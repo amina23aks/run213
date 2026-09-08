@@ -13,7 +13,7 @@ import { getMissingFirebaseClientEnv } from "@/lib/env";
 import type { Look, LookCollection } from "@/types/look";
 import type { Product } from "@/types/product";
 
-type LookList = { items: Look[] };
+type LookList = { items: Look[]; nextCursor: string | null };
 type CollectionList = { items: LookCollection[] };
 type ProductList = { products: Product[] };
 type LookDraft = typeof emptyDraft;
@@ -25,6 +25,7 @@ const emptyDraft = { collectionId: "", collectionSlug: "", name: "", numberLabel
 export function AdminLooksClient() {
   const [user, setUser] = useState<User | null>(null);
   const [looks, setLooks] = useState<Look[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [collections, setCollections] = useState<LookCollection[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [draft, setDraft] = useState(emptyDraft);
@@ -54,12 +55,21 @@ export function AdminLooksClient() {
     try {
       const [lookData, collectionData, productData] = await Promise.all([
         adminFetch("/api/admin/looks", undefined, authUser) as Promise<LookList>,
-        adminFetch("/api/admin/look-collections", undefined, authUser) as Promise<CollectionList>,
+        adminFetch("/api/admin/look-collections?limit=50", undefined, authUser) as Promise<CollectionList>,
         adminFetch("/api/admin/products?limit=50", undefined, authUser) as Promise<ProductList>,
       ]);
-      setLooks(lookData.items); setCollections(collectionData.items); setProducts(productData.products); setMessage("");
+      setLooks(lookData.items); setNextCursor(lookData.nextCursor); setCollections(collectionData.items); setProducts(productData.products); setMessage("");
     } catch { setMessage("Access denied or Firebase admin env is missing."); }
   }, [adminFetch, user]);
+
+  async function loadMore() {
+    if (!nextCursor) return;
+    try {
+      const data = await adminFetch(`/api/admin/looks?cursor=${encodeURIComponent(nextCursor)}`) as LookList;
+      setLooks((current) => appendUniqueLooks(current, data.items));
+      setNextCursor(data.nextCursor);
+    } catch { setErrors({ summary: "More Looks could not be loaded." }); }
+  }
 
   useEffect(() => {
     if (missingClientEnv.length) return;
@@ -119,10 +129,12 @@ export function AdminLooksClient() {
         <AdminLookSection number="05" title="Products in this Look"><AdminLookField label="Search products"><input placeholder="Search by product or category" value={productQuery} onChange={(event) => setProductQuery(event.target.value)} /></AdminLookField>{errors.productIds ? <p className="adminInlineError">{errors.productIds}</p> : null}<div className="adminLookProductPicker">{filteredProducts.map((product) => <button className={draft.productIds.includes(product.id) ? "isSelected" : undefined} type="button" key={product.id} onClick={() => toggleProduct(product.id)}>{product.images[0]?.url ? <FallbackImage fallbackSrc="/placeholders/product-placeholder.webp" src={cloudinaryImageUrl(product.images[0].url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={product.name} width={56} height={64} unoptimized /> : null}<span><strong>{product.name}</strong><small>{product.category} · {formatDzd(product.priceDzd)} · {product.stockMode === "limited" ? `${product.stockQty ?? 0} left` : "In stock"}</small></span><em>{draft.productIds.includes(product.id) ? "Remove" : "Add"}</em></button>)}</div><div className="adminSelectedProducts">{draft.productIds.map((id, index) => { const product = products.find((item) => item.id === id); return <article key={id}><span>{index + 1}</span>{product?.images[0]?.url ? <FallbackImage fallbackSrc="/placeholders/product-placeholder.webp" src={cloudinaryImageUrl(product.images[0].url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={product.name} width={56} height={64} unoptimized /> : null}<strong>{product?.name ?? id}</strong><button type="button" onClick={() => moveProduct(id, -1)}>Move up</button><button type="button" onClick={() => moveProduct(id, 1)}>Move down</button><button type="button" onClick={() => toggleProduct(id)}>Remove</button></article>; })}</div></AdminLookSection>
         <div className="adminProductActions"><button className="adminPrimary" type="button" disabled={!availableCollections.length} onClick={save}>Save Look</button>{editingId ? <button type="button" onClick={() => { setEditingId(null); setDraft(emptyDraft); }}>Cancel edit</button> : null}</div>
       </section>
-      <section className="adminCard"><div className="adminCard__heading"><p>LOOK LIST</p><h2>Looks</h2></div><div className="adminLookList">{looks.length ? looks.map((look) => <article className="adminLookRow" key={look.id}><FallbackImage fallbackSrc="/placeholders/product-placeholder.webp" src={cloudinaryImageUrl(look.heroImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={look.heroImage.alt} width={72} height={72} unoptimized /><div><strong>{look.numberLabel ? `${look.numberLabel} · ` : ""}{look.name}</strong><span>{look.collectionSlug} · {look.status} · {look.productIds.length} products {look.showAsHomepageFigure ? "· Homepage figure" : ""}</span></div><button type="button" onClick={() => edit(look)}>Edit</button>{look.status === "archived" ? <span>Archived</span> : <button type="button" onClick={() => archive(look.id)}>Archive</button>}</article>) : <p className="adminEmptyState">No Looks yet. Create your first Look above.</p>}</div></section>
+      <section className="adminCard"><div className="adminCard__heading"><p>LOOK LIST</p><h2>Looks</h2></div><div className="adminLookList">{looks.length ? looks.map((look) => <article className="adminLookRow" key={look.id}><FallbackImage fallbackSrc="/placeholders/product-placeholder.webp" src={cloudinaryImageUrl(look.heroImage.url, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={look.heroImage.alt} width={72} height={72} unoptimized /><div><strong>{look.numberLabel ? `${look.numberLabel} · ` : ""}{look.name}</strong><span>{look.collectionSlug} · {look.status} · {look.productIds.length} products {look.showAsHomepageFigure ? "· Homepage figure" : ""}</span></div><button type="button" onClick={() => edit(look)}>Edit</button>{look.status === "archived" ? <span>Archived</span> : <button type="button" onClick={() => archive(look.id)}>Archive</button>}</article>) : <p className="adminEmptyState">No Looks yet. Create your first Look above.</p>}</div>{nextCursor ? <button className="adminProductList__more" type="button" onClick={() => void loadMore()}>LOAD MORE</button> : null}</section>
     </div>
   </AdminShell>;
 }
+
+function appendUniqueLooks(current: Look[], next: Look[]) { const ids = new Set(current.map((item) => item.id)); return [...current, ...next.filter((item) => !ids.has(item.id))]; }
 
 function validateDraft(draft: LookDraft): { ok: boolean; errors: FieldErrors; homepageFigureOrder: number | null } {
   const errors: FieldErrors = {};

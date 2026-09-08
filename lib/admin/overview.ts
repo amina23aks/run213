@@ -1,5 +1,5 @@
 import "server-only";
-import { AggregateField, type Query } from "firebase-admin/firestore";
+import { AggregateField, FieldPath, type Query } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { algiersDayKey, algiersDayKeys, getOverviewDateWindow, type OverviewRangeKey } from "@/lib/time/algiers";
 
@@ -13,9 +13,10 @@ export type OverviewPayload = {
   series: Array<{ date: string; label: string; orders: number; merchandiseValueDzd: number; estimatedGrossProfitDzd: number }>;
   categories: Array<{ category: string; merchandiseValueDzd: number }>;
   financialCoverage: { currentMissingCostOrders: number; previousMissingCostOrders: number } | null;
-  unavailable: Array<OverviewMetricKey | "series" | "categories" | "financials">;
+  unavailable: Array<OverviewMetricKey | "series" | "categories" | "financials" | "recentWishlist">;
   chartTruncated: boolean;
   returnEventsTruncated: boolean;
+  recentWishlist: Array<{ id: string; email: string; joinedAt: string | null }>;
   generatedAt: string;
 };
 
@@ -38,13 +39,14 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
     ["lowStock", products.where("stockQty", ">", 0).where("stockQty", "<", 5).count().get()], ["outOfStock", products.where("stockQty", "==", 0).count().get()],
     ["runClubPending", db.collection("runClubSubmissions").where("status", "==", "pending").count().get()],
     ["totalFavorites", db.collection("favoriteAggregates").aggregate({ value: AggregateField.sum("count") }).get()], ["wishlistSignups", db.collection("wishlistSignups").count().get()],
+    ["recentWishlist", db.collection("wishlistSignups").orderBy("createdAt", "desc").orderBy(FieldPath.documentId(), "desc").limit(5).get()],
     ["currentBreakdown", loadBoundedDeliveredBreakdown(current, window.start, window.end)],
     ["previousBreakdown", loadBoundedDeliveredBreakdown(previous, window.previousStart, window.previousEnd)],
     ["returnCosts", Promise.all([loadBoundedReturnCosts(db, window.start, window.end), loadBoundedReturnCosts(db, window.previousStart, window.previousEnd)])],
   ] as const;
   const settled = await Promise.allSettled(jobs.map(([, promise]) => promise));
   const metrics: OverviewPayload["metrics"] = {}, unavailable: OverviewPayload["unavailable"] = [];
-  let currentBreakdown: Breakdown | null = null, previousBreakdown: Breakdown | null = null, returnCosts: [ReturnCostBreakdown, ReturnCostBreakdown] | null = null;
+  let currentBreakdown: Breakdown | null = null, previousBreakdown: Breakdown | null = null, returnCosts: [ReturnCostBreakdown, ReturnCostBreakdown] | null = null, recentWishlist: OverviewPayload["recentWishlist"] = [];
   settled.forEach((result, index) => {
     const key = jobs[index][0];
     if (result.status === "rejected") {
@@ -57,6 +59,7 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
     if (key === "currentBreakdown") currentBreakdown = result.value as Breakdown;
     else if (key === "previousBreakdown") previousBreakdown = result.value as Breakdown;
     else if (key === "returnCosts") returnCosts = result.value as [ReturnCostBreakdown, ReturnCostBreakdown];
+    else if (key === "recentWishlist") recentWishlist = (result.value as FirebaseFirestore.QuerySnapshot).docs.map((doc) => ({ id: doc.id, email: String(doc.get("email") ?? ""), joinedAt: doc.get("createdAt")?.toDate?.().toISOString?.() ?? null }));
     else if (key === "orders" || key === "pendingOrders" || key === "deliveredOrders" || key === "cancelledOrders" || key === "returnedOrders") {
       const pair = result.value as unknown[]; metrics[key] = compareMetric(countValue(pair[0]), countValue(pair[1]));
     } else metrics[key] = key === "totalFavorites" ? sumValue(result.value) : countValue(result.value);
@@ -76,7 +79,7 @@ export async function getAdminOverview(range: OverviewRangeKey = "7d", now = new
     range, window: Object.fromEntries(Object.entries(window).map(([key, value]) => [key, value.toISOString()])) as OverviewPayload["window"], metrics,
     series: currentFinancials?.series ?? [], categories: currentFinancials?.categories ?? [],
     financialCoverage: currentFinancials && previousFinancials ? { currentMissingCostOrders: currentFinancials.missingCostOrders, previousMissingCostOrders: previousFinancials.missingCostOrders } : null,
-    unavailable, chartTruncated: Boolean(currentFinancials?.truncated || previousFinancials?.truncated), returnEventsTruncated: Boolean(returnFinancials?.[0].truncated || returnFinancials?.[1].truncated), generatedAt: now.toISOString(),
+    unavailable, chartTruncated: Boolean(currentFinancials?.truncated || previousFinancials?.truncated), returnEventsTruncated: Boolean(returnFinancials?.[0].truncated || returnFinancials?.[1].truncated), recentWishlist, generatedAt: now.toISOString(),
   };
 }
 

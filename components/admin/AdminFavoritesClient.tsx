@@ -15,8 +15,6 @@ export function AdminFavoritesClient() {
 
 function AdminFavoritesWorkspace() {
   const [kind, setKind] = useState<Kind>("all");
-  const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("");
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -35,7 +33,7 @@ function AdminFavoritesWorkspace() {
       }
       if (!response.ok) throw new Error(`Favorites insights could not be loaded (${response.status}).`);
       const next = await response.json() as Payload;
-      setData((current) => append && current ? { ...next, summary: current.summary, items: [...current.items, ...next.items] } : next);
+      setData((current) => append && current ? { ...next, summary: current.summary, items: appendUniqueItems(current.items, next.items) } : next);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Favorites insights could not be loaded."); }
     finally { setLoading(false); }
   }, [kind]);
@@ -54,15 +52,11 @@ function AdminFavoritesWorkspace() {
             <div className="adminInsightTabs" role="tablist" aria-label="Favorite type">
               {(["all", "product", "look"] as Kind[]).map((value) => <button className={kind === value ? "isActive" : ""} key={value} onClick={() => setKind(value)} type="button">{value === "all" ? "ALL" : `${value.toUpperCase()}S`}</button>)}
             </div>
-            <form onSubmit={(event) => { event.preventDefault(); setQuery(search.trim()); }}>
-              <input aria-label="Search favorites by item name" placeholder="Search item name…" value={search} onChange={(event) => setSearch(event.target.value)} />
-              <button type="submit">SEARCH</button>
-            </form>
             <button className="adminInsightsMore" disabled={loading} onClick={() => void load()} type="button">{loading ? "REFRESHING…" : "REFRESH"}</button>
           </div>
-          {error ? <ErrorState message={error} retry={() => void load()} /> : loading && !data ? <p className="adminInsightState">Loading aggregate saves…</p> : !data?.items.filter((item) => !query || item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).length ? <p className="adminInsightState">No loaded items match this view.</p> : (
+          {error ? <ErrorState message={error} retry={() => void load()} /> : loading && !data ? <p className="adminInsightState">Loading aggregate saves…</p> : !data?.items.length ? <p className="adminInsightState">No saved items in this view.</p> : (
             <div className="adminInsightRows">
-              {data.items.filter((item) => !query || item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((item) => <FavoriteRow item={item} key={item.id} />)}
+              {data.items.map((item) => <FavoriteRow item={item} key={item.id} />)}
             </div>
           )}
           {data?.nextCursor ? <button className="adminInsightsMore" disabled={loading} onClick={() => void load(data.nextCursor, true)} type="button">{loading ? "LOADING…" : "LOAD MORE"}</button> : null}
@@ -70,6 +64,7 @@ function AdminFavoritesWorkspace() {
     </>
   );
 }
+function appendUniqueItems(current: Item[], next: Item[]) { const loaded = new Set(current.map((item) => item.id)); return [...current, ...next.filter((item) => !loaded.has(item.id))]; }
 
 function FavoriteRow({ item }: { item: Item }) {
   const href = item.type === "product" ? `/product/${item.slug}` : `/look/${item.slug}`;

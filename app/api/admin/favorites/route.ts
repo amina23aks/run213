@@ -4,7 +4,7 @@ import { favoriteAggregateId, type FavoriteKind } from "@/lib/favorites/aggregat
 import { getAdminDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 5;
 const NO_STORE_HEADERS = { "Cache-Control": "private, no-store, max-age=0" };
 type Cursor = { count: number; id: string };
 

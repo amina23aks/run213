@@ -70,12 +70,12 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
     return response.status === 401 ? makeRequest(true) : response;
   }, [token]);
 
-  const load = useCallback(async (append = false) => {
+  const load = useCallback(async (append = false, pageCursor: string | null = null) => {
     setLoading(true);
     setMessage("");
     try {
-      const q = new URLSearchParams({ month, status, limit: "20" });
-      if (append && cursor) q.set("cursor", cursor);
+      const q = new URLSearchParams({ month, status, limit: "8" });
+      if (append && pageCursor) q.set("cursor", pageCursor);
       const [summaryResponse, listResponse] = await Promise.all([
         adminFetch(`/api/admin/run-club/summary?month=${month}`),
         adminFetch(`/api/admin/run-club/submissions?${q}`),
@@ -85,7 +85,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
       if (!summaryResponse.ok || !listResponse.ok) throw new Error(summaryPayload.message || listPayload.message || "Run Club data failed to load.");
       const loadedSubmissions = listPayload.submissions as Submission[];
       setSummary(summaryPayload);
-      setItems((current) => append ? [...current, ...loadedSubmissions] : loadedSubmissions);
+      setItems((current) => append ? appendUniqueSubmissions(current, loadedSubmissions) : loadedSubmissions);
       setCursor(listPayload.nextCursor);
       if (!append) {
         setSelected(null);
@@ -97,7 +97,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
     } finally {
       setLoading(false);
     }
-  }, [adminFetch, cursor, month, status]);
+  }, [adminFetch, month, status]);
 
   useEffect(() => { const timer = window.setTimeout(() => { void load(false); }, 0); return () => window.clearTimeout(timer); }, [load]);
 
@@ -261,7 +261,7 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
           {message ? <p className={`adminNotice adminNotice--${messageTone}`} role={messageTone === "error" ? "alert" : "status"}>{message}</p> : null}
           {summary ? <section className="adminRunClubDraw" aria-labelledby="run-club-draw-title"><div><p className="adminRunClubDraw__badge">{summary.drawStatus === "drawn" ? "MONTHLY WINNER" : "MONTHLY DRAW"}</p><h3 id="run-club-draw-title">{winnerList.length ? `${winnerList.length} WINNER${winnerList.length > 1 ? "S" : ""} SAVED` : `${summary.eligibleDrawCount} eligible approved participants`}</h3>{winnerList.length ? <div className="adminRunClubDraw__explain"><span>Original draw completed with {summary.eligibleCountAtDraw ?? winnerList.length} eligible participants.</span><span>{summary.currentApprovedCount ?? summary.eligibleDrawCount} submissions are currently approved.</span><span>{summary.approvedAddedAfterDrawCount ?? 0} approved submissions were added after the original draw.</span><span>{summary.remainingEligibleCount ?? 0} approved non-winning submissions remain eligible.</span></div> : <span>Winner not selected</span>}{summary.approvedCountMismatch ? <strong className="adminRunClubDraw__warning">Counter mismatch: using {summary.eligibleDrawCount} actual eligible entries for draw.</strong> : null}</div>{winnerList.length ? <div className="adminRunClubWinners">{winnerList.map((winner, index) => <article className="adminRunClubWinner" key={winner.submissionId}><FallbackImage fallbackSrc="/placeholders/community-proof-placeholder.webp" src={cloudinaryImageUrl(winner.proofImage.secureUrl, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={`Winner proof from ${winner.publicName}`} width={72} height={72} sizes="72px" unoptimized /><div><strong>WINNER {String(winner.placement ?? index + 1).padStart(2, "0")}</strong><span>{winner.publicName}</span><small>Placement {winner.placement ?? index + 1} · Selected {formatSubmitted(winner.winnerSelectedAt)}</small></div></article>)}{summary.drawStatus === "drawn" ? summary.winnerCount && summary.winnerCount >= 3 ? <p className="adminRunClubDraw__state">MAXIMUM 3 WINNERS SAVED</p> : summary.hasAdditionalEligibleParticipants ? <button className="adminPrimary" type="button" disabled={loading} onClick={() => setConfirmAppendOpen(true)}>ADD ANOTHER WINNER</button> : <p className="adminRunClubDraw__state">NO ADDITIONAL ELIGIBLE PARTICIPANTS</p> : null}</div> : <button className="adminPrimary" type="button" disabled={loading || summary.eligibleDrawCount === 0} onClick={() => setConfirmDrawOpen(true)}>DRAW WINNER</button>}</section> : null}
           <div className="adminRunClubTable" role="table" aria-label="Run Club submissions"><div className="adminRunClubTable__head" role="row"><span>Proof</span><span>Participant</span><span>Contact</span><span>Instagram</span><span>Submitted</span><span>Status</span></div>{items.length ? items.map((item) => <div className="adminRunClubRow" key={item.id} role="row" tabIndex={0} onClick={(event) => { if ((event.target as HTMLElement).closest("button,a,input,select,textarea")) return; openModal(item, event.currentTarget); }} onKeyDown={(event) => { if (event.key !== "Enter" && event.key !== " ") return; event.preventDefault(); openModal(item, event.currentTarget); }}><span>{item.proofImage ? <FallbackImage fallbackSrc="/placeholders/community-proof-placeholder.webp" src={cloudinaryImageUrl(item.proofImage.secureUrl, { width: CLOUDINARY_IMAGE_WIDTHS.adminThumbnail })} alt={`Run proof thumbnail for ${item.name}`} width={64} height={64} sizes="64px" unoptimized /> : null}</span><strong>{item.name}</strong><span>{item.contactType}: {item.contactValue}</span><span>{item.instagram || "—"}</span><span>{formatSubmitted(item.createdAt)}</span><StatusBadge status={item.status} /></div>) : <p className="adminRunClubEmpty">No submissions found for this month and status.</p>}</div>
-          {cursor ? <button className="adminSecondary" disabled={loading} onClick={() => void load(true)} type="button">Load more</button> : null}
+          {cursor ? <button className="adminSecondary" disabled={loading} onClick={() => void load(true, cursor)} type="button">Load more</button> : null}
       </section>
 
       {confirmDrawOpen ? <div className="adminRunClubModalOverlay" role="presentation"><aside className="adminRunClubConfirm" role="dialog" aria-modal="true" aria-labelledby="draw-confirm-title"><h2 id="draw-confirm-title">Draw winners for {new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en", { month: "long", year: "numeric", timeZone: "UTC" })}?</h2><p>Choose 1–3 winners. Winners are selected randomly from approved participants and preserved for this month.</p><label className="adminRunClubWinnerCount" htmlFor="winner-count">Number of winners<select id="winner-count" value={winnerCount} onChange={(event) => setWinnerCount(Number(event.target.value))}><option value={1}>1 winner</option><option value={2}>2 winners</option><option value={3}>3 winners</option></select></label><div className="adminRunClubActions"><button className="adminPrimary" disabled={loading} onClick={() => void drawWinner()} type="button">{loading ? "Drawing..." : "CONFIRM DRAW"}</button><button className="adminSecondary" disabled={loading} onClick={() => setConfirmDrawOpen(false)} type="button">CANCEL</button></div></aside></div> : null}
@@ -277,3 +277,5 @@ function AdminRunClubWorkspace({ defaultMonth }: { defaultMonth: string }) {
     </>
   );
 }
+
+function appendUniqueSubmissions(current: Submission[], next: Submission[]) { const ids = new Set(current.map((item) => item.id)); return [...current, ...next.filter((item) => !ids.has(item.id))]; }
