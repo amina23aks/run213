@@ -17,7 +17,12 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: SITE_NAME, title: SITE_TITLE, description: SITE_DESCRIPTION, url: "/", images: [DEFAULT_SOCIAL_IMAGE] },
   twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION, images: [DEFAULT_SOCIAL_IMAGE] },
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/brand/favicon.png", shortcut: "/brand/favicon.png" },
+  icons: {
+    icon: "/brand/favicon.png",
+    shortcut: "/brand/favicon.png",
+    apple: "/brand/apple-touch-icon.png",
+  },
+  appleWebApp: { capable: true, title: "213 RUN" },
 };
 
 export default function RootLayout({
