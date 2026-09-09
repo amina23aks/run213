@@ -55,12 +55,13 @@ test("Look Detail remains stacked and collection preview alone owns its overflow
   assert.match(strip, /querySelector<HTMLElement>\("\.lookMiniProduct"\)/);
 });
 
-test("manifest remains safe without claiming unavailable square icon assets", async () => {
+test("manifest declares the supplied square home-screen icon assets truthfully", async () => {
   const manifest = await read("app/manifest.ts");
   const layout = await read("app/layout.tsx");
   assert.match(manifest, /name: "213 RUN"/);
   assert.match(manifest, /display: "standalone"/);
   assert.match(layout, /icon: "\/brand\/favicon\.png"/);
-  assert.doesNotMatch(`${manifest}\n${layout}`, /app-icon-(?:180|192|512)\.png/);
-  assert.doesNotMatch(manifest, /sizes: "(?:180|192|512)x(?:180|192|512)"/);
+  assert.match(manifest, /src: "\/brand\/icon-192\.png",\s*sizes: "192x192"/);
+  assert.match(manifest, /src: "\/brand\/icon-512\.png",\s*sizes: "512x512"/);
+  assert.match(layout, /apple: "\/brand\/apple-touch-icon\.png"/);
 });
