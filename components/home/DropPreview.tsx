@@ -12,7 +12,7 @@ export async function DropPreview() {
         <p>THE FIRST CHAPTER.<br />Streetwear essentials for the season ahead.</p>
         <a href="/shop">VIEW ALL PRODUCTS <span>→</span></a>
       </aside>
-      <div className="product-row drop001-product-grid" aria-label="DROP_001 products">
+      <div className="product-row" aria-label="DROP_001 products">
         {products.map((product) => <ProductCard product={toProductCardView(product)} sourceProduct={product} key={product.id} />)}
       </div>
     </section>

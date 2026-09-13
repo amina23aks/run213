@@ -9,6 +9,19 @@ test("related products keep two compact columns on narrow screens", () => {
   assert.match(css, /@media \(max-width: 559px\)[\s\S]*?\.relatedProducts__grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
+test("customer product listings flow into two columns instead of mobile strips", () => {
+  const css = read("app/globals.css");
+  const drop = read("components/home/DropPreview.tsx");
+  const promo = read("components/home/PromoPicks.tsx");
+  const shop = read("components/shop/ShopGrid.tsx");
+
+  assert.match(css, /@media \(max-width: 759px\)[\s\S]*?\.product-row\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)[\s\S]*?grid-auto-flow:\s*row[\s\S]*?overflow-x:\s*visible/);
+  assert.match(css, /@media \(max-width: 559px\)[\s\S]*?\.shopGrid,[\s\S]*?\.relatedProducts__grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.ok(drop.includes('className="product-row"'));
+  assert.ok(promo.includes('className="product-row product-row--promo"'));
+  assert.ok(shop.includes('className="shopGrid"'));
+});
+
 test("account uses explicit light and dark icon assets and puts sign out last", () => {
   const account = read("components/account/AccountPageClient.tsx");
   for (const name of ["order-bag", "heart", "running"]) {
